@@ -10,11 +10,9 @@ import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken }
 import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
 
 // --- Firebase Setup ---
-// NOTE FOR LOCAL VITE USAGE:
-// When running locally, uncomment the 'import.meta.env' lines and remove the 'JSON.parse' block.
-
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? {
-  // UNCOMMENT THESE FOR LOCAL VITE PROJECT:
+// NOTE: To run this locally in Vite, you must UNCOMMENT the import.meta.env lines
+// and remove the check for __firebase_config.
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : {
   apiKey: "AIzaSyAA_HoCCSagZNg31t642wjwxIRrkIPU4uQ",
   authDomain: "amannbhv-m.firebaseapp.com",
   projectId: "amannbhv-m",
