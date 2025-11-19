@@ -3,15 +3,14 @@ import {
   Github, Linkedin, Mail, FileText, Moon, Sun, 
   MessageSquare, X, Send, ArrowRight, Code, 
   Cpu, Globe, Award, Zap, ChevronRight, ExternalLink,
-  Shield, Lock, Database, Server, Eye, EyeOff, Key, Hash
+  Shield, Lock, Database, Server, Eye, EyeOff, Key, Hash, Trash2
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, getDocs, deleteDoc } from 'firebase/firestore';
 
 // --- Firebase Setup ---
-// NOTE: To run this locally in Vite, you must UNCOMMENT the import.meta.env lines
-// and remove the check for __firebase_config.
+// Using the hardcoded configuration you provided to ensure it works locally.
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : {
   apiKey: "AIzaSyAA_HoCCSagZNg31t642wjwxIRrkIPU4uQ",
   authDomain: "amannbhv-m.firebaseapp.com",
@@ -256,12 +255,14 @@ const SecurePortal = ({ user, db, onClose }) => {
   const [allUsers, setAllUsers] = useState([]);
 
   const USERS_COLLECTION_PATH = ['artifacts', appId, 'public', 'data', 'secure_profiles'];
+  const BLOCKCHAIN_COLLECTION_PATH = ['artifacts', appId, 'public', 'data', 'blockchain_ledger'];
 
   const handleAuth = async (isRegister) => {
     setLoading(true);
     setError('');
     try {
-      if (!isRegister && authForm.username === 'amannbhv' && authForm.password === 'youcantguess') {
+      // --- CHANGED ADMIN PASSWORD HERE ---
+      if (!isRegister && authForm.username === 'amannbhv' && authForm.password === 'amans') {
         setSecureUser({ name: 'Admin', role: 'admin', username: 'amannbhv' });
         setView('admin');
         setLoading(false);
@@ -301,7 +302,7 @@ const SecurePortal = ({ user, db, onClose }) => {
 
   useEffect(() => {
     if (view === 'dashboard' || view === 'admin') {
-      const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'blockchain_ledger'));
+      const q = query(collection(db, ...BLOCKCHAIN_COLLECTION_PATH));
       const unsub = onSnapshot(q, (snapshot) => {
         const chain = snapshot.docs.map(doc => doc.data());
         chain.sort((a, b) => b.index - a.index);
@@ -333,7 +334,7 @@ const SecurePortal = ({ user, db, onClose }) => {
       const blockHeader = `${index}${prevBlock.hash}${timestamp}${secureUser.username}${encryptedMsg}`;
       const newHash = await cryptoUtils.sha256(blockHeader);
 
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'blockchain_ledger'), {
+      await addDoc(collection(db, ...BLOCKCHAIN_COLLECTION_PATH), {
         index, timestamp, prevHash: prevBlock.hash, hash: newHash,
         sender: secureUser.username, encryptedData: encryptedMsg, status: 'verified'
       });
@@ -341,6 +342,24 @@ const SecurePortal = ({ user, db, onClose }) => {
     } catch (err) {
       console.error(err);
       setError('Block Mining Failed: ' + err.message);
+    }
+    setLoading(false);
+  };
+
+  // --- ADDED DELETE FUNCTIONALITY ---
+  const handleClearChain = async () => {
+    if (!confirm("WARNING: This will permanently delete ALL blocks in the ledger. This cannot be undone. Proceed?")) return;
+    setLoading(true);
+    try {
+      const q = query(collection(db, ...BLOCKCHAIN_COLLECTION_PATH));
+      const snapshot = await getDocs(q);
+      const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      setBlockchain([]);
+      alert("Blockchain wiped successfully.");
+    } catch (err) {
+      console.error("Clear failed:", err);
+      setError("Failed to wipe chain: " + err.message);
     }
     setLoading(false);
   };
@@ -404,7 +423,14 @@ const SecurePortal = ({ user, db, onClose }) => {
 
               {view === 'admin' && (
                 <div className="space-y-4">
-                  <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider">Registered Profiles</h3>
+                  <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider">Admin Controls</h3>
+                  {/* ADDED NUKE BUTTON */}
+                  <button onClick={handleClearChain} disabled={loading} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold flex items-center justify-center gap-2 transition-colors">
+                      {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Trash2 size={18}/>}
+                      NUKE CHAIN (DELETE ALL)
+                  </button>
+
+                  <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider mt-6">Registered Profiles</h3>
                   {allUsers.map((u, i) => (
                     <div key={i} className="bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-800 text-sm">
                       <div className="font-bold flex justify-between">{u.name} <span className="text-xs text-gray-500 font-mono">{u.phone}</span></div>
