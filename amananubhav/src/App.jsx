@@ -1,34 +1,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Github, Linkedin, Mail, FileText, Moon, Sun, 
-  MessageSquare, X, Send, ArrowRight, Code, 
-  Cpu, Globe, Award, Zap, ChevronRight, ExternalLink,
-  Shield, Lock, Database, Server, Eye, EyeOff, Key, Hash, Trash2
+  Github, Linkedin, Mail, ArrowRight, Code, 
+  Award, Zap, Shield, Lock, Database, Server, 
+  Terminal, X, Maximize2, Minimize2, Sun, Moon, 
+  AlertTriangle, Send, Trash2, ExternalLink, User, 
+  Reply, Cpu, Activity, Globe, Search, Wifi
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, getDocs, deleteDoc } from 'firebase/firestore';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, addDoc, serverTimestamp, query, onSnapshot, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 
-// --- Firebase Setup ---
-// Using the hardcoded configuration you provided to ensure it works locally.
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : {
-  apiKey: "AIzaSyAA_HoCCSagZNg31t642wjwxIRrkIPU4uQ",
-  authDomain: "amannbhv-m.firebaseapp.com",
-  projectId: "amannbhv-m",
-  storageBucket: "amannbhv-m.firebasestorage.app",
-  messagingSenderId: "499252124944",
-  appId: "1:499252124944:web:6a64ac80518d04873a1995",
+const getFirebaseConfig = () => {
+  try {
+    if (import.meta.env && import.meta.env.VITE_FIREBASE_API_KEY) {
+      return {
+        apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+        appId: import.meta.env.VITE_FIREBASE_APP_ID
+      };
+    }
+  } catch (e) {}
+  if (typeof __firebase_config !== 'undefined') {
+    return JSON.parse(__firebase_config);
+  }
+  return null;
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : "portfolio-v1";
+const GEMINI_API_KEY = import.meta.env?.VITE_GEMINI_API_KEY || "";
 
-// --- CRYPTO & BLOCKCHAIN UTILS ---
+const firebaseConfig = getFirebaseConfig();
+const isConfigValid = firebaseConfig && firebaseConfig.apiKey;
+
+const app = isConfigValid ? initializeApp(firebaseConfig) : null;
+const auth = isConfigValid ? getAuth(app) : null;
+const db = isConfigValid ? getFirestore(app) : null;
+const appId = "portfolio-v3-ultimate";
+
+// --- Crypto Utils ---
 const SYSTEM_SECRET = "MY_SUPER_SECRET_MASTER_KEY_2025";
-
 const cryptoUtils = {
   sha256: async (message) => {
     const msgBuffer = new TextEncoder().encode(message);
@@ -48,645 +60,538 @@ const cryptoUtils = {
       const keyBytes = new TextEncoder().encode(SYSTEM_SECRET);
       const decryptedBytes = encryptedBytes.map((b, i) => b ^ keyBytes[i % keyBytes.length]);
       return new TextDecoder().decode(decryptedBytes);
-    } catch (e) {
-      return "Decryption Error";
-    }
+    } catch (e) { return "Decryption Error"; }
   }
 };
 
-// --- Portfolio Data ---
-const RESUME_DATA = {
-  name: "Aman Anubhav",
-  role: "AI Researcher & Engineer",
-  tagline: "Building intelligent agents for a better world.",
-  about: "I am a Computer Science Engineering student at KIIT University (2027) and a Growth Specialist at Google Developers Group. My work bridges the gap between theoretical AI and real-world applications.",
+// --- Data ---
+const RESUME = {
+  name: "AMAN ANUBHAV",
+  about: "I engineer intelligent agents and scalable systems. Computer Science Student @ KIIT University (2027). Growth Specialist @ GDG.",
   stats: [
-    { label: "Asteroids Found", value: "2" },
-    { label: "Global Audience", value: "2M+" },
-    { label: "Hackathon Wins", value: "4+" }
+    { label: "Asteroids Found", value: "02" },
+    { label: "Global Impact", value: "2M+" },
+    { label: "Hackathons", value: "04" }
   ],
   projects: [
-    {
-      title: "OceanBot",
-      category: "Marine Intelligence",
-      tech: ["Python", "TensorFlow", "InceptionV3"],
-      desc: "Marine intelligence platform achieving 98.87% accuracy in classification using transfer learning.",
-      link: "https://github.com/gitamannbhv"
-    },
-    {
-      title: "Mario-RL",
-      category: "Autonomous Agents",
-      tech: ["RL", "DQN", "PPO"],
-      desc: "Autonomous agent mastering Super Mario Bros. Improved level completion by 30% over baseline.",
-      link: "https://github.com/gitamannbhv"
-    },
-    {
-      title: "YVOO",
-      category: "FinTech",
-      tech: ["XGBoost", "Logistic Regression"],
-      desc: "CIBIL Prediction system. Achieved 99% accuracy on synthetic datasets.",
-      link: "https://github.com/gitamannbhv"
-    },
-    {
-      title: "KANAD",
-      category: "AgriTech",
-      tech: ["IoT", "LSTM", "CNN"],
-      desc: "Agricultural Intelligence System serving 23 farmers. Reduced water usage by 23%.",
-      link: "https://github.com/gitamannbhv"
-    }
+    { id: "p1", title: "OceanBot", type: "Marine AI", tech: ["TensorFlow", "CV"], desc: "Marine intelligence platform achieving 98.87% accuracy in debris classification.", link: "https://github.com/gitamannbhv" },
+    { id: "p2", title: "Mario-RL", type: "Autonomous Agent", tech: ["RL", "PPO", "DQN"], desc: "Autonomous agent mastering Super Mario Bros levels with custom reward functions.", link: "https://github.com/gitamannbhv" },
+    { id: "p3", title: "YVOO", type: "FinTech", tech: ["XGBoost", "Analytics"], desc: "High-precision CIBIL score prediction engine for financial fraud detection.", link: "https://github.com/gitamannbhv" },
+    { id: "p4", title: "KANAD", type: "AgriTech", tech: ["IoT", "Edge"], desc: "Smart irrigation system deployed for 23 farmers, reducing water usage by 23%.", link: "https://github.com/gitamannbhv" }
   ],
   experience: [
-    { role: "Growth Specialist", org: "Google Developers Group", year: "2024-Present", desc: "Top 8% talent. Drove 23% engagement growth." },
-    { role: "Founder", org: "DeuxStem Org", year: "2020-Present", desc: "Scaled Ed-Tech non-profit to 2M+ global audience." },
-    { role: "Student Ambassador", org: "Microsoft Learn", year: "2024", desc: "Contributed to Project Wing (RL Algorithms)." }
+    { role: "Growth Specialist", org: "Google Developers Group", time: "2024 — Present", detail: "Top 8% talent. Drove 23% engagement growth across developer ecosystems." },
+    { role: "Founder", org: "DeuxStem Org", time: "2020 — Present", detail: "Scaled an Ed-Tech non-profit to a global audience of 2M+, securing international partnerships." },
+    { role: "Student Ambassador", org: "Microsoft Learn", time: "2024", detail: "Contributed to Project Wing, focusing on Reinforcement Learning algorithms." }
   ]
 };
 
-// --- GLOBAL COMPONENTS ---
-
-const SpotlightCard = ({ children, className = "", hoverEffect = true }) => {
-  const divRef = useRef(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [opacity, setOpacity] = useState(0);
-
-  const handleMouseMove = (e) => {
-    if (!divRef.current) return;
-    const rect = divRef.current.getBoundingClientRect();
-    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
-
-  const handleMouseEnter = () => setOpacity(1);
-  const handleMouseLeave = () => setOpacity(0);
-
-  return (
-    <div
-      ref={divRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={`relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white shadow-sm transition-all duration-300 ${hoverEffect ? 'hover:shadow-md hover:scale-[1.01]' : ''} ${className}`}
-    >
-      <div
-        className="pointer-events-none absolute -inset-px opacity-0 transition duration-300"
-        style={{
-          opacity,
-          background: `radial-gradient(600px circle at ${position.x}px ${position.y}px, rgba(59, 130, 246, 0.1), transparent 40%)`,
-        }}
-      />
-      <div className="relative h-full">{children}</div>
-    </div>
-  );
+// --- Hooks ---
+const useMousePosition = () => {
+  const [mousePosition, setMousePosition] = useState({ 
+    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 0, 
+    y: typeof window !== 'undefined' ? window.innerHeight / 2 : 0 
+  });
+  useEffect(() => {
+    let animationFrameId;
+    const updateMousePosition = ev => {
+      animationFrameId = window.requestAnimationFrame(() => {
+        setMousePosition({ x: ev.clientX, y: ev.clientY });
+      });
+    };
+    window.addEventListener('mousemove', updateMousePosition);
+    return () => {
+      window.removeEventListener('mousemove', updateMousePosition);
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+  return mousePosition;
 };
 
-const LoginForm = ({ view, setView, authForm, setAuthForm, handleAuth, loading, error, setError }) => (
-  <div className="space-y-4 animate-in fade-in zoom-in duration-300">
-    <div className="text-center mb-6">
-      <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
-        <Lock size={32} className="text-white" />
-      </div>
-      <h2 className="text-2xl font-bold dark:text-white">Secure Access</h2>
-      <p className="text-gray-500 text-sm mt-1">Blockchain-Verified Credentials</p>
-    </div>
+// ==========================================
+// 2. SUB-COMPONENTS
+// ==========================================
 
-    {view === 'register' && (
-      <>
-        <input 
-          type="text" placeholder="Full Name" 
-          className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-          value={authForm.name} onChange={e => setAuthForm(prev => ({...prev, name: e.target.value}))}
-        />
-        <div className="grid grid-cols-2 gap-4">
-          <input 
-            type="email" placeholder="Email" 
-            className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-            value={authForm.email} onChange={e => setAuthForm(prev => ({...prev, email: e.target.value}))}
-          />
-          <input 
-            type="tel" placeholder="Phone" 
-            className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-            value={authForm.phone} onChange={e => setAuthForm(prev => ({...prev, phone: e.target.value}))}
-          />
-        </div>
-      </>
-    )}
-    
-    <input 
-      type="text" placeholder="Secure Username" 
-      className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-      value={authForm.username} onChange={e => setAuthForm(prev => ({...prev, username: e.target.value}))}
-    />
-    <input 
-      type="password" placeholder="Password" 
-      className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-      value={authForm.password} onChange={e => setAuthForm(prev => ({...prev, password: e.target.value}))}
-    />
-
-    {error && <div className="text-red-500 text-sm text-center bg-red-100 dark:bg-red-900/30 p-2 rounded">{error}</div>}
-
-    <button 
-      onClick={() => handleAuth(view === 'register')}
-      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all flex justify-center items-center gap-2 shadow-lg shadow-blue-600/20"
-    >
-      {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : (view === 'register' ? 'Create Secure Profile' : 'Authenticate')}
-    </button>
-
-    <div className="text-center text-sm text-gray-500 mt-4">
-      {view === 'register' ? 'Already have an ID? ' : 'New to the secure network? '}
-      <button onClick={() => {setView(view === 'register' ? 'login' : 'register'); setError('');}} className="text-blue-500 hover:underline font-medium">
-        {view === 'register' ? 'Login' : 'Register Profile'}
-      </button>
-    </div>
-  </div>
+const NavButton = ({ id, label, onClick, active }) => (
+  <button 
+    onClick={() => {
+      const element = document.getElementById(id);
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+      if (onClick) onClick(id);
+    }}
+    className={`relative px-4 py-2 text-xs font-bold tracking-widest transition-all duration-300 ${active ? 'text-app-accent after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] after:bg-app-accent' : 'text-app-text-dim hover:text-app-accent'}`}
+  >
+    {label}
+  </button>
 );
 
-const BlockDisplay = ({ block, showDecrypted = false }) => {
-  const [decryptedText, setDecryptedText] = useState('');
+const ThemeToggle = ({ theme, toggleTheme }) => (
+  <button onClick={toggleTheme} className="p-2 rounded-full border border-app-border hover:bg-app-card transition-all text-app-text-dim hover:text-app-text">
+    {theme === 'light' ? <Sun size={16} /> : theme === 'negative' ? <AlertTriangle size={16} className="text-orange-500"/> : <Moon size={16} />}
+  </button>
+);
+
+// --- INVERTED LENS HERO (TEXT UPDATED) ---
+const LensHero = () => {
+  const { x, y } = useMousePosition();
+  
+  return (
+    <section id="home" className="relative h-screen w-full overflow-hidden cursor-none">
+      
+      {/* LAYER 1: Base Layer (Visible outside lens) */}
+      {/* Matches the current theme (e.g., Dark BG, Silver Text) */}
+      <div className="absolute inset-0 flex flex-col justify-center items-center bg-app-bg transition-colors duration-500 z-10">
+        <div className="flex flex-col items-center pointer-events-none select-none space-y-4">
+          <h2 className="text-xl md:text-2xl font-mono text-app-text-dim tracking-widest">
+            &gt;_ AMAN ANUBHAV
+          </h2>
+          <h1 className="text-[11vw] md:text-[12vw] font-black leading-[0.8] tracking-tighter text-app-text">
+            ENGINEER
+          </h1>
+          <h1 className="text-[11vw] md:text-[12vw] font-black leading-[0.8] tracking-tighter text-app-text">
+            ARCHITECT
+          </h1>
+        </div>
+      </div>
+
+      {/* LAYER 2: Revealed Layer (Visible inside lens) */}
+      {/* INVERTED COLORS: White/Metallic BG, Black Text */}
+      <div 
+        className="absolute inset-0 z-20 flex flex-col justify-center items-center bg-white pointer-events-none"
+        style={{
+          maskImage: `radial-gradient(280px circle at ${x}px ${y}px, black 0%, transparent 100%)`,
+          WebkitMaskImage: `radial-gradient(280px circle at ${x}px ${y}px, black 0%, transparent 100%)`
+        }}
+      >
+        {/* Decorative Grid inside Lens */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 mix-blend-multiply"></div>
+        
+        <div className="flex flex-col items-center pointer-events-none select-none space-y-4 relative z-10">
+          <h2 className="text-xl md:text-2xl font-mono text-black font-bold tracking-widest">
+            &gt;_ AMAN ANUBHAV
+          </h2>
+          <h1 className="text-[11vw] md:text-[12vw] font-black leading-[0.8] tracking-tighter text-black mix-blend-hard-light">
+            ENGINEER
+          </h1>
+          <h1 className="text-[11vw] md:text-[12vw] font-black leading-[0.8] tracking-tighter text-black mix-blend-hard-light">
+            ARCHITECT
+          </h1>
+        </div>
+      </div>
+      
+      {/* Custom Cursor */}
+      <div className="fixed top-0 left-0 w-12 h-12 border border-white mix-blend-difference rounded-full pointer-events-none z-50 transition-transform duration-75 flex items-center justify-center" style={{ transform: `translate(${x - 24}px, ${y - 24}px)` }}>
+         <div className="w-1 h-1 bg-white rounded-full"></div>
+      </div>
+    </section>
+  );
+};
+
+// --- AI TERMINAL ---
+const TerminalOverlay = ({ isOpen, onClose }) => {
+  const [input, setInput] = useState('');
+  const [logs, setLogs] = useState([
+    { src: 'SYS', msg: 'Initializing Neural Link...' },
+    { src: 'SYS', msg: 'Connecting to Gemini 2.5 Flash...' },
+    { src: 'SYS', msg: 'Connected. Ask me about Aman.' }
+  ]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const endRef = useRef(null);
 
   useEffect(() => {
-    if (showDecrypted) {
-      cryptoUtils.decrypt(block.encryptedData).then(setDecryptedText);
+    if (isOpen) endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs, isOpen]);
+
+  const handleCommand = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || isProcessing) return;
+    
+    const userQuery = input;
+    setLogs(prev => [...prev, { src: 'USR', msg: userQuery }]);
+    setInput('');
+    setIsProcessing(true);
+
+    try {
+      // SIMULATION MODE IF NO KEY
+      if (!GEMINI_API_KEY) {
+        setTimeout(() => {
+           let mockReply = "I don't have access to the real-time API right now, but here is cached data: ";
+           if (userQuery.toLowerCase().includes("project")) mockReply += "Aman has built OceanBot (Marine AI) and Mario-RL (Reinforcement Learning).";
+           else if (userQuery.toLowerCase().includes("contact")) mockReply += "You can reach him at amannbhv.cswork@gmail.com";
+           else mockReply += "Aman is an AI Researcher & Engineer specializing in scalable systems and intelligent agents.";
+           
+           setLogs(prev => [...prev, { src: 'AI', msg: `[SIMULATION] ${mockReply}` }]);
+           setIsProcessing(false);
+        }, 800);
+        return;
+      }
+
+      const systemPrompt = `You are an advanced AI assistant for Aman Anubhav's portfolio. 
+      Context: ${JSON.stringify(RESUME)}.
+      Instructions: Answer questions about Aman, his projects (OceanBot, Mario-RL), and experience. 
+      Style: Tech-noir, concise, terminal-like.`;
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userQuery }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] }
+          })
+        }
+      );
+
+      const data = await response.json();
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No valid response.";
+      setLogs(prev => [...prev, { src: 'AI', msg: reply }]);
+
+    } catch (err) {
+      setLogs(prev => [...prev, { src: 'ERR', msg: err.message }]);
+    } finally {
+      if (GEMINI_API_KEY) setIsProcessing(false);
     }
-  }, [showDecrypted, block.encryptedData]);
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div className="p-4 mb-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 font-mono text-xs relative group overflow-hidden">
-      <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10"></div>
-      <div className="flex items-center gap-2 mb-2 text-blue-500">
-        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-        <span className="font-bold">BLOCK #{block.index}</span>
-        <span className="text-gray-400 ml-auto">{new Date(block.timestamp).toLocaleTimeString()}</span>
-      </div>
-      <div className="grid grid-cols-[80px_1fr] gap-2 text-gray-600 dark:text-gray-400">
-        <span className="font-bold">Hash:</span>
-        <span className="truncate text-orange-500">{block.hash}</span>
-        <span className="font-bold">PrevHash:</span>
-        <span className="truncate opacity-50">{block.prevHash}</span>
-        <span className="font-bold">Sender:</span>
-        <span className="text-white bg-gray-700 px-1 rounded w-fit">{block.sender}</span>
-        <span className="font-bold">Data:</span>
-        <div className="p-2 bg-black/5 dark:bg-black/30 rounded break-all">
-          {showDecrypted ? (
-            <span className="text-green-500 font-bold flex items-center gap-2">
-               <Eye size={12}/> {decryptedText}
-            </span>
-          ) : (
-            <span className="opacity-70 flex items-center gap-2">
-               <Lock size={12}/> {block.encryptedData.substring(0, 20)}...[ENCRYPTED]
-            </span>
-          )}
+    <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 font-mono animate-in zoom-in duration-200">
+      <div className="w-full max-w-3xl h-[600px] bg-matte-black border border-white/10 rounded shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="h-10 border-b border-white/10 flex items-center justify-between px-4 bg-white/5">
+          <div className="flex items-center gap-2 text-xs text-app-accent">
+            <Terminal size={14} />
+            <span>GEMINI_LINK_V2.5</span>
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          </div>
+          <button onClick={onClose} className="hover:text-red-500 transition-colors"><X size={16} /></button>
+        </div>
+        <div className="flex-1 p-6 overflow-y-auto space-y-3 text-sm z-10">
+          {logs.map((l, i) => (
+            <div key={i} className="flex gap-4 items-start">
+              <span className={`w-10 font-bold mt-1 ${l.src === 'USR' ? 'text-app-accent' : l.src === 'AI' ? 'text-green-500' : l.src === 'ERR' ? 'text-red-500' : 'text-gray-500'}`}>{l.src}</span>
+              <span className={`text-gray-300 whitespace-pre-wrap leading-relaxed ${l.src === 'AI' ? 'typewriter' : ''}`}>{l.msg}</span>
+            </div>
+          ))}
+          {isProcessing && <div className="text-gray-500 animate-pulse ml-14">Processing query...</div>}
+          <div ref={endRef} />
+        </div>
+        <div className="p-4 border-t border-white/10 bg-black z-10">
+          <form onSubmit={handleCommand} className="flex gap-3 items-center">
+            <span className="text-green-500 animate-pulse">➜</span>
+            <input 
+              autoFocus
+              type="text" 
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              className="flex-1 bg-transparent outline-none text-white font-mono placeholder-gray-700"
+              placeholder="Ask about Aman's work..."
+            />
+            <button type="submit" className="text-app-accent disabled:opacity-50" disabled={isProcessing}><Send size={16}/></button>
+          </form>
         </div>
       </div>
     </div>
   );
 };
 
-const SecurePortal = ({ user, db, onClose }) => {
-  const [view, setView] = useState('login');
-  const [secureUser, setSecureUser] = useState(null);
+// --- SECURE VAULT ---
+const SecureVault = ({ isOpen, onClose, user, db }) => {
+  const [view, setView] = useState('login'); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Inputs
-  const [authForm, setAuthForm] = useState({ name: '', email: '', phone: '', username: '', password: '' });
-  const [messageInput, setMessageInput] = useState('');
-  
-  // Data
-  const [blockchain, setBlockchain] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-
-  const USERS_COLLECTION_PATH = ['artifacts', appId, 'public', 'data', 'secure_profiles'];
-  const BLOCKCHAIN_COLLECTION_PATH = ['artifacts', appId, 'public', 'data', 'blockchain_ledger'];
+  const [activeUser, setActiveUser] = useState(null);
+  const [regForm, setRegForm] = useState({ username: '', password: '', name: '', email: '', phone: '', org: '' });
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [msgInput, setMsgInput] = useState('');
+  const [replyInput, setReplyInput] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [usersList, setUsersList] = useState([]);
 
   const handleAuth = async (isRegister) => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      // --- CHANGED ADMIN PASSWORD HERE ---
-      if (!isRegister && authForm.username === 'amannbhv' && authForm.password === 'amans') {
-        setSecureUser({ name: 'Admin', role: 'admin', username: 'amannbhv' });
-        setView('admin');
-        setLoading(false);
-        return;
+      const form = isRegister ? regForm : loginForm;
+      if (!isRegister && form.username === 'amannbhv' && form.password === 'amans') {
+        setActiveUser({ username: 'amannbhv', role: 'admin', name: 'Administrator' });
+        setView('admin'); setLoading(false); return;
       }
-      const passHash = await cryptoUtils.sha256(authForm.password);
-      const usersRef = collection(db, ...USERS_COLLECTION_PATH);
+
+      const passHash = await cryptoUtils.sha256(form.password);
+      const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'vault_users');
       
       if (isRegister) {
-        await addDoc(usersRef, {
-          name: authForm.name, email: authForm.email, phone: authForm.phone,
-          username: authForm.username, passHash: passHash, role: 'user', createdAt: serverTimestamp()
-        });
-        setSecureUser({ name: authForm.name, role: 'user', username: authForm.username });
-        setView('dashboard');
+        const q = query(usersRef); const snap = await getDocs(q);
+        if (snap.docs.find(d => d.data().username === form.username)) throw new Error("Username taken");
+        const newUser = { ...regForm, passHash, role: 'user', createdAt: serverTimestamp(), status: 'active' };
+        delete newUser.password;
+        await addDoc(usersRef, newUser);
+        setActiveUser(newUser); setView('dashboard');
       } else {
-        const q = query(usersRef);
-        const querySnapshot = await getDocs(q);
-        let foundUser = null;
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.username === authForm.username && data.passHash === passHash) foundUser = data;
-        });
-        if (foundUser) {
-          setSecureUser(foundUser);
-          setView('dashboard');
-        } else {
-          setError('Invalid Credentials');
-        }
+        const q = query(usersRef); const snap = await getDocs(q);
+        const userDoc = snap.docs.find(d => d.data().username === form.username && d.data().passHash === passHash);
+        if (userDoc && userDoc.data().status !== 'blocked') { setActiveUser(userDoc.data()); setView('dashboard'); } 
+        else { throw new Error("Invalid Credentials"); }
       }
-    } catch (err) {
-      console.error(err);
-      setError('Security Protocol Failed: ' + err.message);
-    }
+    } catch (err) { setError(err.message); }
     setLoading(false);
   };
 
   useEffect(() => {
+    if (!db) return;
     if (view === 'dashboard' || view === 'admin') {
-      const q = query(collection(db, ...BLOCKCHAIN_COLLECTION_PATH));
-      const unsub = onSnapshot(q, (snapshot) => {
-        const chain = snapshot.docs.map(doc => doc.data());
-        chain.sort((a, b) => b.index - a.index);
-        setBlockchain(chain);
+      const unsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'vault_messages')), (snap) => {
+        const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        msgs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        setMessages(msgs);
       });
       return () => unsub();
     }
   }, [view, db]);
 
   useEffect(() => {
-    if (view === 'admin') {
-      const fetchUsers = async () => {
-        const usersRef = collection(db, ...USERS_COLLECTION_PATH);
-        const snapshot = await getDocs(usersRef);
-        setAllUsers(snapshot.docs.map(doc => doc.data()));
-      };
-      fetchUsers();
+    if (view === 'admin' && db) {
+      getDocs(query(collection(db, 'artifacts', appId, 'public', 'data', 'vault_users'))).then(snap => 
+        setUsersList(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      );
     }
   }, [view, db]);
 
-  const handleSendMessage = async () => {
-    if (!messageInput.trim()) return;
-    setLoading(true);
+  const sendMessage = async () => {
+    if (!msgInput.trim()) return;
     try {
-      const prevBlock = blockchain[0] || { hash: "0" };
-      const encryptedMsg = await cryptoUtils.encrypt(messageInput);
-      const timestamp = new Date().toISOString();
-      const index = (blockchain.length || 0) + 1;
-      const blockHeader = `${index}${prevBlock.hash}${timestamp}${secureUser.username}${encryptedMsg}`;
-      const newHash = await cryptoUtils.sha256(blockHeader);
-
-      await addDoc(collection(db, ...BLOCKCHAIN_COLLECTION_PATH), {
-        index, timestamp, prevHash: prevBlock.hash, hash: newHash,
-        sender: secureUser.username, encryptedData: encryptedMsg, status: 'verified'
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'vault_messages'), {
+        sender: activeUser.username, senderName: activeUser.name, content: await cryptoUtils.encrypt(msgInput), timestamp: serverTimestamp(), replies: []
       });
-      setMessageInput('');
-    } catch (err) {
-      console.error(err);
-      setError('Block Mining Failed: ' + err.message);
-    }
-    setLoading(false);
+      setMsgInput('');
+    } catch (e) { setError("Transmission Failed"); }
   };
 
-  // --- ADDED DELETE FUNCTIONALITY ---
-  const handleClearChain = async () => {
-    if (!confirm("WARNING: This will permanently delete ALL blocks in the ledger. This cannot be undone. Proceed?")) return;
-    setLoading(true);
+  const sendReply = async (msgId, currentReplies) => {
+    if (!replyInput.trim()) return;
     try {
-      const q = query(collection(db, ...BLOCKCHAIN_COLLECTION_PATH));
-      const snapshot = await getDocs(q);
-      const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(deletePromises);
-      setBlockchain([]);
-      alert("Blockchain wiped successfully.");
-    } catch (err) {
-      console.error("Clear failed:", err);
-      setError("Failed to wipe chain: " + err.message);
-    }
-    setLoading(false);
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_messages', msgId), {
+        replies: [...(currentReplies || []), { sender: 'Admin', text: replyInput, timestamp: new Date().toISOString() }]
+      });
+      setReplyInput(''); setReplyingTo(null);
+    } catch (e) { setError("Reply Failed"); }
   };
+
+  const deleteUser = async (userId) => {
+    if(!confirm("Delete user?")) return;
+    try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_users', userId)); setUsersList(prev => prev.filter(u => u.id !== userId)); } catch(e) {}
+  };
+
+  const MessageBlock = ({ msg, isAdmin, isOwner }) => {
+    const [decrypted, setDecrypted] = useState(null);
+    useEffect(() => { if (isAdmin || isOwner) cryptoUtils.decrypt(msg.content).then(setDecrypted); }, [msg, isAdmin, isOwner]);
+    
+    return (
+      <div className={`p-4 mb-3 rounded border transition-all ${isOwner ? 'border-app-accent/50 bg-app-accent/5' : 'border-app-border bg-app-bg'}`}>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs font-bold text-app-accent uppercase">{msg.senderName}</span>
+          <span className="text-[10px] text-app-text-dim">{msg.timestamp?.toDate().toLocaleTimeString()}</span>
+        </div>
+        <div className="font-mono text-sm break-all text-app-text">
+          {(isAdmin || isOwner) ? <span className="text-green-400">{decrypted || "Decrypting..."}</span> : <span className="text-app-text-dim opacity-50 flex items-center gap-2"><Lock size={12}/> [ENCRYPTED PAYLOAD]</span>}
+        </div>
+        {msg.replies?.map((r, i) => <div key={i} className="mt-2 pl-3 border-l border-app-text-dim text-xs text-app-text"><span className="font-bold">{r.sender}:</span> {r.text}</div>)}
+        {isAdmin && (
+          <div className="mt-3 pt-2 border-t border-app-border flex gap-2">
+            {replyingTo === msg.id ? (
+              <><input autoFocus className="flex-1 bg-black/30 border border-app-border px-2 text-xs text-white" value={replyInput} onChange={e=>setReplyInput(e.target.value)} placeholder="Reply..."/><button onClick={()=>sendReply(msg.id, msg.replies)} className="text-xs text-green-400">SEND</button><button onClick={()=>setReplyingTo(null)} className="text-xs text-red-400">X</button></>
+            ) : <button onClick={()=>setReplyingTo(msg.id)} className="flex items-center gap-1 text-xs text-app-accent hover:underline"><Reply size={12}/> REPLY</button>}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white dark:bg-[#050505] flex flex-col">
-      <div className="h-16 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6">
-        <div className="flex items-center gap-3">
-          <Shield className="text-blue-500" />
-          <span className="font-bold text-lg tracking-tight">Secure<span className="text-blue-500">Chain</span> v1.0</span>
-        </div>
-        <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-          <X size={24} />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-        <div className="w-full md:w-96 p-6 border-r border-gray-200 dark:border-gray-800 overflow-y-auto bg-gray-50/50 dark:bg-[#0a0a0a]">
-          {(view === 'login' || view === 'register') ? (
-            <div className="h-full flex flex-col justify-center">
-              <LoginForm 
-                view={view} setView={setView} 
-                authForm={authForm} setAuthForm={setAuthForm}
-                handleAuth={handleAuth} loading={loading} error={error} setError={setError}
-              />
+    <div className="fixed inset-0 z-[100] bg-red-950/95 backdrop-blur-xl flex items-center justify-center p-4 animate-in zoom-in duration-300 font-mono">
+      <div className="w-full max-w-4xl h-[80vh] bg-black border border-red-900/50 rounded-lg shadow-[0_0_50px_rgba(153,27,27,0.3)] flex overflow-hidden relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-red-500 hover:text-white z-20"><X/></button>
+        
+        {/* Sidebar */}
+        <div className="w-64 border-r border-red-900/30 p-6 bg-black hidden md:block relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-red-600 shadow-[0_0_20px_red]"></div>
+          <div className="flex items-center gap-2 mb-12 text-red-500 font-bold tracking-widest"><Shield size={20}/> VAULT_OS</div>
+          {activeUser && (
+            <div className="mb-8 p-4 border border-red-900/30 bg-red-950/10 rounded">
+              <div className="text-[10px] text-red-400 mb-1">OPERATOR</div>
+              <div className="font-bold text-white truncate">{activeUser.name}</div>
+              <div className="text-[10px] text-red-500 uppercase mt-1 flex items-center gap-1"><Lock size={10}/> {activeUser.role}</div>
             </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="bg-blue-600 text-white p-4 rounded-xl shadow-lg shadow-blue-900/20">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg">
-                    {secureUser?.username?.[0]?.toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-bold text-lg">{secureUser?.name}</div>
-                    <div className="text-blue-200 text-xs uppercase tracking-wider">{secureUser?.role} Access</div>
-                  </div>
-                </div>
-                <div className="text-xs font-mono bg-black/20 p-2 rounded mt-2 truncate">ID: {secureUser?.username}</div>
+          )}
+          {view !== 'login' && <button onClick={()=>setView('login')} className="w-full text-left px-4 py-3 text-xs text-red-400 hover:bg-red-950/50 border border-transparent hover:border-red-900/30 rounded transition-colors">TERMINATE SESSION</button>}
+        </div>
+
+        {/* Main */}
+        <div className="flex-1 flex flex-col relative bg-black/90">
+          {(view === 'login' || view === 'register') && (
+            <div className="flex-1 flex-col items-center justify-center p-8 flex">
+              <div className="w-full max-w-sm space-y-6">
+                 <div className="text-center">
+                   <h2 className="text-3xl font-bold text-white tracking-tighter mb-2">SECURE ACCESS</h2>
+                   <p className="text-red-500 text-xs tracking-widest">LEVEL 5 ENCRYPTION</p>
+                 </div>
+                {view === 'register' && <div className="grid grid-cols-2 gap-2"><input placeholder="Full Name" className="auth-input" value={regForm.name} onChange={e => setRegForm({...regForm, name: e.target.value})} /><input placeholder="Org" className="auth-input" value={regForm.org} onChange={e => setRegForm({...regForm, org: e.target.value})} /><input placeholder="Email" className="auth-input" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} /><input placeholder="Phone" className="auth-input" value={regForm.phone} onChange={e => setRegForm({...regForm, phone: e.target.value})} /></div>}
+                <input placeholder="Username" className="auth-input w-full" value={view === 'register' ? regForm.username : loginForm.username} onChange={e => view === 'register' ? setRegForm({...regForm, username: e.target.value}) : setLoginForm({...loginForm, username: e.target.value})} />
+                <input type="password" placeholder="Password" className="auth-input w-full" value={view === 'register' ? regForm.password : loginForm.password} onChange={e => view === 'register' ? setRegForm({...regForm, password: e.target.value}) : setLoginForm({...loginForm, password: e.target.value})} />
+                {error && <div className="text-red-500 text-xs bg-red-950/30 p-2 border border-red-900/50 text-center">{error}</div>}
+                <button onClick={() => handleAuth(view === 'register')} className="w-full py-4 bg-red-900 hover:bg-red-800 text-white font-bold tracking-widest rounded transition-all shadow-lg shadow-red-900/20">{loading ? 'Authenticating...' : 'ENTER VAULT'}</button>
+                <div className="text-center text-xs mt-4"><button onClick={() => setView(view === 'login' ? 'register' : 'login')} className="text-red-400 hover:text-white underline transition-colors">{view === 'login' ? 'Create Identity' : 'Back to Login'}</button></div>
               </div>
+            </div>
+          )}
 
-              {view === 'dashboard' && (
-                <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800">
-                  <h3 className="font-bold mb-3 flex items-center gap-2"><Send size={16}/> New Secure Message</h3>
-                  <textarea 
-                    className="w-full bg-gray-100 dark:bg-gray-800 p-3 rounded-lg text-sm mb-3 outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                    rows={3}
-                    placeholder="Message is encrypted before sending..."
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                  />
-                  <button 
-                    onClick={handleSendMessage}
-                    disabled={loading}
-                    className="w-full py-2 bg-gray-900 dark:bg-white text-white dark:text-black rounded-lg text-sm font-bold hover:opacity-90"
-                  >
-                    {loading ? 'Mining Block...' : 'Encrypt & Send to Chain'}
-                  </button>
-                </div>
+          {(view === 'dashboard' || view === 'admin') && (
+            <div className="flex-1 flex flex-col h-full">
+              <div className="p-4 border-b border-red-900/30 flex justify-between items-center">
+                <h3 className="text-white font-bold flex items-center gap-2 tracking-wider"><Database size={16} className="text-red-500"/> LEDGER STREAM</h3>
+                <span className="text-[10px] text-red-500 animate-pulse">● LIVE</span>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {messages.map(msg => (
+                  <MessageBlock key={msg.id} msg={msg} isOwner={msg.sender === activeUser.username} isAdmin={view === 'admin'} />
+                ))}
+              </div>
+              {view !== 'admin' && (
+                <div className="p-4 border-t border-red-900/30 bg-black"><div className="flex gap-2"><input className="flex-1 bg-red-950/10 border border-red-900/30 p-3 text-sm text-white outline-none focus:border-red-500 transition-colors placeholder-red-900/50" placeholder="Enter classified payload..." value={msgInput} onChange={e => setMsgInput(e.target.value)} /><button onClick={sendMessage} className="px-6 bg-white text-black font-bold hover:bg-gray-200 text-xs tracking-wider">UPLOAD</button></div></div>
               )}
-
-              {view === 'admin' && (
-                <div className="space-y-4">
-                  <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider">Admin Controls</h3>
-                  {/* ADDED NUKE BUTTON */}
-                  <button onClick={handleClearChain} disabled={loading} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold flex items-center justify-center gap-2 transition-colors">
-                      {loading ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Trash2 size={18}/>}
-                      NUKE CHAIN (DELETE ALL)
-                  </button>
-
-                  <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider mt-6">Registered Profiles</h3>
-                  {allUsers.map((u, i) => (
-                    <div key={i} className="bg-white dark:bg-gray-900 p-3 rounded-lg border border-gray-200 dark:border-gray-800 text-sm">
-                      <div className="font-bold flex justify-between">{u.name} <span className="text-xs text-gray-500 font-mono">{u.phone}</span></div>
-                      <div className="text-gray-500 text-xs truncate">{u.email}</div>
-                      <div className="text-xs font-mono text-orange-500 mt-1 truncate" title="Password Hash">Hash: {u.passHash?.substring(0, 10)}...</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <button onClick={() => setView('login')} className="w-full py-2 border border-red-500/30 text-red-500 rounded-lg hover:bg-red-500/10 text-sm">
-                Terminate Session
-              </button>
             </div>
           )}
         </div>
-
-        <div className="flex-1 p-6 overflow-hidden flex flex-col bg-white dark:bg-[#050505]">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Database size={20} className="text-purple-500" />
-              Live Blockchain Ledger
-            </h2>
-            <div className="flex gap-2 text-xs font-mono text-gray-500">
-              <span className="flex items-center gap-1"><div className="w-2 h-2 bg-green-500 rounded-full"></div> SYNCED</span>
-              <span className="flex items-center gap-1"><Lock size={10} /> AES-256</span>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto pr-2">
-            {blockchain.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-50">
-                <Server size={48} className="mb-4" />
-                <p>Waiting for first block...</p>
-              </div>
-            ) : (
-              blockchain.map((block, i) => (
-                <BlockDisplay key={i} block={block} showDecrypted={view === 'admin'} />
-              ))
-            )}
-          </div>
-        </div>
       </div>
+      <style>{`.auth-input { width: 100%; background: rgba(50,0,0,0.2); border: 1px solid rgba(100,0,0,0.3); padding: 12px; color: white; font-size: 14px; outline: none; transition: border-color 0.2s; } .auth-input:focus { border-color: red; }`}</style>
     </div>
   );
 };
 
-const ChatWidget = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: 'bot', text: "Hi! I'm Aman's AI assistant. Ask me about his projects, skills, or experience." }
-  ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const chatEndRef = useRef(null);
-
-  const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  useEffect(scrollToBottom, [messages, isOpen]);
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const userMsg = { role: 'user', text: input };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setIsTyping(true);
-    setTimeout(() => {
-      const lowerInput = userMsg.text.toLowerCase();
-      let response = "I'm not sure about that, but you can email Aman directly!";
-      if (lowerInput.includes('project') || lowerInput.includes('work')) response = "Aman has worked on OceanBot (Marine AI), Mario-RL (Gaming AI), and YVOO (FinTech). Which one interests you?";
-      else if (lowerInput.includes('contact') || lowerInput.includes('email')) response = "You can reach Aman at amannbhv.cswork@gmail.com.";
-      else if (lowerInput.includes('asteroid') || lowerInput.includes('space')) response = "Yes! Aman discovered 2 asteroids and received commendations from NASA & Pan-STARRS.";
-      else if (lowerInput.includes('skills') || lowerInput.includes('tech')) response = "He is proficient in Python, TensorFlow, C++, and React. He specializes in RL and Computer Vision.";
-      else if (lowerInput.includes('mario')) response = "For Mario-RL, he used DQN and PPO algorithms to improve level completion by 30%.";
-      else if (lowerInput.includes('ocean')) response = "OceanBot uses InceptionV3 transfer learning and achieved 98.87% accuracy.";
-      setMessages(prev => [...prev, { role: 'bot', text: response }]);
-      setIsTyping(false);
-    }, 1000);
-  };
-
-  return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      {isOpen && (
-        <div className="mb-4 w-80 sm:w-96 h-96 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="font-semibold text-sm text-gray-900 dark:text-white">Portfolio AI</span>
-            </div>
-            <button onClick={() => setIsOpen(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"><X size={18}/></button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-gray-900">
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${m.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none'}`}>
-                  {m.text}
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-bl-none px-4 py-2 flex gap-1 items-center"><div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div><div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-75"></div><div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-150"></div></div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-          <div className="p-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-            <div className="flex gap-2">
-              <input 
-                type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask about projects..." className="flex-1 bg-gray-100 dark:bg-gray-800 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
-              />
-              <button onClick={handleSend} className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl transition-colors"><Send size={18} /></button>
-            </div>
-          </div>
-        </div>
-      )}
-      <button onClick={() => setIsOpen(!isOpen)} className="h-14 w-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110">
-        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
-      </button>
-    </div>
-  );
-};
-
+// --- MAIN APP ---
 const App = () => {
-  const [darkMode, setDarkMode] = useState(true);
+  const [theme, setTheme] = useState('dark');
   const [activeSection, setActiveSection] = useState('home');
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [showSecurePortal, setShowSecurePortal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [formStatus, setFormStatus] = useState('idle');
 
   useEffect(() => {
-    const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
-      }
+    const root = document.documentElement;
+    root.setAttribute('data-theme', theme);
+    
+    const init = async () => {
+      try { 
+        if (isConfigValid && auth) await signInAnonymously(auth); 
+      } catch(e) { console.error("Auth Error:", e); }
     };
-    initAuth();
-    return onAuthStateChanged(auth, setUser);
-  }, []);
+    init();
+    if (auth) return onAuthStateChanged(auth, setUser);
+  }, [theme]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!user) return;
-    setFormStatus('submitting');
-    try {
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-        ...formData, userId: user.uid, timestamp: serverTimestamp()
-      });
-      setFormStatus('success');
-      setFormData({ name: '', email: '', message: '' });
-      setTimeout(() => setFormStatus('idle'), 3000);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setFormStatus('error');
+  const cycleTheme = () => { const next = theme === 'dark' ? 'light' : (theme === 'light' ? 'negative' : 'dark'); setTheme(next); };
+  const getThemeIcon = () => { if (theme === 'light') return <Sun size={16}/>; if (theme === 'negative') return <AlertTriangle size={16}/>; return <Moon size={16}/>; };
+
+  const handleSecureClick = () => {
+    // Fallback logic for easy testing
+    if (!isConfigValid) {
+      if (confirm("Firebase not configured. Open Vault UI in Offline Mode?")) {
+        setIsVaultOpen(true);
+        return;
+      }
     }
+    setIsVaultOpen(true);
   };
 
-  const toggleTheme = () => setDarkMode(!darkMode);
+  if (!isConfigValid && !import.meta.env) return <div className="min-h-screen bg-black text-red-500 flex items-center justify-center p-4 text-center font-mono"><h1>ERROR: .env variables missing.</h1></div>;
 
   return (
-    <div className={`${darkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-gray-100 transition-colors duration-300 font-sans selection:bg-blue-500/30">
-        {showSecurePortal && user && <SecurePortal user={user} db={db} onClose={() => setShowSecurePortal(false)} />}
-        <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 bg-white/70 dark:bg-[#0a0a0a]/70">
-          <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AA.</span>
-            <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-400">
-              {['home', 'projects', 'experience', 'contact'].map((item) => (
-                <button key={item} onClick={() => setActiveSection(item)} className={`capitalize hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${activeSection === item ? 'text-blue-600 dark:text-blue-400' : ''}`}>{item}</button>
-              ))}
-            </div>
-            <div className="flex items-center gap-4">
-              <button onClick={() => setShowSecurePortal(true)} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/10 text-red-500 text-xs font-bold hover:bg-red-500 hover:text-white transition-all border border-red-500/20">
-                <Shield size={12} /> SECURE ZONE
-              </button>
-              <a href="https://github.com/gitamannbhv" target="_blank" className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"><Github size={20} /></a>
-              <button onClick={toggleTheme} className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
-            </div>
+    <div className="font-sans text-app-text bg-app-bg min-h-screen transition-colors duration-300 selection:bg-app-accent/30">
+      
+      {isVaultOpen && <SecureVault user={user} db={db} onClose={() => setIsVaultOpen(false)} />}
+      <TerminalOverlay isOpen={isTerminalOpen} onClose={() => setIsTerminalOpen(false)} />
+      
+      <nav className="fixed top-0 w-full z-40 backdrop-blur-md border-b border-app-border transition-all">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <span className="text-2xl font-black tracking-tighter bg-app-gradient bg-clip-text text-transparent cursor-pointer">AA.</span>
+          <div className="hidden md:flex gap-10">
+             {['projects', 'experience', 'contact'].map(id => (
+               <NavButton key={id} id={id} label={id.toUpperCase()} onClick={setActiveSection} active={activeSection === id} />
+             ))}
           </div>
-        </nav>
-        <main className="pt-24 pb-20 max-w-6xl mx-auto px-6 space-y-32">
-          <section id="home" className="min-h-[60vh] flex flex-col justify-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-medium w-fit mb-6 border border-blue-100 dark:border-blue-800"><Zap size={12} fill="currentColor" /> Available for collaborations</div>
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">Building the future with <br /><span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Intelligent Agents</span></h1>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mb-10 leading-relaxed">{RESUME_DATA.about}</p>
-            <div className="flex flex-wrap gap-4">
-              <button onClick={() => setActiveSection('projects')} className="px-8 py-3 rounded-full bg-gray-900 dark:bg-white text-white dark:text-black font-medium hover:opacity-90 transition-opacity flex items-center gap-2">View Projects <ArrowRight size={18} /></button>
-              <button onClick={() => setActiveSection('contact')} className="px-8 py-3 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Contact Me</button>
-            </div>
-            <div className="grid grid-cols-3 gap-8 mt-20 pt-10 border-t border-gray-100 dark:border-gray-800">
-              {RESUME_DATA.stats.map((stat, i) => (<div key={i}><div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div><div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider">{stat.label}</div></div>))}
-            </div>
-          </section>
-          <section id="projects">
-            <div className="flex items-end justify-between mb-12"><div><h2 className="text-3xl font-bold mb-4">Featured Work</h2><p className="text-gray-600 dark:text-gray-400">Selected projects in AI, ML, and IoT.</p></div><a href="https://github.com/gitamannbhv" className="hidden md:flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline">View Github <ExternalLink size={16} /></a></div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {RESUME_DATA.projects.map((project, index) => (
-                <SpotlightCard key={index} className="h-full flex flex-col">
-                  <div className="p-8 flex-1 flex flex-col">
-                    <div className="flex items-start justify-between mb-6"><div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400"><Code size={24} /></div><span className="text-xs font-mono text-gray-500 border border-gray-200 dark:border-gray-700 px-2 py-1 rounded">{project.category}</span></div>
-                    <h3 className="text-xl font-bold mb-3">{project.title}</h3><p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed text-sm flex-1">{project.desc}</p>
-                    <div className="flex flex-wrap gap-2 mt-auto">{project.tech.map(t => (<span key={t} className="text-xs font-medium px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">{t}</span>))}</div>
-                  </div>
-                </SpotlightCard>
-              ))}
-            </div>
-          </section>
-          <section id="experience" className="grid lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-              <h2 className="text-3xl font-bold mb-8">Experience</h2>
-              <div className="space-y-6">
-                {RESUME_DATA.experience.map((exp, i) => (
-                  <SpotlightCard key={i} hoverEffect={false}>
-                    <div className="p-6 flex gap-4">
-                      <div className="flex-shrink-0 mt-1"><div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"><Award size={20} className="text-gray-600 dark:text-gray-400" /></div></div>
-                      <div><h3 className="font-bold text-lg">{exp.role}</h3><div className="text-blue-600 dark:text-blue-400 text-sm mb-2">{exp.org} • {exp.year}</div><p className="text-gray-600 dark:text-gray-400 text-sm">{exp.desc}</p></div>
-                    </div>
-                  </SpotlightCard>
-                ))}
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsTerminalOpen(true)} className="p-2 hover:text-app-accent transition-colors" title="Open AI Terminal"><Terminal size={18}/></button>
+            <button 
+              onClick={handleSecureClick}
+              className="flex items-center gap-2 px-4 py-2 bg-red-900 text-white text-[10px] font-bold tracking-widest rounded-sm hover:bg-red-800 transition-colors shadow-lg border border-red-800"
+            >
+              <Lock size={12} /> SECURE VAULT
+            </button>
+            <button onClick={cycleTheme} className="p-2 rounded-full border border-app-border text-app-text-dim hover:text-app-text transition-colors">
+               {getThemeIcon()}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <LensHero />
+      
+      <section id="projects" className="px-6 py-32 max-w-7xl mx-auto">
+        <div className="mb-16 border-b border-app-border pb-4 flex justify-between items-end">
+          <h2 className="text-4xl font-bold tracking-tight text-app-text">SELECTED WORKS</h2>
+          <a href="https://github.com/gitamannbhv" target="_blank" className="text-xs font-bold tracking-widest flex items-center gap-2 text-app-text-dim hover:text-app-accent transition-colors">GITHUB <ArrowRight size={12}/></a>
+        </div>
+        <div className="grid md:grid-cols-2 gap-8">
+          {RESUME.projects.map((p, i) => (
+            <a href={p.link} key={i} target="_blank" className="group block bg-app-card border border-app-border p-8 hover:border-app-accent/50 transition-all hover:-translate-y-1 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity text-app-accent"><ExternalLink size={20}/></div>
+              <div className="flex justify-between items-start mb-8">
+                <Code className="text-app-accent"/>
               </div>
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold mb-8">Latest Blogs</h2>
-              <div className="space-y-6">
-                {[{ title: "Understanding DQN vs PPO in Mario AI", date: "Oct 15, 2025" }, { title: "How I discovered 2 Asteroids", date: "Sep 22, 2025" }, { title: "Optimizing AgriTech with IoT", date: "Aug 10, 2025" }].map((blog, i) => (
-                  <a key={i} href="#" className="group block">
-                    <SpotlightCard className="h-full">
-                      <div className="p-6"><div className="text-xs text-gray-500 mb-2">{blog.date}</div><h3 className="font-bold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between">{blog.title}<ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" /></h3></div>
-                    </SpotlightCard>
-                  </a>
-                ))}
+              <h3 className="text-2xl font-bold mb-2 text-app-text">{p.title}</h3>
+              <p className="text-sm text-app-text-dim mb-4 leading-relaxed">{p.desc}</p>
+              <div className="flex gap-2 flex-wrap">
+                {p.tech.map(t => <span key={t} className="text-[10px] border border-app-border px-2 py-1 uppercase tracking-wider text-app-text-dim">{t}</span>)}
               </div>
-            </div>
-          </section>
-          <section id="contact" className="max-w-2xl mx-auto text-center">
-            <h2 className="text-4xl font-bold mb-6">Let's Build Something Amazing</h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-10">I'm currently looking for new opportunities in AI Research and Engineering. Whether you have a question or just want to say hi, my inbox is always open.</p>
-            <SpotlightCard hoverEffect={false}>
-              <form onSubmit={handleSubmit} className="p-8 text-left space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div><label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Name</label><input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="John Doe" /></div>
-                  <div><label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Email</label><input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="john@example.com" /></div>
-                </div>
-                <div><label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Message</label><textarea required rows={4} value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="I'd like to discuss a project..." /></div>
-                <button disabled={formStatus === 'submitting' || formStatus === 'success'} type="submit" className={`w-full py-4 rounded-lg font-medium text-white transition-all flex justify-center items-center gap-2 ${formStatus === 'success' ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'} ${formStatus === 'submitting' ? 'opacity-70 cursor-not-allowed' : ''}`}>{formStatus === 'submitting' && <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />}{formStatus === 'success' ? 'Message Sent!' : 'Send Collaboration Request'}</button>
-              </form>
-            </SpotlightCard>
-          </section>
-        </main>
-        <footer className="py-8 border-t border-gray-200 dark:border-gray-800 text-center text-sm text-gray-500">
-          <div className="flex justify-center gap-6 mb-4"><a href="https://github.com/gitamannbhv" className="hover:text-gray-900 dark:hover:text-white transition-colors">GitHub</a><a href="https://www.linkedin.com/in/amananubhav/" className="hover:text-gray-900 dark:hover:text-white transition-colors">LinkedIn</a><a href="mailto:amannbhv.cswork@gmail.com" className="hover:text-gray-900 dark:hover:text-white transition-colors">Email</a></div>
-          <p>&copy; {new Date().getFullYear()} Aman Anubhav. All rights reserved.</p>
-        </footer>
-        <ChatWidget />
-      </div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section id="experience" className="px-6 py-32 bg-app-card/30">
+         <div className="max-w-4xl mx-auto">
+           <h2 className="text-xs font-mono text-app-text-dim mb-12 tracking-widest">EXPERIENCE LOG</h2>
+           <div className="space-y-12 border-l border-app-border ml-2">
+             {RESUME.experience.map((exp, i) => (
+               <div key={i} className="pl-8 relative group">
+                 <div className="absolute -left-[5px] top-2 w-2.5 h-2.5 bg-app-bg border border-app-border rounded-full group-hover:bg-app-accent transition-colors"></div>
+                 <div className="flex flex-col md:flex-row justify-between mb-2">
+                   <h3 className="text-xl font-bold text-app-text">{exp.role}</h3>
+                   <span className="text-xs font-mono text-app-text-dim">{exp.time}</span>
+                 </div>
+                 <div className="text-sm font-bold text-app-text-dim mb-2">{exp.org}</div>
+                 <p className="text-app-text text-sm max-w-xl leading-relaxed">{exp.detail}</p>
+               </div>
+             ))}
+           </div>
+         </div>
+      </section>
+
+      <footer className="px-6 py-20 border-t border-app-border text-center overflow-hidden">
+         <h2 className="text-[12vw] font-black text-app-text opacity-5 leading-none select-none pointer-events-none">
+           ANUBHAV
+         </h2>
+         <div className="mt-12 flex flex-col md:flex-row justify-center items-center gap-8">
+           <a href="mailto:amannbhv.cswork@gmail.com" className="text-xs font-bold tracking-widest text-app-text-dim hover:text-app-accent transition-colors">EMAIL</a>
+           <a href="https://www.linkedin.com/in/amananubhav/" className="text-xs font-bold tracking-widest text-app-text-dim hover:text-app-accent transition-colors">LINKEDIN</a>
+           <a href="https://github.com/gitamannbhv" className="text-xs font-bold tracking-widest text-app-text-dim hover:text-app-accent transition-colors">GITHUB</a>
+         </div>
+         <p className="mt-8 text-app-text-dim text-xs font-mono opacity-50">&copy; {new Date().getFullYear()} AMAN ANUBHAV. SYSTEMS ONLINE.</p>
+      </footer>
     </div>
   );
 };

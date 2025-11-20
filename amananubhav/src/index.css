@@ -3,17 +3,61 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* DEFAULT (DARK / METALLIC) */
+  --bg-color: #050505;
+  --card-bg: #121212;
+  --text-color: #E0E0E0;
+  --text-dim: #A0A0A0;
+  --accent-color: #AEEEEE; /* Pale Turquoise */
+  --border-color: rgba(255, 255, 255, 0.1);
+  --btn-gradient: linear-gradient(135deg, #E0E0E0 0%, #9AA0A6 100%);
 }
 
+/* LIGHT THEME */
+[data-theme='light'] {
+  --bg-color: #F5F5F7;
+  --card-bg: #FFFFFF;
+  --text-color: #1D1D1F;
+  --text-dim: #6e6e73;
+  --accent-color: #0071e3; /* Apple Blue */
+  --border-color: rgba(0, 0, 0, 0.1);
+  --btn-gradient: linear-gradient(135deg, #1D1D1F 0%, #434344 100%);
+}
+
+/* NEGATIVE / INVERTED THEME (High Contrast) */
+[data-theme='negative'] {
+  --bg-color: #E0E0E0;     /* Inverted Black */
+  --card-bg: #CCCCCC;
+  --text-color: #000000;
+  --text-dim: #333333;
+  --accent-color: #FF4500; /* Orange Red (Inverted Cyan) */
+  --border-color: rgba(0, 0, 0, 0.2);
+  --btn-gradient: linear-gradient(135deg, #FF4500 0%, #CC3700 100%);
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Smooth Scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--text-dim);
+  border-radius: 10px;
+  opacity: 0.5;
 }
