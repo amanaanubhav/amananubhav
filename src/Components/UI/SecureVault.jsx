@@ -8,7 +8,7 @@ import {
   collection, addDoc, serverTimestamp, query, onSnapshot, 
   getDocs, deleteDoc, doc, updateDoc, where 
 } from 'firebase/firestore';
-import { db } from '../../utils/firebase';
+import { db } from '../../Utils/firebase';
 
 const appId = "portfolio-v5-production";
 
