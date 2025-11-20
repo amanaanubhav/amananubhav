@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, X, Send, Wifi, WifiOff, Cpu } from 'lucide-react';
-import { RESUME } from '../../data/resume';
+import { RESUME } from '../../Data/resume';
 
 // Ensure this matches your .env variable name exactly
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCVzyQzhoi5Y5GE9ZG0gtNSoGeK3Nmhwjw";
