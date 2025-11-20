@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trophy } from 'lucide-react';
-import useScrollReveal from '../hooks/useScrollReveal';
+import useScrollReveal from '../Hooks/useScrollReveal';
 
 const Reveal = ({ children, delay = 0 }) => {
   const [ref, isVisible] = useScrollReveal();
