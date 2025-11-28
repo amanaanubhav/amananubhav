@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Terminal, X, Send, Wifi, WifiOff, Cpu } from 'lucide-react';
-import { RESUME } from '../../Data/resume';
+import { RESUME } from '../../data/resume';
 
-// Ensure this matches your .env variable name exactly
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCVzyQzhoi5Y5GE9ZG0gtNSoGeK3Nmhwjw";
+// Use Environment variable, fallback to the hardcoded key if missing
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
+// --- LOCAL KNOWLEDGE BASE (Offline Fallback) ---
 const SYSTEM_COMMANDS = {
   help: "List all available system commands",
   clear: "Clear the terminal screen",
@@ -33,7 +34,7 @@ const OFFLINE_RESPONSES = {
 const TerminalOverlay = ({ isOpen, onClose }) => {
   const [input, setInput] = useState('');
   const [logs, setLogs] = useState([
-    { src: 'SYS', msg: 'Initializing Neural Link v3.6...' },
+    { src: 'SYS', msg: 'Initializing Neural Link v3.7...' },
     { src: 'SYS', msg: 'Loading Local Knowledge Base... OK' },
     { src: 'SYS', msg: 'Checking Uplink... ' + (GEMINI_API_KEY ? 'CONNECTED' : 'OFFLINE MODE') },
     { src: 'AI', msg: "System Ready. Type 'help' for commands or ask me anything." }
@@ -120,15 +121,22 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
       return;
     }
 
+    let apiFailed = false;
+
+    // 1. Try Gemini AI
     try {
-      if (!GEMINI_API_KEY) throw new Error("No API Key provided");
+      if (!GEMINI_API_KEY) throw new Error("API Key Missing. Forced Offline Mode.");
 
       const systemPrompt = `
         You are the AI interface for Aman Anubhav's portfolio. 
         Identity: You are a sophisticated, slightly cyberpunk AI assistant.
         Tone: Professional but technical, concise, and helpful.
         Context: ${JSON.stringify(RESUME)}
-        Instruction: Answer the user's query based ONLY on the context provided above. Keep answers under 60 words.
+
+        Instruction: Answer the user's query based ONLY on the context provided above. 
+        - Provide specific details on projects like YVOO, PAVANA, and OceanBot when asked.
+        - If the answer is not in the context, state you lack data access. 
+        - Keep answers under 60 words.
       `;
 
       const response = await fetch(
@@ -145,33 +153,39 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
+        throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 100)}`);
       }
 
       const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(`Gemini Error: ${data.error.message}`);
+      }
+
       const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
       
       if (reply) {
         setLogs(prev => [...prev, { src: 'AI', msg: reply }]);
       } else {
-        throw new Error("Empty response from AI");
+        throw new Error("Empty or invalid response from AI.");
       }
 
     } catch (err) {
-      console.error("Gemini API Error:", err);
+      apiFailed = true;
       // Show the actual error in the terminal for debugging
       setLogs(prev => [...prev, { 
         src: 'ERR', 
-        msg: `[!] Connection Failed: ${err.message}` 
-      }]);
-      
-      // Fallback
-      const offlineReply = getOfflineResponse(userQuery);
-      setLogs(prev => [...prev, { 
-        src: 'SYS', 
-        msg: `> Switching to Local Cache.\n> ${offlineReply}` 
+        msg: `[!] Gemini Link Failure: ${err.message}` 
       }]);
     } finally {
+      // 2. Fallback to Local Keyword Bot if API failed
+      if (apiFailed) {
+        const offlineReply = getOfflineResponse(userQuery);
+        setLogs(prev => [...prev, { 
+          src: 'SYS', 
+          msg: `> Switching to Local Cache for query.\n> ${offlineReply}` 
+        }]);
+      }
       setIsProcessing(false);
     }
   };
@@ -185,7 +199,7 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
         <div className="h-10 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-900/50">
           <div className="flex items-center gap-3 text-xs">
             <Terminal size={14} className="text-green-500" />
-            <span className="text-zinc-400">NEURAL_LINK_V3.6</span>
+            <span className="text-zinc-400">NEURAL_LINK_V3.7</span>
             <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${GEMINI_API_KEY ? 'bg-green-900/30 text-green-500' : 'bg-yellow-900/30 text-yellow-500'}`}>
                {GEMINI_API_KEY ? <Wifi size={10} /> : <WifiOff size={10} />}
                <span>{GEMINI_API_KEY ? 'ONLINE' : 'LOCAL'}</span>
