@@ -1,8 +1,8 @@
 export const RESUME = {
   name: "AMAN KUMAR ANUBHAV",
   role: "AI RESEARCHER / ENGINEER",
-  about: "I didn't inherit talent—I built it. I call myself a 'Genetically Engineered Learner'. I refuse to learn for grades; instead, I learn to understand real-world problems like climate change and financial exclusion, then engineer intelligent agents and scalable systems to solve them.",
-  philosophy: "The gap between what we know and what we could solve drives everything I do. Climate change, financial exclusion, accessibility—these aren't abstract concepts. They're problems waiting for someone willing to learn deeply enough to fix them.",
+  about: "I call myself a 'Genetically Engineered Learner'. I didn't inherit talent—I built it through obsessive curiosity. I refuse to learn for grades; I learn to understand real-world problems like climate change and financial exclusion, then engineer intelligent agents and scalable systems to solve them.",
+  location: "India (Originally from Sikahar, Bihar)",
   links: {
     linkedin: "https://www.linkedin.com/in/aman-anubhav-5055b6220/",
     github: "https://github.com/gitamannbhv",
@@ -13,7 +13,7 @@ export const RESUME = {
     {
       institution: "KIIT University",
       degree: "B.Tech in Computer Science & Engineering (AI/ML)",
-      focus: "Deep Learning, MLOps, Cloud Computing"
+      focus: "AI/ML, Deep Learning, MLOps, Cloud Computing"
     },
     {
       institution: "DPS GAYA",
@@ -23,9 +23,10 @@ export const RESUME = {
   ],
   skills: {
     languages: ["Python", "C", "C++", "JavaScript"],
-    ai_ml: ["XGBoost", "TensorFlow", "PyTorch", "Reinforcement Learning (PPO, DDQN)", "Liquid Neural Networks", "Scikit-learn"],
-    full_stack: ["React", "Next.js", "Flask", "PostgreSQL", "Tailwind CSS", "Framer Motion"],
-    cloud_devops: ["Google Cloud (19 courses)", "Docker", "Kubernetes", "MLOps", "AWS", "Azure"]
+    ai_ml: ["XGBoost", "TensorFlow", "PyTorch", "Reinforcement Learning (DDQN, PPO)", "Liquid Neural Networks (LNN)", "Scikit-learn"],
+    full_stack: ["React", "Next.js", "Flask", "PostgreSQL", "MongoDB", "Tailwind CSS", "Framer Motion"],
+    cloud_devops: ["Google Cloud (19 courses + labs)", "Docker", "Kubernetes", "MLOps", "AWS", "Azure"],
+    tools: ["VS Code", "Google Colab", "Kaggle", "Git/GitHub", "Figma"]
   },
   projects: [
     { 
@@ -33,7 +34,7 @@ export const RESUME = {
       title: "YVOO", 
       type: "FinTech AI", 
       tech: ["XGBoost", "React", "Flask", "PostgreSQL"], 
-      desc: "AI-driven credit intelligence platform reducing verification time from days to seconds. Automates credit scoring with 90%+ accuracy using synthetic data & ML ensembles. Qualified for Smart India Hackathon 2025 National Screening.", 
+      desc: "AI-driven credit intelligence platform. Automates credit scoring with 90%+ accuracy using synthetic data & ML ensembles. Qualified for Smart India Hackathon 2025 National Screening.", 
       link: "https://github.com/gitamannbhv/YVOO",
       year: "2025"
     },
@@ -42,7 +43,7 @@ export const RESUME = {
       title: "PAVANA", 
       type: "Climate Tech", 
       tech: ["Thermodynamics", "CAD", "Simulation"], 
-      desc: "Solar-powered carbon capture system design utilizing novel gradient composite metal chambers. Capable of removing 90% of atmospheric CO2 at reduced costs ($94-232/ton).", 
+      desc: "Solar-powered carbon capture system design capable of removing 90% atmospheric CO2 at reduced costs ($94-232/ton). Features novel gradient composite metal chambers.", 
       link: "https://github.com/gitamannbhv",
       year: "2020-Present"
     },
@@ -87,7 +88,7 @@ export const RESUME = {
       title: "VYOMAGAMI",
       type: "Aerospace",
       tech: ["Physics Simulation", "Concept Design"],
-      desc: "Hybrid balloon-rocket satellite launch system reducing deployment costs by 60-70% through atmospheric resistance minimization.",
+      desc: "Hybrid balloon-rocket satellite launch system reducing deployment costs by 60-70% through novel atmospheric resistance minimization.",
       link: "https://github.com/gitamannbhv",
       year: "Research Phase"
     }
@@ -109,7 +110,7 @@ export const RESUME = {
       role: "AI/ML Researcher", 
       org: "E-Labs", 
       time: "Active", 
-      detail: "Leading research innovation and student mentorship in AI/ML concepts. guiding research projects and fostering collaborative learning environments." 
+      detail: "Leading research innovation and student mentorship in AI/ML concepts. Guiding research projects and fostering collaborative learning environments." 
     },
     { 
       role: "Student Ambassador", 
@@ -124,5 +125,6 @@ export const RESUME = {
     "NYAS Global Champion 2022",
     "NASA International Astronomical Search Collaboration Partner",
     "Featured in Global Indian Magazine as 'The Bihar Teen Who Impressed NASA'"
-  ]
+  ],
+  interests: ["Astronomy & Stargazing", "Fitness (Basketball, Football)", "Mentorship"]
 };
