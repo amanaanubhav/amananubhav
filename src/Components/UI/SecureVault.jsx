@@ -11,22 +11,16 @@ import {
 import { db } from '../../utils/firebase';
 
 const appId = "portfolio-v5-production";
-
-// --- SHARED SECRET FOR ADMIN CHANNEL ---
 const ADMIN_CHANNEL_SECRET = "Admin_Access_Protocol_v5_Secure_Key_99";
 
-// --- CRYPTO UTILS (Optimized) ---
-// Reduced iterations from 100,000 to 10,000 for better performance in a demo environment.
-// In a high-security production app, you would use Web Workers to keep the UI responsive with higher iterations.
-const PBKDF2_ITERATIONS = 10000; 
-
+// --- CRYPTO UTILS ---
 const deriveKey = async (password, salt) => {
   const enc = new TextEncoder();
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
   );
   return window.crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: enc.encode(salt), iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    { name: "PBKDF2", salt: enc.encode(salt), iterations: 10000, hash: "SHA-256" },
     keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
   );
 };
@@ -70,6 +64,7 @@ const SecureVault = ({ isOpen, onClose }) => {
   const [view, setView] = useState('login'); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   
   const [currentUser, setCurrentUser] = useState(null);
   const [userKey, setUserKey] = useState(null);   
@@ -83,6 +78,14 @@ const SecureVault = ({ isOpen, onClose }) => {
   const [usersList, setUsersList] = useState([]);
   const [activeTab, setActiveTab] = useState('ledger');
   const chainEndRef = useRef(null);
+
+  // Reset UI state when switching views
+  const switchView = (newView) => {
+    setError('');
+    setSuccessMsg('');
+    setLoading(false);
+    setView(newView);
+  };
 
   // --- Handlers ---
   const handleRegister = async (e) => {
@@ -109,10 +112,10 @@ const SecureVault = ({ isOpen, onClose }) => {
 
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'vault_users'), newUser);
       
-      const key = await deriveKey(regForm.password, regForm.username); 
-      setUserKey(key);
-      setCurrentUser(newUser);
-      setView('dashboard');
+      // Registration Successful: Redirect to Login
+      setLoginForm({ username: regForm.username, password: '' }); // Pre-fill username
+      setView('login');
+      setSuccessMsg("Identity Generated Successfully. Please Authenticate.");
       
     } catch (err) { setError(err.message); }
     setLoading(false);
@@ -120,7 +123,7 @@ const SecureVault = ({ isOpen, onClose }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setSuccessMsg('');
 
     try {
       // ADMIN LOGIN
@@ -160,7 +163,7 @@ const SecureVault = ({ isOpen, onClose }) => {
     setCurrentUser(null);
     setUserKey(null);
     setAdminKey(null);
-    setView('login');
+    switchView('login');
     setLoginForm({ username: '', password: '' });
     setChain([]);
   };
@@ -177,14 +180,16 @@ const SecureVault = ({ isOpen, onClose }) => {
         let decrypted = null;
         let source = null;
 
+        // Admin Decrypt
         if (currentUser?.role === 'admin' && adminKey && block.adminPayload) {
             try {
                 const content = await decryptData(adminKey, block.adminPayload);
                 decrypted = content;
                 source = 'admin';
-            } catch (e) { /* key mismatch */ }
+            } catch (e) { /* */ }
         }
 
+        // User Decrypt
         if (userKey && block.userPayload) {
             try {
                 const content = await decryptData(userKey, block.userPayload);
@@ -192,13 +197,14 @@ const SecureVault = ({ isOpen, onClose }) => {
                     decrypted = content;
                     source = 'user';
                 }
-            } catch (e) { /* not my message */ }
+            } catch (e) { /* */ }
         }
 
         return { ...block, decryptedContent: decrypted, decryptSource: source };
       }));
 
       setChain(processedChain);
+      // Auto-scroll to bottom on new message
       setTimeout(() => chainEndRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
     });
 
@@ -214,7 +220,9 @@ const SecureVault = ({ isOpen, onClose }) => {
 
   const handleAddBlock = async () => {
     if (!msgInput.trim()) return;
-    setLoading(true);
+    // Note: We don't set global loading here to keep UI snappy, 
+    // just rely on the input clearing for feedback.
+    
     try {
       const index = chain.length;
       const previousHash = index === 0 ? '0' : chain[index - 1].hash;
@@ -227,6 +235,9 @@ const SecureVault = ({ isOpen, onClose }) => {
 
       const hash = await computeHash(`${index}${previousHash}${userPayload}`);
 
+      // Clear input IMMEDIATELY for better UX
+      setMsgInput('');
+
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'vault_chain'), {
         index, 
         previousHash, 
@@ -236,11 +247,14 @@ const SecureVault = ({ isOpen, onClose }) => {
         sender: currentUser.username, 
         timestamp: serverTimestamp()
       });
-      setMsgInput('');
-    } catch (err) { console.error(err); setError("Failed to commit block."); }
-    setLoading(false);
+      
+    } catch (err) { 
+        console.error(err); 
+        setError("Failed to commit block."); 
+    }
   };
 
+  // Admin Actions
   const deleteBlock = async (id) => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_chain', id));
   const toggleUserStatus = async (id, s) => updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_users', id), { status: s === 'active' ? 'blocked' : 'active' });
   const deleteUser = async (id) => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_users', id));
@@ -294,4 +308,104 @@ const SecureVault = ({ isOpen, onClose }) => {
         <div className="flex-1 flex flex-col relative bg-zinc-950/50">
           {view === 'login' && (
              <div className="flex-1 flex items-center justify-center p-8 relative">
-                <div className="w-full max-
+                <div className="w-full max-w-sm space-y-6">
+                   <h2 className="text-2xl font-bold text-white text-center tracking-tight">Access Node</h2>
+                   <div className="space-y-4">
+                      <input placeholder="USERNAME" className="w-full bg-black border border-zinc-800 p-4 text-sm text-white text-center tracking-widest outline-none focus:border-green-500" value={loginForm.username} onChange={e => setLoginForm({...loginForm, username: e.target.value})} />
+                      <input type="password" placeholder="PASSPHRASE" className="w-full bg-black border border-zinc-800 p-4 text-sm text-white text-center tracking-widest outline-none focus:border-green-500" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} />
+                      <button onClick={handleLogin} disabled={loading} className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-4 text-xs tracking-[0.2em] transition-colors">{loading ? 'DECRYPTING...' : 'CONNECT'}</button>
+                   </div>
+                   <div className="text-center"><button onClick={() => switchView('register')} className="text-[10px] text-zinc-500 hover:text-white uppercase tracking-widest">Generate Identity</button></div>
+                   {successMsg && <div className="text-green-400 text-xs text-center bg-green-900/20 p-3 border border-green-900/50 font-mono animate-pulse">{successMsg}</div>}
+                   {error && <div className="text-red-500 text-xs text-center bg-red-900/10 p-3 border border-red-900/30 font-mono">{error}</div>}
+                </div>
+             </div>
+          )}
+
+          {view === 'register' && (
+             <div className="flex-1 flex items-center justify-center p-8 relative">
+                <div className="w-full max-w-sm space-y-6">
+                   <h2 className="text-2xl font-bold text-white text-center tracking-tight">New Identity</h2>
+                   <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <input placeholder="FULL NAME" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.fullName} onChange={e => setRegForm({...regForm, fullName: e.target.value})} />
+                        <input placeholder="ORG" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.org} onChange={e => setRegForm({...regForm, org: e.target.value})} />
+                      </div>
+                      <input placeholder="USERNAME" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.username} onChange={e => setRegForm({...regForm, username: e.target.value})} />
+                      <input type="password" placeholder="PASSPHRASE" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.password} onChange={e => setRegForm({...regForm, password: e.target.value})} />
+                      <button onClick={handleRegister} disabled={loading} className="w-full bg-green-600 hover:bg-green-500 text-black font-bold py-4 text-xs tracking-[0.2em] mt-4">{loading ? 'GENERATING...' : 'COMMIT'}</button>
+                   </div>
+                   <div className="text-center"><button onClick={() => switchView('login')} className="text-[10px] text-zinc-500 hover:text-white uppercase tracking-widest">Back to Login</button></div>
+                </div>
+             </div>
+          )}
+
+          {view === 'dashboard' && activeTab === 'ledger' && (
+             <div className="flex-1 flex flex-col h-full">
+                <div className="pl-6 py-6 pr-24 border-b border-zinc-800 flex justify-between items-center bg-black/50">
+                   <div className="flex items-center gap-3"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div><h3 className="font-bold text-white text-sm tracking-widest">LIVE_LEDGER</h3></div>
+                   {currentUser.role === 'admin' && <button onClick={nukeChain} className="text-[10px] text-red-500 border border-red-900/50 px-3 py-1 hover:bg-red-900/20">NUKE CHAIN</button>}
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                   {chain.map((block) => (
+                      <div key={block.id} className={`p-5 border transition-all ${block.decryptedContent ? 'bg-green-900/10 border-green-900/30' : 'bg-black border-zinc-800 opacity-60 hover:opacity-100'}`}>
+                         <div className="flex justify-between items-start mb-3">
+                            <div className="flex items-center gap-3">
+                               <span className="text-[10px] font-mono bg-zinc-900 px-2 py-1 text-zinc-500">BLK_{block.index}</span>
+                               <span className={`text-xs font-bold ${block.decryptedContent ? 'text-green-400' : 'text-white'}`}>{block.sender}</span>
+                            </div>
+                            <span className="text-[10px] text-zinc-600 font-mono">{block.timestamp?.toDate().toLocaleTimeString()}</span>
+                         </div>
+                         <div className="font-mono text-xs break-all leading-relaxed pl-2 border-l-2 border-zinc-800">
+                            {block.decryptedContent ? (
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-green-300">{block.decryptedContent.text}</span>
+                                    {block.decryptSource === 'admin' && <span className="text-[9px] text-red-400 uppercase tracking-widest mt-1 flex items-center gap-1"><Unlock size={8} /> ADMIN_DECRYPT</span>}
+                                </div>
+                            ) : (
+                                <span className="text-zinc-600 italic flex items-center gap-2"><Lock size={10}/> [ ENCRYPTED_PAYLOAD ]</span>
+                            )}
+                         </div>
+                         {currentUser.role === 'admin' && <button onClick={() => deleteBlock(block.id)} className="text-red-500 hover:text-red-400 text-[10px] mt-3 flex items-center gap-1 uppercase tracking-wider"><Trash2 size={10}/> Prune</button>}
+                      </div>
+                   ))}
+                   <div ref={chainEndRef} />
+                </div>
+                {currentUser.role !== 'admin' && (
+                    <div className="p-4 border-t border-zinc-800 bg-black flex gap-0">
+                        <input className="flex-1 bg-zinc-900 border-y border-l border-zinc-700 p-4 text-sm text-white outline-none focus:bg-zinc-800 font-mono" placeholder="> Encrypt data..." value={msgInput} onChange={e => setMsgInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddBlock()} />
+                        <button onClick={handleAddBlock} disabled={!msgInput.trim()} className="bg-white hover:bg-zinc-200 px-6 text-black border-y border-r border-zinc-700"><Plus size={20} /></button>
+                    </div>
+                )}
+             </div>
+          )}
+
+          {view === 'dashboard' && activeTab === 'users' && currentUser.role === 'admin' && (
+             <div className="flex-1 overflow-y-auto p-8 grid gap-4">
+                <div className="flex justify-between items-end mb-8 pr-12">
+                    <h2 className="text-xl font-bold text-white">User Directory</h2>
+                    <span className="text-xs text-zinc-500 uppercase tracking-widest">{usersList.length} Registered Identities</span>
+                </div>
+                <div className="grid gap-4">
+                   {usersList.map(u => (
+                      <div key={u.id} className="bg-black p-5 border border-zinc-800 flex justify-between items-center hover:border-zinc-600">
+                         <div>
+                            <div className="font-bold text-white text-sm">{u.username}</div>
+                            <div className={`text-[9px] mt-1 inline-block px-2 py-0.5 uppercase ${u.status === 'blocked' ? 'bg-red-500 text-black' : 'bg-green-500 text-black'}`}>{u.status}</div>
+                         </div>
+                         <div className="flex gap-3">
+                            <button onClick={() => toggleUserStatus(u.id, u.status)} className="p-2 border border-zinc-700 text-zinc-400 hover:text-white">{u.status === 'blocked' ? <CheckCircle size={16}/> : <AlertTriangle size={16}/>}</button>
+                            <button onClick={() => deleteUser(u.id)} className="p-2 border border-red-900 text-red-500 hover:bg-red-900/20"><Trash2 size={16}/></button>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SecureVault;
