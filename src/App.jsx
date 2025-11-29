@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { auth } from './Utils/firebase';
+import { auth } from './Utils/supabase';
 
 // Components
 import LensHero from './Components/Hero/LensHero';
