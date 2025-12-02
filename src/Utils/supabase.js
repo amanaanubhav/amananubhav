@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Use VITE_ environment variables for safe import
+// Use  environment variables for safe import
 // Vercel/Vite makes these variables available during the build process
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = import.meta.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.SUPABASE_ANON_KEY;
 
 // Initialize the Supabase Client
 // It checks for the existence of the keys before attempting initialization.
@@ -18,7 +18,7 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     }
 } else {
     // This warning is expected locally if keys are not loaded, or during deployment setup.
-    console.warn("Supabase initialization skipped: Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.");
+    console.warn("Supabase initialization skipped: Missing SUPABASE_URL or SUPABASE_ANON_KEY.");
     supabase = null;
 }
 
