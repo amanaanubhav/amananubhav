@@ -56,7 +56,7 @@ const About = ({ resumeData }) => {
             </p>
             
             <p className="text-sm leading-relaxed opacity-60 font-sans border-l-2 border-green-600/50 pl-3">
-              **Learning Philosophy:** {resumeData.philosophy}
+             {resumeData.philosophy}
             </p>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-current opacity-80">
