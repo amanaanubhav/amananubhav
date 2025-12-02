@@ -10,11 +10,11 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../Utils/firebase';
 
-const appId = "portfolio-v5-production";
+const appId = "amananubhav_securevault";
 const ADMIN_CHANNEL_SECRET = "Admin_Access_Protocol_v5_Secure_Key_99";
 
 // --- CRYPTO UTILS (Optimized) ---
-const PBKDF2_ITERATIONS = 2000; // Reduced for instant demo performance
+const PBKDF2_ITERATIONS = 2000; 
 
 const deriveKey = async (password, salt) => {
   const enc = new TextEncoder();
@@ -32,6 +32,7 @@ const encryptData = async (key, data) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encodedData = enc.encode(JSON.stringify(data));
   const encryptedContent = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, encodedData);
+  
   const buffer = new Uint8Array(iv.byteLength + encryptedContent.byteLength);
   buffer.set(iv, 0);
   buffer.set(new Uint8Array(encryptedContent), iv.byteLength);
@@ -43,11 +44,15 @@ const decryptData = async (key, encryptedBase64) => {
     const binaryString = atob(encryptedBase64);
     const buffer = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) { buffer[i] = binaryString.charCodeAt(i); }
+    
     const iv = buffer.slice(0, 12);
     const data = buffer.slice(12);
+    
     const decryptedContent = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
     return JSON.parse(new TextDecoder().decode(decryptedContent));
-  } catch (e) { throw new Error("Decryption failed."); }
+  } catch (e) { 
+    throw new Error("Decryption failed."); 
+  }
 };
 
 const computeHash = async (dataString) => {
@@ -107,6 +112,7 @@ const SecureVault = ({ isOpen, onClose }) => {
 
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'vault_users'), newUser);
       
+      // FIX: Redirect to login on success
       setLoginForm({ username: regForm.username, password: '' });
       setSuccessMsg("Identity Generated Successfully. Please Authenticate.");
       switchView('login');
@@ -209,7 +215,7 @@ const SecureVault = ({ isOpen, onClose }) => {
     if (!msgInput.trim()) return;
     
     const messageToCommit = msgInput;
-    setMsgInput('');
+    setMsgInput(''); // FIX: Clear input immediately
 
     try {
       const index = chain.length;
@@ -244,7 +250,6 @@ const SecureVault = ({ isOpen, onClose }) => {
       <div className="w-full max-w-6xl h-[85vh] bg-zinc-950 border border-zinc-800 rounded-lg flex overflow-hidden shadow-2xl relative">
         <button onClick={onClose} className="absolute top-4 right-4 z-50 text-zinc-500 hover:text-white hover:bg-zinc-800 p-2 rounded-full transition-all"><X size={20} /></button>
 
-        {/* SIDEBAR */}
         <div className="w-64 bg-black border-r border-zinc-800 p-6 flex flex-col hidden md:flex">
           <div className="flex items-center gap-3 text-green-500 mb-10">
             <Shield size={28} />
@@ -278,7 +283,6 @@ const SecureVault = ({ isOpen, onClose }) => {
           )}
         </div>
 
-        {/* CONTENT AREA */}
         <div className="flex-1 flex flex-col relative bg-zinc-950/50">
           {view === 'login' && (
              <div className="flex-1 flex items-center justify-center p-8 relative">
@@ -314,6 +318,7 @@ const SecureVault = ({ isOpen, onClose }) => {
              </div>
           )}
 
+          {/* Dashboard Views (Ledger & Users) remain the same as in previous successful versions */}
           {view === 'dashboard' && activeTab === 'ledger' && (
              <div className="flex-1 flex flex-col h-full">
                 <div className="pl-6 py-6 pr-24 border-b border-zinc-800 flex justify-between items-center bg-black/50">
@@ -353,8 +358,29 @@ const SecureVault = ({ isOpen, onClose }) => {
                 )}
              </div>
           )}
-          {/* User Management Section Removed for Brevity (It is identical to previous version) */}
-          {/* You can paste the 'users' tab logic here if needed, or it remains from previous code */}
+
+          {view === 'dashboard' && activeTab === 'users' && currentUser.role === 'admin' && (
+             <div className="flex-1 overflow-y-auto p-8 grid gap-4">
+                <div className="flex justify-between items-end mb-8 pr-12">
+                    <h2 className="text-xl font-bold text-white">User Directory</h2>
+                    <span className="text-xs text-zinc-500 uppercase tracking-widest">{usersList.length} Registered Identities</span>
+                </div>
+                <div className="grid gap-4">
+                   {usersList.map(u => (
+                      <div key={u.id} className="bg-black p-5 border border-zinc-800 flex justify-between items-center hover:border-zinc-600">
+                         <div>
+                            <div className="font-bold text-white text-sm">{u.username}</div>
+                            <div className={`text-[9px] mt-1 inline-block px-2 py-0.5 uppercase ${u.status === 'blocked' ? 'bg-red-500 text-black' : 'bg-green-500 text-black'}`}>{u.status}</div>
+                         </div>
+                         <div className="flex gap-3">
+                            <button onClick={() => toggleUserStatus(u.id, u.status)} className="p-2 border border-zinc-700 text-zinc-400 hover:text-white">{u.status === 'blocked' ? <CheckCircle size={16}/> : <AlertTriangle size={16}/>}</button>
+                            <button onClick={() => deleteUser(u.id)} className="p-2 border border-red-900 text-red-500 hover:bg-red-900/20"><Trash2 size={16}/></button>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          )}
         </div>
       </div>
     </div>
