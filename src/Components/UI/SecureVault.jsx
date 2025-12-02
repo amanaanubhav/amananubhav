@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Shield, Lock, Unlock, Database, AlertTriangle, CheckCircle, 
   Plus, Key, RefreshCw, FileJson, Trash2, Bug, Terminal, 
-  User, LogOut, Eye, EyeOff, Server, X, MessageSquare
+  User, LogOut, Eye, EyeOff, Server, X, MessageSquare, Mail, Phone
 } from 'lucide-react';
 import { 
   collection, addDoc, serverTimestamp, query, onSnapshot, 
@@ -72,7 +72,15 @@ const SecureVault = ({ isOpen, onClose }) => {
   const [userKey, setUserKey] = useState(null);   
   const [adminKey, setAdminKey] = useState(null); 
   
-  const [regForm, setRegForm] = useState({ username: '', password: '', fullName: '', org: '' });
+  // Updated Registration Form State
+  const [regForm, setRegForm] = useState({ 
+    username: '', 
+    password: '', 
+    fullName: '', 
+    org: '',
+    email: '',
+    phone: ''
+  });
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [msgInput, setMsgInput] = useState('');
   
@@ -88,9 +96,14 @@ const SecureVault = ({ isOpen, onClose }) => {
     setView(newView);
   };
 
+  // --- Handlers ---
   const handleRegister = async (e) => {
     e.preventDefault();
-    if(!regForm.username || !regForm.password) return setError("Credentials required.");
+    // Validate all fields including Email and Phone
+    if(!regForm.username || !regForm.password || !regForm.email || !regForm.phone) {
+        return setError("All fields (Username, Pass, Email, Phone) are required.");
+    }
+    
     setLoading(true); setError('');
     
     try {
@@ -104,6 +117,8 @@ const SecureVault = ({ isOpen, onClose }) => {
         username: regForm.username,
         fullName: regForm.fullName,
         org: regForm.org,
+        email: regForm.email,   // Store Email
+        phone: regForm.phone,   // Store Phone
         passwordHash, 
         role: 'user',
         createdAt: serverTimestamp(),
@@ -112,7 +127,6 @@ const SecureVault = ({ isOpen, onClose }) => {
 
       await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'vault_users'), newUser);
       
-      // FIX: Redirect to login on success
       setLoginForm({ username: regForm.username, password: '' });
       setSuccessMsg("Identity Generated Successfully. Please Authenticate.");
       switchView('login');
@@ -127,6 +141,7 @@ const SecureVault = ({ isOpen, onClose }) => {
     setLoading(true); setError(''); setSuccessMsg('');
 
     try {
+      // ADMIN LOGIN
       if (loginForm.username === 'amananubhav' && loginForm.password === 'youcantguess') {
         setCurrentUser({ username: 'amananubhav', role: 'admin', fullName: 'System Administrator' });
         const admKey = await deriveKey(ADMIN_CHANNEL_SECRET, "admin_salt_v5");
@@ -136,6 +151,7 @@ const SecureVault = ({ isOpen, onClose }) => {
         return;
       }
 
+      // USER LOGIN
       const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'vault_users'), where("username", "==", loginForm.username));
       const snap = await getDocs(q);
       
@@ -165,6 +181,7 @@ const SecureVault = ({ isOpen, onClose }) => {
     setChain([]);
   };
 
+  // --- Data Sync ---
   useEffect(() => {
     if (view !== 'dashboard' || !db) return;
 
@@ -215,7 +232,7 @@ const SecureVault = ({ isOpen, onClose }) => {
     if (!msgInput.trim()) return;
     
     const messageToCommit = msgInput;
-    setMsgInput(''); // FIX: Clear input immediately
+    setMsgInput('');
 
     try {
       const index = chain.length;
@@ -248,8 +265,10 @@ const SecureVault = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 font-cyber animate-in fade-in duration-300">
       <div className="w-full max-w-6xl h-[85vh] bg-zinc-950 border border-zinc-800 rounded-lg flex overflow-hidden shadow-2xl relative">
+        
         <button onClick={onClose} className="absolute top-4 right-4 z-50 text-zinc-500 hover:text-white hover:bg-zinc-800 p-2 rounded-full transition-all"><X size={20} /></button>
 
+        {/* SIDEBAR */}
         <div className="w-64 bg-black border-r border-zinc-800 p-6 flex flex-col hidden md:flex">
           <div className="flex items-center gap-3 text-green-500 mb-10">
             <Shield size={28} />
@@ -284,6 +303,7 @@ const SecureVault = ({ isOpen, onClose }) => {
         </div>
 
         <div className="flex-1 flex flex-col relative bg-zinc-950/50">
+          {/* LOGIN SCREEN */}
           {view === 'login' && (
              <div className="flex-1 flex items-center justify-center p-8 relative">
                 <div className="w-full max-w-sm space-y-6">
@@ -300,6 +320,7 @@ const SecureVault = ({ isOpen, onClose }) => {
              </div>
           )}
 
+          {/* REGISTRATION SCREEN */}
           {view === 'register' && (
              <div className="flex-1 flex items-center justify-center p-8 relative">
                 <div className="w-full max-w-sm space-y-6">
@@ -309,16 +330,20 @@ const SecureVault = ({ isOpen, onClose }) => {
                         <input placeholder="FULL NAME" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.fullName} onChange={e => setRegForm({...regForm, fullName: e.target.value})} />
                         <input placeholder="ORG" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.org} onChange={e => setRegForm({...regForm, org: e.target.value})} />
                       </div>
+                      <input placeholder="EMAIL" type="email" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} />
+                      <input placeholder="PHONE" type="tel" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.phone} onChange={e => setRegForm({...regForm, phone: e.target.value})} />
+                      
                       <input placeholder="USERNAME" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.username} onChange={e => setRegForm({...regForm, username: e.target.value})} />
                       <input type="password" placeholder="PASSPHRASE" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.password} onChange={e => setRegForm({...regForm, password: e.target.value})} />
                       <button onClick={handleRegister} disabled={loading} className="w-full bg-green-600 hover:bg-green-500 text-black font-bold py-4 text-xs tracking-[0.2em] mt-4">{loading ? 'GENERATING...' : 'COMMIT'}</button>
                    </div>
                    <div className="text-center"><button onClick={() => switchView('login')} className="text-[10px] text-zinc-500 hover:text-white uppercase tracking-widest">Back to Login</button></div>
+                   {error && <div className="text-red-500 text-xs text-center bg-red-900/10 p-3 border border-red-900/30 font-mono">{error}</div>}
                 </div>
              </div>
           )}
 
-          {/* Dashboard Views (Ledger & Users) remain the same as in previous successful versions */}
+          {/* LEDGER DASHBOARD */}
           {view === 'dashboard' && activeTab === 'ledger' && (
              <div className="flex-1 flex flex-col h-full">
                 <div className="pl-6 py-6 pr-24 border-b border-zinc-800 flex justify-between items-center bg-black/50">
@@ -358,7 +383,7 @@ const SecureVault = ({ isOpen, onClose }) => {
                 )}
              </div>
           )}
-
+          {/* ADMIN DASHBOARD */}
           {view === 'dashboard' && activeTab === 'users' && currentUser.role === 'admin' && (
              <div className="flex-1 overflow-y-auto p-8 grid gap-4">
                 <div className="flex justify-between items-end mb-8 pr-12">
@@ -368,9 +393,17 @@ const SecureVault = ({ isOpen, onClose }) => {
                 <div className="grid gap-4">
                    {usersList.map(u => (
                       <div key={u.id} className="bg-black p-5 border border-zinc-800 flex justify-between items-center hover:border-zinc-600">
-                         <div>
-                            <div className="font-bold text-white text-sm">{u.username}</div>
-                            <div className={`text-[9px] mt-1 inline-block px-2 py-0.5 uppercase ${u.status === 'blocked' ? 'bg-red-500 text-black' : 'bg-green-500 text-black'}`}>{u.status}</div>
+                         <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-white text-sm">{u.fullName}</span>
+                                <span className="text-xs text-zinc-500">@{u.username}</span>
+                            </div>
+                            <div className="text-[10px] text-zinc-400 mt-1 flex flex-col gap-1">
+                                <span>{u.org}</span>
+                                <span className="flex items-center gap-1 text-zinc-600"><Mail size={10}/> {u.email}</span>
+                                <span className="flex items-center gap-1 text-zinc-600"><Phone size={10}/> {u.phone}</span>
+                            </div>
+                            <div className={`text-[9px] mt-2 inline-block px-2 py-0.5 uppercase ${u.status === 'blocked' ? 'bg-red-500 text-black' : 'bg-green-500 text-black'}`}>{u.status}</div>
                          </div>
                          <div className="flex gap-3">
                             <button onClick={() => toggleUserStatus(u.id, u.status)} className="p-2 border border-zinc-700 text-zinc-400 hover:text-white">{u.status === 'blocked' ? <CheckCircle size={16}/> : <AlertTriangle size={16}/>}</button>
