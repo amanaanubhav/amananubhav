@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../Utils/firebase';
 
-const appId = "amananubhav_securevault";
+const appId = "securevault_v1";
 const ADMIN_CHANNEL_SECRET = "Admin_Access_Protocol_v5_Secure_Key_99";
 
 // --- CRYPTO UTILS (Optimized) ---
@@ -72,7 +72,7 @@ const SecureVault = ({ isOpen, onClose }) => {
   const [userKey, setUserKey] = useState(null);   
   const [adminKey, setAdminKey] = useState(null); 
   
-  // Updated Registration Form State
+  // Registration Form State
   const [regForm, setRegForm] = useState({ 
     username: '', 
     password: '', 
@@ -99,7 +99,7 @@ const SecureVault = ({ isOpen, onClose }) => {
   // --- Handlers ---
   const handleRegister = async (e) => {
     e.preventDefault();
-    // Validate all fields including Email and Phone
+    // Validate all fields
     if(!regForm.username || !regForm.password || !regForm.email || !regForm.phone) {
         return setError("All fields (Username, Pass, Email, Phone) are required.");
     }
@@ -117,8 +117,8 @@ const SecureVault = ({ isOpen, onClose }) => {
         username: regForm.username,
         fullName: regForm.fullName,
         org: regForm.org,
-        email: regForm.email,   // Store Email
-        phone: regForm.phone,   // Store Phone
+        email: regForm.email,
+        phone: regForm.phone,
         passwordHash, 
         role: 'user',
         createdAt: serverTimestamp(),
@@ -185,6 +185,7 @@ const SecureVault = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (view !== 'dashboard' || !db) return;
 
+    // Ledger Sync
     const chainUnsub = onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'vault_chain')), async (snapshot) => {
       const fetchedChain = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       fetchedChain.sort((a, b) => a.index - b.index);
@@ -193,6 +194,7 @@ const SecureVault = ({ isOpen, onClose }) => {
         let decrypted = null;
         let source = null;
 
+        // Admin Decrypt
         if (currentUser?.role === 'admin' && adminKey && block.adminPayload) {
             try {
                 const content = await decryptData(adminKey, block.adminPayload);
@@ -201,6 +203,7 @@ const SecureVault = ({ isOpen, onClose }) => {
             } catch (e) { /* */ }
         }
 
+        // User Decrypt
         if (userKey && block.userPayload) {
             try {
                 const content = await decryptData(userKey, block.userPayload);
@@ -218,6 +221,7 @@ const SecureVault = ({ isOpen, onClose }) => {
       setTimeout(() => chainEndRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
     });
 
+    // Users Sync (Admin Only)
     let usersUnsub = () => {};
     if (currentUser?.role === 'admin') {
       usersUnsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'vault_users'), (snap) => {
@@ -251,11 +255,30 @@ const SecureVault = ({ isOpen, onClose }) => {
     } catch (err) { console.error(err); setError("Failed to commit block."); }
   };
 
-  const deleteBlock = async (id) => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_chain', id));
-  const toggleUserStatus = async (id, s) => updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_users', id), { status: s === 'active' ? 'blocked' : 'active' });
-  const deleteUser = async (id) => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_users', id));
+  // --- ADMIN ACTIONS (Delete/Block) ---
+  const deleteBlock = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_chain', id));
+    } catch (err) { console.error("Delete failed:", err); }
+  };
+
+  const toggleUserStatus = async (id, s) => {
+    const newStatus = s === 'active' ? 'blocked' : 'active';
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_users', id), { status: newStatus });
+    } catch (err) { console.error("Toggle failed:", err); }
+  };
+
+  const deleteUser = async (id) => {
+    if (confirm("Are you sure? This action is permanent.")) {
+      try {
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'vault_users', id));
+      } catch (err) { console.error("Delete user failed:", err); }
+    }
+  };
+
   const nukeChain = async () => {
-      if(!confirm("NUKE CHAIN? This is irreversible.")) return;
+      if(!confirm("NUKE CHAIN? This will delete all messages permanently.")) return;
       const snap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'vault_chain'));
       snap.forEach(d => deleteDoc(d.ref));
   };
@@ -332,7 +355,6 @@ const SecureVault = ({ isOpen, onClose }) => {
                       </div>
                       <input placeholder="EMAIL" type="email" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} />
                       <input placeholder="PHONE" type="tel" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.phone} onChange={e => setRegForm({...regForm, phone: e.target.value})} />
-                      
                       <input placeholder="USERNAME" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.username} onChange={e => setRegForm({...regForm, username: e.target.value})} />
                       <input type="password" placeholder="PASSPHRASE" className="w-full bg-black border border-zinc-800 p-3 text-xs text-white text-center outline-none focus:border-green-500" value={regForm.password} onChange={e => setRegForm({...regForm, password: e.target.value})} />
                       <button onClick={handleRegister} disabled={loading} className="w-full bg-green-600 hover:bg-green-500 text-black font-bold py-4 text-xs tracking-[0.2em] mt-4">{loading ? 'GENERATING...' : 'COMMIT'}</button>
@@ -348,7 +370,7 @@ const SecureVault = ({ isOpen, onClose }) => {
              <div className="flex-1 flex flex-col h-full">
                 <div className="pl-6 py-6 pr-24 border-b border-zinc-800 flex justify-between items-center bg-black/50">
                    <div className="flex items-center gap-3"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div><h3 className="font-bold text-white text-sm tracking-widest">LIVE_LEDGER</h3></div>
-                   {currentUser.role === 'admin' && <button onClick={() => nukeChain(true)} className="text-[10px] text-red-500 border border-red-900/50 px-3 py-1 hover:bg-red-900/20">NUKE CHAIN</button>}
+                   {currentUser.role === 'admin' && <button onClick={nukeChain} className="text-[10px] text-red-500 border border-red-900/50 px-3 py-1 hover:bg-red-900/20">NUKE CHAIN</button>}
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                    {chain.map((block) => (
@@ -370,7 +392,11 @@ const SecureVault = ({ isOpen, onClose }) => {
                                 <span className="text-zinc-600 italic flex items-center gap-2"><Lock size={10}/> [ ENCRYPTED_PAYLOAD ]</span>
                             )}
                          </div>
-                         {currentUser.role === 'admin' && <button onClick={() => deleteBlock(block.id)} className="text-red-500 hover:text-red-400 text-[10px] mt-3 flex items-center gap-1 uppercase tracking-wider"><Trash2 size={10}/> Prune</button>}
+                         {currentUser.role === 'admin' && (
+                            <div className="mt-3 pt-3 border-t border-zinc-900 flex justify-end">
+                                <button onClick={() => deleteBlock(block.id)} className="text-red-500 hover:text-red-400 text-[10px] flex items-center gap-1 uppercase tracking-wider"><Trash2 size={10}/> Prune Block</button>
+                            </div>
+                         )}
                       </div>
                    ))}
                    <div ref={chainEndRef} />
@@ -383,7 +409,8 @@ const SecureVault = ({ isOpen, onClose }) => {
                 )}
              </div>
           )}
-          {/* ADMIN DASHBOARD */}
+
+          {/* USER MANAGEMENT (Admin Only) */}
           {view === 'dashboard' && activeTab === 'users' && currentUser.role === 'admin' && (
              <div className="flex-1 overflow-y-auto p-8 grid gap-4">
                 <div className="flex justify-between items-end mb-8 pr-12">
