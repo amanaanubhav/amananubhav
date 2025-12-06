@@ -17,7 +17,7 @@ const Reveal = ({ children, delay = 0 }) => {
 
 const Projects = ({ resumeData }) => {
   return (
-    <section id="projects" className="px-20 py-40 max-w-7xl mx-auto bg-zinc-950 text-zinc-400">
+    <section id="projects" className="px-10 py-40 max-w-7xl mx-auto bg-zinc-950 text-zinc-400">
       <Reveal>
         <h2 className="text-xs font-cyber tracking-[0.3em] uppercase text-zinc-600 mb-20 border-b border-zinc-900 pb-4">
           // 03. Selected Works
