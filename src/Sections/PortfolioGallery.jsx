@@ -22,7 +22,7 @@ const images = [
     // Column 3
     [
         "../src/assets/gallery/G6.jpg",
-        "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=1964&auto=format&fit=crop",
+        "../src/assets/gallery/G14.jpg",
         "../src/assets/gallery/G5.jpg",
         "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1887&auto=format&fit=crop",
     ],
