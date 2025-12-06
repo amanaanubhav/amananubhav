@@ -7,7 +7,6 @@ import LensHero from './Components/Hero/LensHero';
 import Navbar from './Components/Layout/Navbar';
 import About from './Sections/About';
 import Experience from './Sections/Experience';
-import Gallery from './Sections/Gallery';
 import Projects from './Sections/Projects';
 import Adventures from './Sections/Adventures';
 import Achievements from './Sections/Achievements';
@@ -17,6 +16,7 @@ import SecureVault from './Components/UI/SecureVault';
 import TerminalOverlay from './Components/UI/TerminalOverlay';
 import StoryModal from './Components/UI/StoryModal';
 import { RESUME } from './Data/resume';
+import PortfolioGallery from './Sections/PortfolioGallery';
 
 const App = () => {
     const [activeSection, setActiveSection] = useState('home');
@@ -79,11 +79,11 @@ const App = () => {
                         <About resumeData={RESUME} />
                         <Experience resumeData={RESUME} isDark={isDark} />
 
-                        <Gallery />
+
+                        <PortfolioGallery />
 
                         <Projects resumeData={RESUME} isDark={isDark} />
 
-                        {/* New Section added here */}
                         <Adventures onOpenStory={handleOpenStory} />
 
                         <Achievements resumeData={RESUME} isDark={isDark} />
