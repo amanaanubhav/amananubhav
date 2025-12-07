@@ -8,29 +8,31 @@ const images = [
     [
         "/G1.jpg",
         "/G2.jpg",
-        "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop",
+        "/G21.jpg",
         "/G8.jpg",
         "/GV7.mp4",
     ],
     // Column 2 - Inverse
     [
         "/G12.jpg",
-        "/G3.jpg",
+        "/G5.jpg",
         "/G9.jpg",
         "/GV3.mp4",
+        "/G17.jpg",
     ],
     // Column 3
     [
         "/G6.jpg",
-        "/G14.jpg",
-        "/G5.jpg",
-        "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1887&auto=format&fit=crop",
+        "/G11.jpg",
+        "/G20.jpg",
+        "/GV16.mp4",
+        "/G18.jpg",
     ],
     // Column 4 - Inverse
     [
-        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1964&auto=format&fit=crop",
+        "/G19.jpg",
         "/G13.jpg",
-        "/G11.jpg",
+        "/G14.jpg",
         "/GV10.mp4",
         "/G4.jpg",
     ],
