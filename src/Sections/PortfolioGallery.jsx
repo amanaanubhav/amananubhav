@@ -53,13 +53,13 @@ const PhotoCard = ({ src, index }) => {
             <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10 pointer-events-none" />
 
             {isYoutube ? (
-                <div className="relative w-full aspect-[9/16]">
+                <div className="relative w-full aspect-[9/16] pointer-events-none">
                     <iframe
-                        src={src}
+                        src={`${src.split('?')[0]}?controls=0&autoplay=1&mute=1&loop=1&playlist=${src.split('/embed/')[1].split('?')[0]}&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1`}
                         title="YouTube video player"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover scale-[1.35]"
                     ></iframe>
                 </div>
             ) : isVideo ? (
