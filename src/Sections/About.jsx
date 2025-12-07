@@ -26,7 +26,7 @@ const About = ({ resumeData }) => {
             <div className="relative w-full aspect-square border-2 border-EoFFFF-600/50 flex items-center justify-center overflow-hidden bg-zinc-900 shadow-xl">
               {/* Placeholder/Profile Image */}
               <img
-                src="../public/images/profile1.jpg"
+                src="/profile1.jpg"
                 alt="Aman Anubhav Profile"
                 className="w-full h-full object-cover opacity-80"
               />
