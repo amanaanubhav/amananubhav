@@ -6,33 +6,33 @@ import { useScroll, useTransform, motion } from 'framer-motion';
 const images = [
     // Column 1 - Travel & Nature
     [
-        "../src/assets/gallery/G1.jpg",
-        "../src/assets/gallery/G2.jpg",
+        "/G1.jpg",
+        "/G2.jpg",
         "https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop",
-        "../src/assets/gallery/G8.jpg",
-        "../src/assets/gallery/GV7.mp4",
+        "/G8.jpg",
+        "/GV7.mp4",
     ],
     // Column 2 - Inverse
     [
-        "../src/assets/gallery/G12.jpg",
-        "../src/assets/gallery/G3.jpg",
-        "../src/assets/gallery/G9.jpg",
-        "../src/assets/gallery/GV3.mp4",
+        "/G12.jpg",
+        "/G3.jpg",
+        "/G9.jpg",
+        "/GV3.mp4",
     ],
     // Column 3
     [
-        "../src/assets/gallery/G6.jpg",
-        "../src/assets/gallery/G14.jpg",
-        "../src/assets/gallery/G5.jpg",
+        "/G6.jpg",
+        "/G14.jpg",
+        "/G5.jpg",
         "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1887&auto=format&fit=crop",
     ],
     // Column 4 - Inverse
     [
         "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1964&auto=format&fit=crop",
-        "../src/assets/gallery/G13.jpg",
-        "../src/assets/gallery/G11.jpg",
-        "../src/assets/gallery/GV10.mp4",
-        "../src/assets/gallery/G4.jpg",
+        "/G13.jpg",
+        "/G11.jpg",
+        "/GV10.mp4",
+        "/G4.jpg",
     ],
 ];
 
