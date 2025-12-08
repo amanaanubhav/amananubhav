@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Analytics } from "@vercel/analytics/next"
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { auth } from './Utils/firebase';
 
