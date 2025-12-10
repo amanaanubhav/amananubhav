@@ -1,7 +1,7 @@
 import React from 'react';
 import useScrollReveal from '../../Hooks/useScrollReveal';
 import Magnetic from '../UI/Magnetic';
-import { Github, Linkedin, Mail } from 'lucide-react';
+import { Github, Linkedin, Mail, Lock } from 'lucide-react';
 
 const Reveal = ({ children }) => {
   const [ref, isVisible] = useScrollReveal();
@@ -12,7 +12,7 @@ const Reveal = ({ children }) => {
   );
 };
 
-const Footer = ({ isDark }) => {
+const Footer = ({ isDark, openVault }) => {
   const socialLinks = [
     { icon: <Mail size={20} />, href: "mailto:amannbhv.cswork@gmail.com", label: "Email" },
     { icon: <Linkedin size={20} />, href: "https://www.linkedin.com/in/amananubhav/", label: "LinkedIn" },
@@ -29,20 +29,29 @@ const Footer = ({ isDark }) => {
         </h2>
       </Reveal>
 
-      <div className="flex items-center gap-6 relative z-10">
-        {socialLinks.map((link, index) => (
-          <Magnetic key={index}>
-            <a
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-300 group ${isDark ? 'border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-white hover:bg-white hover:text-black' : 'border-zinc-200 bg-white text-zinc-600 hover:border-black hover:bg-black hover:text-white'}`}
-              aria-label={link.label}
-            >
-              {link.icon}
-            </a>
-          </Magnetic>
-        ))}
+      <div className="flex flex-col items-center gap-8 relative z-10">
+        <button
+          onClick={openVault}
+          className={`px-8 py-3 rounded-full font-bold tracking-widest text-xs transition-all duration-300 border flex items-center gap-2 font-cyber hover:scale-105 active:scale-95 ${isDark ? 'bg-white text-black border-white hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'bg-black text-white border-black hover:bg-zinc-800 shadow-[0_0_20px_rgba(0,0,0,0.3)]'}`}
+        >
+          <Lock size={14} /> SECURE CONTACT
+        </button>
+
+        <div className="flex items-center gap-6">
+          {socialLinks.map((link, index) => (
+            <Magnetic key={index}>
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-300 group ${isDark ? 'border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-white hover:bg-white hover:text-black' : 'border-zinc-200 bg-white text-zinc-600 hover:border-black hover:bg-black hover:text-white'}`}
+                aria-label={link.label}
+              >
+                {link.icon}
+              </a>
+            </Magnetic>
+          ))}
+        </div>
       </div>
 
       <p className={`absolute bottom-10 text-xs font-mono ${isDark ? 'text-zinc-800' : 'text-zinc-300'}`}>&copy; {new Date().getFullYear()} AMAN ANUBHAV. ALL RIGHTS RESERVED.</p>

@@ -11,7 +11,7 @@ const Reveal = ({ children }) => {
   );
 };
 
-const About = ({ resumeData }) => {
+const About = ({ resumeData, isDark }) => {
   return (
     <section id="about" className="px-6 py-32 max-w-4xl mx-auto font-cyber">
       <Reveal>
@@ -23,7 +23,7 @@ const About = ({ resumeData }) => {
 
           {/* PROFILE PICTURE COLUMN */}
           <div className="space-y-4">
-            <div className="relative w-full aspect-square border-2 border-EoFFFF-600/50 flex items-center justify-center overflow-hidden bg-zinc-900 shadow-xl">
+            <div className={`relative w-full aspect-square border-2 ${isDark ? 'border-cyan-600/50 bg-zinc-900' : 'border-cyan-600/20 bg-white'} flex items-center justify-center overflow-hidden shadow-xl`}>
               {/* Placeholder/Profile Image */}
               <img
                 src="/profile1.jpg"
@@ -38,15 +38,15 @@ const About = ({ resumeData }) => {
 
             {/* Social Links */}
             <div className='flex justify-center gap-6 pt-4'>
-              <a href={resumeData.links.linkedin} target="_blank" className='text-zinc-500 hover:text-white transition-colors'><Linkedin size={20} /></a>
-              <a href={resumeData.links.github} target="_blank" className='text-zinc-500 hover:text-white transition-colors'><Github size={20} /></a>
-              <a href={`mailto:${resumeData.links.email}`} target="_blank" className='text-zinc-500 hover:text-white transition-colors'><Mail size={20} /></a>
+              <a href={resumeData.links.linkedin} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Linkedin size={20} /></a>
+              <a href={resumeData.links.github} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Github size={20} /></a>
+              <a href={`mailto:${resumeData.links.email}`} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Mail size={20} /></a>
             </div>
           </div>
 
           {/* TEXT CONTENT COLUMN */}
-          <div className="space-y-8">
-            <h3 className="text-2xl font-bold leading-tight">
+          <div className={`space-y-8 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+            <h3 className={`text-2xl font-bold leading-tight ${isDark ? 'text-white' : 'text-black'}`}>
               "I didn't inherit talent—<br />
               <span className="opacity-50">I built it."</span>
             </h3>

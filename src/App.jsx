@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { auth } from './Utils/firebase';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Components
-import LensHero from './Components/Hero/LensHero';
 import Navbar from './Components/Layout/Navbar';
-import About from './Sections/About';
-import Experience from './Sections/Experience';
-import Projects from './Sections/Projects';
-import Adventures from './Sections/Adventures';
-import Achievements from './Sections/Achievements';
 import Footer from './Components/Layout/Footer';
 import Preloader from './Components/UI/Preloader';
-import SecureVault from './Components/UI/SecureVault';
+import SecureContact from './Components/UI/SecureContact';
 import TerminalOverlay from './Components/UI/TerminalOverlay';
 import StoryModal from './Components/UI/StoryModal';
 import { RESUME } from './Data/resume';
-import PortfolioGallery from './Sections/PortfolioGallery';
+
+// Pages
+import Home from './Pages/Home';
+import Stories from './Pages/Stories';
 
 const App = () => {
     const [activeSection, setActiveSection] = useState('home');
@@ -43,7 +41,7 @@ const App = () => {
     const handleCloseStory = () => setSelectedStory(null);
 
     return (
-        <>
+        <BrowserRouter>
             {loading && <Preloader onComplete={() => setLoading(false)} />}
 
             {/* Story Modal Overlay */}
@@ -54,7 +52,7 @@ const App = () => {
             <div className={`font-sans min-h-screen transition-colors duration-700 selection:bg-gray-500/30 ${isDark ? 'bg-black text-zinc-400' : 'bg-white text-zinc-600'}`}>
 
                 {isVaultOpen && (
-                    <SecureVault
+                    <SecureContact
                         isOpen={isVaultOpen}
                         onClose={() => setIsVaultOpen(false)}
                         isDark={isDark}
@@ -72,29 +70,18 @@ const App = () => {
                     openVault={handleOpenVault}
                 />
 
-                <LensHero isDark={isDark} />
-
                 {RESUME ? (
-                    <main className={`relative z-10 ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}>
-                        <About resumeData={RESUME} />
-                        <Experience resumeData={RESUME} isDark={isDark} />
-
-
-                        <PortfolioGallery />
-
-                        <Projects resumeData={RESUME} isDark={isDark} />
-
-                        <Adventures onOpenStory={handleOpenStory} />
-
-                        <Achievements resumeData={RESUME} isDark={isDark} />
-                    </main>
+                    <Routes>
+                        <Route path="/" element={<Home isDark={isDark} resumeData={RESUME} />} />
+                        <Route path="/stories" element={<Stories isDark={isDark} onOpenStory={handleOpenStory} />} />
+                    </Routes>
                 ) : (
                     <div className="p-20 text-center text-red-500 font-mono">Error: System Data Corrupted.</div>
                 )}
 
-                <Footer isDark={isDark} />
+                <Footer isDark={isDark} openVault={handleOpenVault} />
             </div>
-        </>
+        </BrowserRouter>
     );
 };
 

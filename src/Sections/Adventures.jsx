@@ -1,87 +1,116 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
-import useScrollReveal from '../Hooks/useScrollReveal'; // Note: Corrected casing if your folder is 'Hooks'
+import { motion, useInView } from 'framer-motion'; // Using framer-motion fully
 import { ADVENTURES } from '../Data/adventures';
 
-const Reveal = ({ children, delay = 0 }) => {
-  const [ref, isVisible] = useScrollReveal();
+const BlogCard = ({ story, index, isDark, onOpenStory }) => {
   return (
-    <div
-      ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ y: -10 }}
+      className={`group relative cursor-pointer rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 h-[500px] w-full`}
+      onClick={() => onOpenStory(story)}
     >
-      {children}
-    </div>
+      {/* Background Image */}
+      <div className="absolute inset-0 w-full h-full">
+        <img
+          src={story.coverImage}
+          alt={story.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+      </div>
+
+      {/* Gradient Overlay - Colorful & Cinematic */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${isDark
+        ? 'from-black/90 via-black/50 to-transparent'
+        : 'from-zinc-900/90 via-zinc-900/40 to-transparent'
+        } group-hover:from-black/95 group-hover:via-black/70 transition-all duration-300`}
+      />
+
+      {/* Content Container */}
+      <div className="absolute inset-0 p-8 flex flex-col justify-end">
+        {/* Category Tag */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 + index * 0.1 }}
+          className="absolute top-8 left-8"
+        >
+          <span className={`px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full backdrop-blur-md border ${isDark
+            ? 'bg-white/10 text-white border-white/20'
+            : 'bg-black/10 text-white border-white/20'
+            }`}>
+            {story.category}
+          </span>
+        </motion.div>
+
+        {/* Main Text Content */}
+        <div className="transform transition-transform duration-500 group-hover:-translate-y-2">
+          <span className="text-xs font-mono text-zinc-300 mb-2 block border-l-2 border-green-400 pl-3">
+            {story.date}
+          </span>
+          <h3 className="text-2xl md:text-3xl font-bold text-white leading-tight mb-3 drop-shadow-lg">
+            {story.title}
+          </h3>
+          <p className="text-sm text-zinc-300 line-clamp-2 md:line-clamp-3 leading-relaxed mb-6 opacity-80 group-hover:opacity-100 transition-opacity">
+            {story.subtitle}
+          </p>
+
+          {/* Action Button */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold font-cyber text-green-400 tracking-wider group-hover:text-green-300 transition-colors">
+              READ STORY
+            </span>
+            <motion.div
+              whileHover={{ x: 5, rotate: -45 }}
+              className="p-2 bg-white/10 rounded-full text-white backdrop-blur-sm"
+            >
+              <ArrowUpRight size={14} />
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
-const Adventures = ({ onOpenStory }) => {
+const Adventures = ({ onOpenStory, isDark }) => {
   return (
-    <section id="adventures" className="px-6 py-40 bg-zinc-950 border-t border-zinc-900/50">
+    <section id="adventures" className={`px-6 py-20 min-h-screen ${isDark ? 'bg-zinc-950' : 'bg-white'}`}>
       <div className="max-w-7xl mx-auto">
-        <Reveal>
-          <div className="flex flex-col md:flex-row justify-between items-end mb-20 border-b border-zinc-900 pb-4">
-            <div>
-              <h2 className="text-xs font-cyber tracking-[0.3em] uppercase text-zinc-600 mb-2 flex items-center gap-2">
-                // 04. The Lab & Life
-                <Sparkles size={12} className="F7F7F7" />
-              </h2>
-              <h3 className="text-3xl font-bold text-white">STORIES & NBHV</h3>
-            </div>
-            <p className="text-zinc-500 text-sm max-w-md mt-4 md:mt-0 text-right font-mono text-[10px] tracking-wide">
-              [ LOGS: EXPERIMENTAL_PROJECTS // PERSONAL_QUESTS ]
-            </p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-zinc-800/50 pb-8"
+        >
+          <div>
+            <h2 className="text-xs font-cyber tracking-[0.3em] uppercase text-green-500 mb-3 flex items-center gap-2">
+              <Sparkles size={14} />
+                            // 04. ARCHIVES
+            </h2>
+            <h3 className={`text-4xl md:text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+              BLOGS & STORIES
+            </h3>
           </div>
-        </Reveal>
+          <p className={`text-sm max-w-md mt-6 md:mt-0 text-right font-mono tracking-wide ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+            [ LOGS: EXPERIMENTAL_PROJECTS // THOUGHTS ]
+          </p>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ADVENTURES.map((story, i) => (
-            <Reveal key={story.id} delay={i * 100}>
-              <div
-                onClick={() => onOpenStory(story)}
-                className="group cursor-pointer relative aspect-[4/5] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900"
-              >
-                {/* Image */}
-                <div className="absolute inset-0">
-                  <img
-                    src={story.coverImage}
-                    alt={story.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-50 group-hover:opacity-30"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
-                </div>
-
-                {/* Content */}
-                <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                  {/* Top Label */}
-                  <div className="mb-auto flex justify-between w-full transform -translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-100">
-                    <span className="px-2 py-1 bg-green-500/10 border border-green-500/20 rounded text-[9px] font-cyber text-green-400 uppercase tracking-wider">
-                      {story.category}
-                    </span>
-                  </div>
-
-                  {/* Text */}
-                  <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                    <span className="text-[10px] font-mono text-zinc-500 mb-3 block border-b border-zinc-800 pb-2 w-fit">
-                      {story.date}
-                    </span>
-                    <h3 className="text-xl font-bold text-white leading-tight mb-3 group-hover:text-green-400 transition-colors">
-                      {story.title}
-                    </h3>
-                    <p className="text-sm text-zinc-400 line-clamp-2 font-sans font-light">
-                      {story.subtitle}
-                    </p>
-
-                    {/* 'Read' indicator */}
-                    <div className="mt-4 flex items-center gap-2 text-[10px] font-cyber text-zinc-500 group-hover:text-white transition-colors opacity-0 group-hover:opacity-100">
-                      <span>ACCESS_LOG</span>
-                      <ArrowUpRight size={12} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {ADVENTURES.map((story, index) => (
+            <BlogCard
+              key={story.id}
+              story={story}
+              index={index}
+              isDark={isDark}
+              onOpenStory={onOpenStory}
+            />
           ))}
         </div>
       </div>

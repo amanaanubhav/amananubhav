@@ -159,7 +159,7 @@ const MobileGallery = ({ images }) => {
     );
 };
 
-const ParallaxPortfolio = () => {
+const ParallaxPortfolio = ({ isDark }) => {
     const containerRef = useRef(null);
 
     // Track scroll progress relative to the container for Desktop
@@ -177,7 +177,7 @@ const ParallaxPortfolio = () => {
     const allImages = images.flat();
 
     return (
-        <section className="relative w-full h-auto bg-zinc-950 text-white overflow-hidden py-0 border-t border-b border-zinc-950 -mb-2em z-0">
+        <section className={`relative w-full h-auto text-white overflow-hidden py-0 border-t border-b -mb-2em z-0 ${isDark ? 'bg-zinc-950 border-zinc-950' : 'bg-gray-50 border-gray-200'}`}>
 
             {/* Desktop / Tablet Grid View (>= md) */}
             <div ref={containerRef} className="hidden md:block px-4 md:px-8">
@@ -195,7 +195,7 @@ const ParallaxPortfolio = () => {
                         className="my-10 text-center"
                     >
                         <h2 className="text-3xl md:text-5xl font-bold tracking-tighter">{/*header optional*/}</h2>
-                        <p className="text-zinc-500 mt-2 mb-3 font-mono text-sm">ARCHIVES</p>
+                        <p className={`mt-2 mb-3 font-mono text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>ARCHIVES</p>
                     </motion.div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -209,8 +209,8 @@ const ParallaxPortfolio = () => {
 
             {/* Mobile Horizontal Scroll View (< md) */}
             <div className="block md:hidden">
-                <div className="py-10 text-center absolute top-0 left-0 w-full z-10 pointer-events-none mix-blend-difference -mt-5 mb-10">
-                    <p className="text-white font-mono text-sm uppercase tracking-widest drop-shadow-md">ARCHIVES</p>
+                <div className={`py-10 text-center absolute top-0 left-0 w-full z-10 pointer-events-none mix-blend-difference -mt-5 mb-10`}>
+                    <p className={`font-mono text-sm uppercase tracking-widest drop-shadow-md ${isDark ? 'text-white' : 'text-zinc-800'}`}>ARCHIVES</p>
                 </div>
                 <MobileGallery images={allImages} />
             </div>
