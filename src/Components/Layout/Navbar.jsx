@@ -8,7 +8,7 @@ import {
 } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Briefcase, FolderGit2, BookOpen, Terminal, Sun, Moon } from 'lucide-react';
+import { Home, Briefcase, FolderGit2, BookOpen, Terminal, Sun, Moon, Lock } from 'lucide-react';
 import { Button as MovingBorderContainer } from "../UI/MovingBorder";
 
 const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerminal, openVault }) => {
@@ -99,7 +99,6 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
         )}
       >
         {/* Moving Border Container */}
-        {/* Moving Border Container */}
         <MovingBorderContainer
           borderRadius="1.75rem"
           className="dark:bg-black bg-white dark:text-white text-black border-neutral-200 dark:border-slate-800"
@@ -108,7 +107,7 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
         >
           {/* Content Container */}
           <div className={cn(
-            "flex items-center justify-center space-x-4 pr-2 pl-8 py-2",
+            "flex items-center justify-center space-x-2 md:space-x-4 pr-2 pl-4 md:pl-8 py-2",
           )}>
             {navItems.map((navItem, idx) => (
               <button
@@ -128,7 +127,7 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
             ))}
 
             {/* Extra Actions (Theme & Terminal) integrated cleanly */}
-            <div className="flex items-center gap-2 pl-2">
+            <div className="flex items-center gap-1 md:gap-2 pl-2">
               <button
                 onClick={toggleTheme}
                 className="p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-600 dark:text-neutral-300"
@@ -146,9 +145,10 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
             {/* Secure Contact Button - Authentically styled as requested */}
             <button
               onClick={openVault}
-              className="border text-sm font-medium relative border-neutral-200 dark:border-white/[0.2] text-black dark:text-white px-4 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="border text-sm font-medium relative border-neutral-200 dark:border-white/[0.2] text-black dark:text-white px-3 md:px-4 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
-              <span>Secure Contact</span>
+              <span className="hidden sm:block">Secure Contact</span>
+              <span className="block sm:hidden"><Lock className="h-4 w-4" /></span>
               <span
                 className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-blue-500 to-transparent h-px"
               />
