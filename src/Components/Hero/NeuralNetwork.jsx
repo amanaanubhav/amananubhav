@@ -33,7 +33,7 @@ const NeuralNetwork = ({ color = "rgba(255,255,255,0.03)", burstColor = "rgba(25
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       particles.forEach((p, i) => {
         p.x += p.vx;
         p.y += p.vy;
@@ -49,8 +49,8 @@ const NeuralNetwork = ({ color = "rgba(255,255,255,0.03)", burstColor = "rgba(25
           const p2 = particles[j];
           const dx = p.x - p2.x;
           const dy = p.y - p2.y;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
           if (dist < 150) {
             ctx.strokeStyle = color;
             ctx.lineWidth = (150 - dist) / 600;
@@ -61,8 +61,8 @@ const NeuralNetwork = ({ color = "rgba(255,255,255,0.03)", burstColor = "rgba(25
 
             if (Math.random() < 0.005) {
               pulses.push({
-                start: {x: p.x, y: p.y},
-                end: {x: p2.x, y: p2.y},
+                start: { x: p.x, y: p.y },
+                end: { x: p2.x, y: p2.y },
                 progress: 0,
                 speed: 0.2 + Math.random() * 0.1
               });

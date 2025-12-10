@@ -1,48 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { Terminal, Lock, Sun, Moon, Menu, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+"use client";
+import React, { useState } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useMotionValueEvent,
+} from "framer-motion";
+import { cn } from "@/lib/utils";
 import { useNavigate, useLocation } from 'react-router-dom';
-import NavButton from '../UI/NavButton';
+import { Home, Briefcase, FolderGit2, BookOpen, Terminal, Sun, Moon } from 'lucide-react';
+import { Button as MovingBorderContainer } from "../UI/MovingBorder";
 
 const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerminal, openVault }) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const { scrollYProgress } = useScroll();
+  const [visible, setVisible] = useState(true); // Default to true so it shows initially
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setIsScrolled(currentScrollY > 20);
+  useMotionValueEvent(scrollYProgress, "change", (current) => {
+    // Check if current is not undefined and is a number
+    if (typeof current === "number") {
+      let direction = current - scrollYProgress.getPrevious();
 
-      // Always show at the top of the page (buffer of 50px)
-      if (currentScrollY < 50) {
-        setIsVisible(true);
-      }
-      // Hide when scrolling down, Show when scrolling up
-      else if (currentScrollY > lastScrollY) {
-        setIsVisible(false);
+      if (scrollYProgress.get() < 0.05) {
+        setVisible(true); // Show at top
       } else {
-        setIsVisible(true);
+        if (direction < 0) {
+          setVisible(true); // Show on scroll up
+        } else {
+          setVisible(false); // Hide on scroll down
+        }
       }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
-
-  // Lock body scroll when menu is open
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
     }
-  }, [isMenuOpen]);
+  });
 
   const handleNavigation = (id) => {
     if (id === 'home') {
@@ -65,181 +55,104 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
         }
       }
     }
-    setIsMenuOpen(false);
   };
 
-  const menuVariants = {
-    closed: {
-      opacity: 0,
-      y: "-20px",
-      transition: { type: "spring", stiffness: 300, damping: 30 }
+  const navItems = [
+    {
+      name: "Home",
+      link: "home",
+      icon: <Home className="h-4 w-4" />,
     },
-    open: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring", stiffness: 300, damping: 30, staggerChildren: 0.1, delayChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    closed: { opacity: 0, x: -20 },
-    open: { opacity: 1, x: 0 }
-  };
+    {
+      name: "Experience",
+      link: "experience",
+      icon: <Briefcase className="h-4 w-4" />,
+    },
+    {
+      name: "Projects",
+      link: "projects",
+      icon: <FolderGit2 className="h-4 w-4" />,
+    },
+    {
+      name: "Blogs",
+      link: "blogs",
+      icon: <BookOpen className="h-4 w-4" />,
+    },
+  ];
 
   return (
-    <>
-      <nav
-        className={`fixed top-0 w-full z-50 transition-all duration-500 ease-in-out transform ${isVisible ? 'translate-y-0' : '-translate-y-full'
-          } ${isScrolled ? (isDark ? 'md:bg-black/50 md:backdrop-blur-md' : 'md:bg-white/50 md:backdrop-blur-md') : ''} bg-transparent`}
+    <AnimatePresence mode="wait">
+      <motion.div
+        initial={{
+          opacity: 1,
+          y: -100,
+        }}
+        animate={{
+          y: visible ? 0 : -100,
+          opacity: visible ? 1 : 0,
+        }}
+        transition={{
+          duration: 0.2,
+        }}
+        className={cn(
+          "fixed top-10 inset-x-0 mx-auto max-w-fit z-[5000]",
+        )}
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <span
-            className={`text-xl font-bold tracking-tighter cursor-pointer font-cyber ${isDark ? 'text-white' : 'text-black'}`}
-            onClick={() => handleNavigation('home')}
-          >
-            AA.
-          </span>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex gap-10">
-            {['home', 'experience', 'projects', 'blogs'].map(id => (
-              <NavButton
-                key={id}
-                id={id}
-                label={id.toUpperCase()}
-                onClick={() => handleNavigation(id)}
-                active={activeSection === id && location.pathname === '/'}
-                isDark={isDark}
-              />
+        {/* Moving Border Container */}
+        {/* Moving Border Container */}
+        <MovingBorderContainer
+          borderRadius="1.75rem"
+          className="dark:bg-black bg-white dark:text-white text-black border-neutral-200 dark:border-slate-800"
+          containerClassName="h-auto w-auto"
+          as="div"
+        >
+          {/* Content Container */}
+          <div className={cn(
+            "flex items-center justify-center space-x-4 pr-2 pl-8 py-2",
+          )}>
+            {navItems.map((navItem, idx) => (
+              <button
+                key={`link=${idx}`}
+                onClick={() => handleNavigation(navItem.link)}
+                className={cn(
+                  "relative dark:text-neutral-50 items-center flex space-x-1 text-neutral-600 dark:hover:text-neutral-300 hover:text-neutral-500 transition-colors"
+                )}
+              >
+                <span className="block sm:hidden">{navItem.icon}</span>
+                <span className="hidden sm:block text-sm">{navItem.name}</span>
+              </button>
             ))}
-            <NavButton
-              id="footer"
-              label="CONTACT"
-              onClick={() => {
-                if (location.pathname !== '/') {
-                  navigate('/', { state: { scrollTo: 'footer' } });
-                } else {
-                  document.querySelector('footer')?.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              isDark={isDark}
-            />
-          </div>
 
-          <div className="hidden md:flex items-center gap-4">
-            <button onClick={toggleTheme} className={`p-2 rounded-full transition-all ${isDark ? 'hover:bg-white/10 text-zinc-400 hover:text-white' : 'hover:bg-black/5 text-zinc-600 hover:text-black'}`}>
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <button onClick={openTerminal} className={`p-2 transition-colors ${isDark ? 'hover:text-blue-400' : 'hover:text-blue-600'}`} title="Open Terminal">
-              <Terminal size={18} />
-            </button>
+            {/* Extra Actions (Theme & Terminal) integrated cleanly */}
+            <div className="flex items-center gap-2 pl-2">
+              <button
+                onClick={toggleTheme}
+                className="p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-600 dark:text-neutral-300"
+              >
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+              <button
+                onClick={openTerminal}
+                className="p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-neutral-600 dark:text-neutral-300"
+              >
+                <Terminal className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Secure Contact Button - Authentically styled as requested */}
             <button
               onClick={openVault}
-              className={`flex items-center gap-2 px-4 py-2 text-[10px] font-bold tracking-widest rounded-sm transition-colors border font-cyber cursor-pointer hover:scale-105 active:scale-95 ${isDark ? 'bg-red-900/20 text-red-500 border-red-900/50 hover:bg-red-900/40' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'}`}
+              className="border text-sm font-medium relative border-neutral-200 dark:border-white/[0.2] text-black dark:text-white px-4 py-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >
-              <Lock size={12} /> SECURE CONTACT
+              <span>Secure Contact</span>
+              <span
+                className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-blue-500 to-transparent h-px"
+              />
             </button>
           </div>
-
-          {/* Mobile Menu Button */}
-          <div className="flex md:hidden items-center gap-4">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`p-2 rounded-md transition-colors ${isDark ? 'text-white hover:bg-white/10' : 'text-black hover:bg-black/5'}`}
-            >
-              <AnimatePresence mode="wait">
-                {isMenuOpen ? (
-                  <motion.div
-                    key="close"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <X size={24} />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="menu"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Menu size={24} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial="closed"
-            animate="open"
-            exit="closed"
-            variants={menuVariants}
-            className={`fixed inset-0 z-40 md:hidden flex flex-col pt-24 px-6 ${isDark ? 'bg-black/95 text-white' : 'bg-white/95 text-black'
-              } backdrop-blur-xl`}
-          >
-            <div className="flex flex-col gap-8 items-start">
-              {['home', 'experience', 'projects', 'blogs'].map(id => (
-                <motion.div key={id} variants={itemVariants} className="w-full">
-                  <button
-                    onClick={() => handleNavigation(id)}
-                    className={`text-2xl font-bold tracking-tight w-full text-left font-sans ${activeSection === id ? (isDark ? 'text-white' : 'text-black') : (isDark ? 'text-zinc-500' : 'text-zinc-400')}`}
-                  >
-                    {id.toUpperCase()}
-                  </button>
-                </motion.div>
-              ))}
-              <motion.div variants={itemVariants} className="w-full">
-                <button
-                  onClick={() => {
-                    if (location.pathname !== '/') {
-                      navigate('/', { state: { scrollTo: 'footer' } });
-                    } else {
-                      document.querySelector('footer')?.scrollIntoView({ behavior: 'smooth' });
-                    }
-                    setIsMenuOpen(false);
-                  }}
-                  className={`text-2xl font-bold tracking-tight w-full text-left font-sans ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}
-                >
-                  CONTACT
-                </button>
-              </motion.div>
-
-              <motion.div variants={itemVariants} className="w-full h-px bg-zinc-800/50 my-2" />
-
-              <motion.div variants={itemVariants} className="flex items-center gap-6 w-full">
-                <button
-                  onClick={toggleTheme}
-                  className={`flex items-center gap-3 text-sm font-cyber ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}
-                >
-                  {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                  {isDark ? 'LIGHT MODE' : 'DARK MODE'}
-                </button>
-              </motion.div>
-
-              <motion.div variants={itemVariants} className="flex gap-4 mt-4">
-                <button onClick={openTerminal} className={`p-4 rounded-xl border ${isDark ? 'border-zinc-800 bg-zinc-900/50 text-blue-400' : 'border-zinc-200 bg-zinc-50 text-blue-600'}`}>
-                  <Terminal size={20} />
-                </button>
-                <button onClick={openVault} className={`px-6 py-4 rounded-xl border flex items-center gap-2 font-cyber text-xs tracking-widest ${isDark ? 'border-red-900/50 bg-red-900/20 text-red-500' : 'border-red-200 bg-red-50 text-red-600'}`}>
-                  <Lock size={14} /> SECURE CONTACT
-                </button>
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+        </MovingBorderContainer>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

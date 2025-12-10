@@ -61,14 +61,16 @@ const App = () => {
 
                 <TerminalOverlay isOpen={isTerminalOpen} onClose={() => setIsTerminalOpen(false)} />
 
-                <Navbar
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                    isDark={isDark}
-                    toggleTheme={toggleTheme}
-                    openTerminal={() => setIsTerminalOpen(true)}
-                    openVault={handleOpenVault}
-                />
+                {!loading && !isVaultOpen && !isTerminalOpen && (
+                    <Navbar
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                        isDark={isDark}
+                        toggleTheme={toggleTheme}
+                        openTerminal={() => setIsTerminalOpen(true)}
+                        openVault={handleOpenVault}
+                    />
+                )}
 
                 {RESUME ? (
                     <Routes>

@@ -1,96 +1,86 @@
-import React, { useState } from 'react';
-import useMousePosition from '../../Hooks/useMousePosition';
-import WireframeTunnel from './WireframeTunnel';
-import CustomCursor from '../UI/CustomCursor';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import NeuralNetwork from "./NeuralNetwork";
+import WireframeTunnel from "./WireframeTunnel";
 
 const LensHero = ({ isDark }) => {
-  const { x, y } = useMousePosition();
-  const [isHovering, setIsHovering] = useState(false);
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [isHovered, setIsHovered] = useState(false);
 
-  // Config
-  const lensSize = 200;
+    const handleMouseMove = (e) => {
+        const { clientX, clientY } = e;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        setMousePosition({ x, y });
+    };
 
-  return (
-    <section
-      id="home"
-      className={`relative h-screen w-full overflow-hidden flex flex-col justify-center items-center cursor-none transition-colors duration-700 ${isDark ? 'bg-black' : 'bg-gray-100'}`}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-    >
-      <CustomCursor isHovering={isHovering} isDark={isDark} />
+    return (
+        <section
+            className={cn(
+                "relative h-screen w-full overflow-hidden flex flex-col items-center justify-center bg-black text-white",
+                isDark ? "bg-black text-white" : "bg-white text-black"
+            )}
+            onMouseMove={handleMouseMove}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {/* Background Layers */}
+            <div className="absolute inset-0 z-0">
+                <WireframeTunnel isDark={isDark} />
+            </div>
 
-      {/* FONT INJECTION */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;800&display=swap');
-        .font-cyber { font-family: 'JetBrains Mono', monospace; }
-        .text-metal-dark {
-            background: linear-gradient(to bottom, #ffffff 0%, #a0a0a0 50%, #404040 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .text-metal-light {
-            background: linear-gradient(to bottom, #202020 0%, #505050 50%, #909090 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-      `}</style>
 
-      {/* LAYER 1: BASE (Standard View) */}
-      {/* Low opacity content that sits in the background */}
-      <div className={`absolute inset-0 flex flex-col justify-center items-center z-10 pointer-events-none select-none p-4 font-cyber ${isDark ? 'opacity-30' : 'opacity-40'}`}>
-        <WireframeTunnel isDark={isDark} gridColor={isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"} />
+            {/* Main Content */}
+            <div className="relative z-10 flex flex-col items-center justify-center text-center pointer-events-none select-none space-y-6 md:space-y-8">
 
-        <h1 className={`text-[6vw] md:text-[7vw] font-extrabold tracking-tighter text-center z-10 whitespace-nowrap transition-opacity duration-500 ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-          &gt;_ AMAN ANUBHAV
-        </h1>
+                {/* Title Group */}
+                <div className="flex flex-col md:flex-row items-center md:items-baseline space-y-2 md:space-y-0 md:space-x-8">
+                    <span className="text-4xl md:text-6xl font-light text-neutral-500">{">_"}</span>
+                    <h1 className="text-5xl md:text-8xl font-bold tracking-tighter uppercase font-cyber text-center">
+                        AMAN <span className="md:ml-4">ANUBHAV</span>
+                    </h1>
+                </div>
 
-        <h2 className={`mt-6 text-sm md:text-xl font-medium tracking-[0.5em] z-10 uppercase ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-          Engineer Architect
-        </h2>
+                {/* Subtitle */}
+                <h2 className="text-lg md:text-2xl font-light tracking-[0.3em] md:tracking-[0.5em] uppercase opacity-70 text-center">
+                    ENGINEER <span className="mx-4 md:mx-8">ARCHITECT</span>
+                </h2>
 
-        <div className={`mt-16 flex items-center gap-4 text-[10px] font-bold tracking-widest z-10 uppercase ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-          <span>SYSTEM</span>
-          <span>//</span>
-          <span>INTELLIGENCE</span>
-          <div className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-zinc-700' : 'bg-zinc-400'} animate-pulse`}></div>
-        </div>
-      </div>
+                {/* Footer System Text - Now Relative/Stacked */}
+                <div className="pt-8 md:pt-12 flex items-center gap-4 text-xs md:text-sm font-mono tracking-widest opacity-50">
+                    <span>SYSTEMS</span>
+                    <span className="text-neutral-500">//</span>
+                    <span>INTELLIGENCE</span>
+                    <motion.div
+                        animate={{ opacity: [0, 1, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                        className={cn(
+                            "w-2 h-2 rounded-full",
+                            isDark ? "bg-green-500" : "bg-red-500"
+                        )}
+                    />
+                </div>
+            </div>
 
-      {/* LAYER 2: REVEAL (Lens Effect - Inverted) */}
-      {/* High opacity, inverted content visible only inside the mask */}
-      <div
-        className={`absolute inset-0 z-20 flex flex-col justify-center items-center pointer-events-none select-none font-cyber ${isDark ? 'bg-white' : 'bg-black'}`}
-        style={{
-          maskImage: `radial-gradient(${lensSize}px circle at ${x}px ${y}px, black 0%, transparent 100%)`,
-          WebkitMaskImage: `radial-gradient(${lensSize}px circle at ${x}px ${y}px, black 0%, transparent 100%)`
-        }}
-      >
-        {/* Inverted Tunnel */}
-        <WireframeTunnel isDark={!isDark} gridColor={isDark ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.15)"} burstColor={isDark ? "#000000" : "#FFFFFF"} />
+            {/* Large Negative Lens */}
+            <motion.div
+                className="absolute top-0 left-0 w-[250px] h-[250px] bg-white rounded-full pointer-events-none z-20 mix-blend-difference"
+                animate={{
+                    x: mousePosition.x - 125,
+                    y: mousePosition.y - 125,
+                    scale: isHovered ? 1 : 0,
+                }}
+                transition={{
+                    type: "tween",
+                    ease: "backOut",
+                    duration: 0.15
+                }}
+            />
 
-        {/* Background Texture */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-multiply"></div>
-
-        {/* MAIN TITLE - SHARP & BRIGHT */}
-        <h1 className={`text-[6vw] md:text-[7vw] font-extrabold tracking-tighter text-center z-10 whitespace-nowrap ${isDark ? 'text-metal-light' : 'text-metal-dark'}`}>
-          &gt;_ AMAN ANUBHAV
-        </h1>
-
-        {/* SUBTITLE - HIGH CONTRAST */}
-        <h2 className={`mt-6 text-sm md:text-xl font-medium tracking-[0.5em] z-10 uppercase ${isDark ? 'text-black' : 'text-white'}`}>
-          Engineer Architect
-        </h2>
-
-        {/* SYSTEM STATUS - ACTIVE */}
-        <div className={`mt-16 flex items-center gap-4 text-[10px] font-bold tracking-widest z-10 uppercase ${isDark ? 'text-black' : 'text-white'}`}>
-          <span>SYSTEM</span>
-          <span>//</span>
-          <span>INTELLIGENCE</span>
-          <div className={`w-2 h-2 rounded-full animate-[ping_1s_ease-in-out_infinite] ${isDark ? 'bg-black' : 'bg-white shadow-[0_0_10px_white]'}`}></div>
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 };
 
 export default LensHero;
