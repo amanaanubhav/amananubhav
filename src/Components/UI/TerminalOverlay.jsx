@@ -161,7 +161,7 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
         <div className="h-12 border-b border-blue-900/30 flex items-center justify-between px-6 bg-[#0f111a]">
           <div className="flex items-center gap-4 text-xs tracking-widest">
             <Terminal size={16} className="text-blue-500" />
-            <span className="text-blue-100 font-bold">{">_ TERMINAL"}</span>
+            <span className="text-blue-500 font-bold">TERMINAL</span>
             <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider ${VITE_GEMINI_API ? 'bg-blue-900/20 text-blue-400 border border-blue-800/50' : 'bg-red-900/20 text-red-500 border border-red-800/50'}`}>
               {VITE_GEMINI_API ? <Wifi size={12} /> : <WifiOff size={12} />}
               <span>{VITE_GEMINI_API ? 'Mainframe Active' : 'Offline'}</span>
