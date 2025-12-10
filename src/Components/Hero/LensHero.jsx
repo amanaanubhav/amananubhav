@@ -35,21 +35,21 @@ const LensHero = ({ isDark }) => {
             {/* Main Content */}
             <div className="relative z-10 flex flex-col items-center justify-center text-center pointer-events-none select-none space-y-6 md:space-y-8">
 
-                {/* Title Group */}
-                <div className="flex flex-col md:flex-row items-center md:items-baseline space-y-2 md:space-y-0 md:space-x-8">
-                    <span className="text-4xl md:text-6xl font-light text-neutral-500">{">_"}</span>
+                {/* Title Group - Relative container for strict centering */}
+                <div className="relative flex items-center justify-center">
+                    <span className="absolute -left-12 md:-left-24 top-1/2 -translate-y-1/2 text-4xl md:text-6xl font-light text-neutral-500">{">_"}</span>
                     <h1 className="text-5xl md:text-8xl font-bold tracking-tighter uppercase font-cyber text-center">
-                        AMAN <span className="md:ml-4">ANUBHAV</span>
+                        AMAN <span className="ml-4">ANUBHAV</span>
                     </h1>
                 </div>
 
-                {/* Subtitle */}
-                <h2 className="text-lg md:text-2xl font-light tracking-[0.3em] md:tracking-[0.5em] uppercase opacity-70 text-center">
+                {/* Subtitle - Negative margin to compensate for tracking space */}
+                <h2 className="text-lg md:text-2xl font-light tracking-[0.3em] md:tracking-[0.5em] uppercase opacity-70 text-center -mr-[0.3em] md:-mr-[0.5em]">
                     ENGINEER <span className="mx-4 md:mx-8">ARCHITECT</span>
                 </h2>
 
                 {/* Footer System Text - Now Relative/Stacked */}
-                <div className="pt-8 md:pt-12 flex items-center gap-4 text-xs md:text-sm font-mono tracking-widest opacity-50">
+                <div className="pt-8 md:pt-12 flex items-center gap-4 text-xs md:text-sm font-mono tracking-widest opacity-50 pl-[2px]">{/* Added slight pl to balance visually */}
                     <span>SYSTEMS</span>
                     <span className="text-neutral-500">//</span>
                     <span>INTELLIGENCE</span>

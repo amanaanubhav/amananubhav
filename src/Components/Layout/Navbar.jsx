@@ -115,11 +115,15 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
                 key={`link=${idx}`}
                 onClick={() => handleNavigation(navItem.link)}
                 className={cn(
-                  "relative dark:text-neutral-50 items-center flex space-x-1 text-neutral-600 dark:hover:text-neutral-300 hover:text-neutral-500 transition-colors"
+                  "relative items-center flex space-x-1 transition-all duration-300 px-3 py-1.5 rounded-full",
+                  "text-neutral-600 dark:text-neutral-400", // Default text: Steel Gray
+                  "hover:text-black dark:hover:text-white", // Hover text: Frost White / Black
+                  "hover:bg-zinc-200/50 dark:hover:bg-zinc-800", // Hover bg: Silver / Dark Steel
+                  "group"
                 )}
               >
                 <span className="block sm:hidden">{navItem.icon}</span>
-                <span className="hidden sm:block text-sm">{navItem.name}</span>
+                <span className="hidden sm:block text-xs uppercase tracking-widest font-medium">{navItem.name}</span>
               </button>
             ))}
 
