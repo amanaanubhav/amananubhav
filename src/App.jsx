@@ -3,13 +3,9 @@ import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { auth } from './Utils/firebase';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-// Components
-import Navbar from './Components/Layout/Navbar';
-import Footer from './Components/Layout/Footer';
-import Preloader from './Components/UI/Preloader';
-import SecureContact from './Components/UI/SecureContact';
-import TerminalOverlay from './Components/UI/TerminalOverlay';
-import StoryModal from './Components/UI/StoryModal';
+// Layout
+import Layout from './Components/Layout/Layout';
+
 import { RESUME } from './Data/resume';
 
 // Pages
@@ -42,36 +38,21 @@ const App = () => {
 
     return (
         <BrowserRouter>
-            {loading && <Preloader onComplete={() => setLoading(false)} />}
-
-            {/* Story Modal Overlay */}
-            {selectedStory && (
-                <StoryModal story={selectedStory} onClose={handleCloseStory} isDark={isDark} />
-            )}
-
-            <div className={`font-sans min-h-screen transition-colors duration-700 selection:bg-gray-500/30 ${isDark ? 'bg-black text-zinc-400' : 'bg-white text-zinc-600'}`}>
-
-                {isVaultOpen && (
-                    <SecureContact
-                        isOpen={isVaultOpen}
-                        onClose={() => setIsVaultOpen(false)}
-                        isDark={isDark}
-                    />
-                )}
-
-                <TerminalOverlay isOpen={isTerminalOpen} onClose={() => setIsTerminalOpen(false)} />
-
-                {!loading && !isVaultOpen && !isTerminalOpen && (
-                    <Navbar
-                        activeSection={activeSection}
-                        setActiveSection={setActiveSection}
-                        isDark={isDark}
-                        toggleTheme={toggleTheme}
-                        openTerminal={() => setIsTerminalOpen(true)}
-                        openVault={handleOpenVault}
-                    />
-                )}
-
+            <Layout
+                isDark={isDark}
+                toggleTheme={toggleTheme}
+                loading={loading}
+                setLoading={setLoading}
+                isVaultOpen={isVaultOpen}
+                setIsVaultOpen={setIsVaultOpen}
+                isTerminalOpen={isTerminalOpen}
+                setIsTerminalOpen={setIsTerminalOpen}
+                selectedStory={selectedStory}
+                onCloseStory={handleCloseStory}
+                activeSection={activeSection}
+                setActiveSection={setActiveSection}
+                handleOpenVault={handleOpenVault}
+            >
                 {RESUME ? (
                     <Routes>
                         <Route path="/" element={<Home isDark={isDark} resumeData={RESUME} />} />
@@ -80,9 +61,7 @@ const App = () => {
                 ) : (
                     <div className="p-20 text-center text-red-500 font-mono">Error: System Data Corrupted.</div>
                 )}
-
-                <Footer isDark={isDark} openVault={handleOpenVault} />
-            </div>
+            </Layout>
         </BrowserRouter>
     );
 };
