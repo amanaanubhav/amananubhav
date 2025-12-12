@@ -1,5 +1,5 @@
 import React from 'react';
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 import Navbar from './Navbar';
 import Footer from './Footer';
 import Preloader from '../UI/Preloader';
@@ -62,6 +62,7 @@ const Layout = ({
 
                 <Footer isDark={isDark} openVault={handleOpenVault} />
             </div>
+            <Analytics />
         </>
     );
 };
