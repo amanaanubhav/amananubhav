@@ -29,7 +29,7 @@ RULES:
     `;
 
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash-001",
+            model: "gemini-1.5-flash",
             systemInstruction: { parts: [{ text: systemInstruction }] }
         });
 
