@@ -43,6 +43,6 @@ export default async function handler(req, res) {
         res.end();
     } catch (error) {
         console.error("Gemini Error:", error);
-        res.status(500).end("Internal Server Error");
+        res.status(500).json({ error: error.message || "Internal Server Error" });
     }
 }
