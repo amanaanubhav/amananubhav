@@ -17,23 +17,37 @@ const SYSTEM_COMMANDS = {
 };
 
 const OFFLINE_RESPONSES = {
-  "who": "Aman Anubhav is a Genetically Engineered Learner, AI Researcher & Engineer.",
+  "who": "Aman Anubhav is a Genetically Engineered Learner, AI Researcher & Engineer. He builds advanced AI systems and sustainable tech.",
+  "about": "Aman is an explorer of the digital and physical frontiers, specializing in MLOps, Liquid Neural Networks, and decentralized systems.",
   "aman": "That's me. I'm a Genetically Engineered Learner focused on AI, MLOps, and Climate Tech.",
-  "yvoo": "YVOO is an AI-driven credit intelligence platform I built. It automates credit scoring with 90%+ accuracy.",
-  "pavana": "PAVANA is a solar-powered carbon capture system design utilizing novel gradient composite metal chambers.",
-  "rakshak": "RAKSHAK is a wildlife-friendly river-flow energy harvester I designed.",
-  "liquid": "I am researching Liquid Neural Networks (LNNs) for adaptive, continuous-time AI systems.",
 
-  "contact": "Email: amannbhv.cswork@gmail.com",
-  "default": "Connection to Mainframe unstable. API unavailable. Try 'help' for local commands."
+  // Projects
+  "projects": "Major Projects:\n\n1. YVOO: AI-driven credit intelligence platform (90%+ accuracy).\n2. PAVANA: Solar-powered carbon capture with gradient composite metals.\n3. RAKSHAK: Wildlife-friendly river-flow energy harvester.\n4. Liquid Neural Networks: Adaptive continuous-time AI research.",
+  "yvoo": "YVOO is an AI-driven credit intelligence platform I built. It automates credit scoring with 90%+ accuracy using advanced ML algorithms.",
+  "pavana": "PAVANA is a solar-powered carbon capture system design I created, utilizing novel gradient composite metal chambers for efficiency.",
+  "rakshak": "RAKSHAK is a wildlife-friendly river-flow energy harvester. It generates clean energy without disrupting aquatic ecosystems.",
+  "liquid": "I am researching Liquid Neural Networks (LNNs) for adaptive, continuous-time AI systems that perform better in dynamic environments.",
+
+  // Contact & Socials
+  "contact": "You can reach the mainframe via Email: amannbhv.cswork@gmail.com",
+  "email": "amannbhv.cswork@gmail.com",
+  "linkedin": "Signal detected on LinkedIn: linkedin.com/in/aman-anubhav",
+  "github": "Code repository located: github.com/aman-anubhav",
+
+  // Skills
+  "skills": "Core Capabilities: Python, PyTorch, TensorFlow, React, Node.js, Next.js, Docker, Kubernetes, AWS, Google Cloud.",
+  "stack": "Tech Stack: Full-Stack Web Dev (MERN), Deep Learning (Vision/NLP), DevOps (CI/CD pipelines).",
+
+  // Misc
+  "help": "Available Commands: 'about', 'projects', 'skills', 'contact', 'clear'. Or just ask me anything.",
+  "status": "All systems nominal. Mainframe online. Neural Link active.",
+  "default": "Connection to Mainframe unstable. API unavailable. Switching to local cache: I couldn't process that query specifically, but I can tell you about my 'projects', 'skills', or 'contact' info."
 };
 
 const TerminalOverlay = ({ isOpen, onClose }) => {
   const [input, setInput] = useState('');
   const [logs, setLogs] = useState([
-    { src: 'SYS', msg: 'Initializing Terminal v5.0...' },
-    { src: 'SYS', msg: 'Loading Knowledge Core... OK' },
-    { src: 'SYS', msg: 'Establishing Secure Uplink... CONNECTED' },
+    { src: 'SYS', msg: "Available Commands: 'about', 'projects', 'skills', 'contact', 'clear'" },
     { src: 'AI', msg: "Terminal Ready. Accessing Aman Anubhav's digital consciousness. How can I assist?" }
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -47,43 +61,25 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
     }
   }, [logs, isOpen]);
 
-  const processLocalCommand = (cmd) => {
-    const lowerCmd = cmd.toLowerCase().trim();
-    if (lowerCmd === 'clear') { setLogs([]); return true; }
-    if (lowerCmd === 'help') {
-      const helpText = Object.entries(SYSTEM_COMMANDS).map(([k, v]) => `${k.padEnd(10)} - ${v}`).join('\n');
-      setLogs(prev => [...prev, { src: 'SYS', msg: helpText }]);
-      return true;
-    }
-    if (lowerCmd === 'bio' || lowerCmd === 'about') { setLogs(prev => [...prev, { src: 'SYS', msg: RESUME.about }]); return true; }
-    if (lowerCmd === 'projects') {
-      const projectList = RESUME.projects.map(p => `• ${p.title}: ${p.desc}`).join('\n');
-      setLogs(prev => [...prev, { src: 'SYS', msg: projectList }]);
-      return true;
-    }
-    if (lowerCmd === 'contact') {
-      setLogs(prev => [...prev, { src: 'SYS', msg: `Email: ${RESUME.links.email}\nLinkedIn: ${RESUME.links.linkedin}` }]);
-      return true;
-    }
-    return false;
-  };
-
   const handleCommand = async (e) => {
     e.preventDefault();
     if (!input.trim() || isProcessing) return;
 
     const userQuery = input;
-    setLogs(prev => [...prev, { src: 'USR', msg: userQuery }]);
     setInput('');
     setIsProcessing(true);
 
-    if (userQuery.toLowerCase() === 'clear') {
+    // 1. Add User message to logs
+    setLogs(prev => [...prev, { src: 'USR', msg: userQuery }]);
+
+    // 2. Handle 'clear' command locally
+    if (userQuery.toLowerCase().trim() === 'clear') {
       setLogs([]);
       setIsProcessing(false);
       return;
     }
 
-    // Create a placeholder for the AI's streaming response
+    // 3. Add placeholder for AI response
     setLogs(prev => [...prev, { src: 'AI', msg: '' }]);
 
     try {
@@ -96,6 +92,8 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
           adventureData: ADVENTURES
         })
       });
+
+      if (!response.ok) throw new Error("Uplink Failed");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -118,7 +116,34 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
         });
       }
     } catch (err) {
-      setLogs(prev => [...prev, { src: 'SYS', msg: "[!] UPLINK ERROR: " + err.message }]);
+      // Natural Fallback: Simulate a system shift to local data
+      console.warn("Switching to offline protocol:", err);
+
+      let offlineReply = OFFLINE_RESPONSES.default;
+      const lowerQuery = userQuery.toLowerCase();
+
+      // Smart keyword matching with priorities
+      for (const [key, response] of Object.entries(OFFLINE_RESPONSES)) {
+        if (lowerQuery.includes(key)) {
+          offlineReply = response;
+          break;
+        }
+      }
+
+      // Simulate "Local Processing" delay for realism
+      setTimeout(() => {
+        setLogs(prev => {
+          const newLogs = [...prev];
+          const lastIndex = newLogs.length - 1;
+          // Replace the "AI" placeholder with the fallback response
+          newLogs[lastIndex] = {
+            src: 'AI',
+            msg: `[!] External Link Unstable. Retrieved from Local Memory:\n\n${offlineReply}`
+          };
+          return newLogs;
+        });
+      }, 600); // 600ms processing delay
+
     } finally {
       setIsProcessing(false);
     }
