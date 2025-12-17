@@ -3,7 +3,7 @@ import { Terminal, X, Send, Wifi, WifiOff, Cpu } from 'lucide-react';
 import { RESUME } from '../../Data/resume';
 import { ADVENTURES } from '../../Data/adventures'; // Importing Adventures for more context
 
-const VITE_GEMINI_API = import.meta.env.VITE_GEMINI_API;
+
 
 // --- LOCAL KNOWLEDGE BASE ---
 const SYSTEM_COMMANDS = {
@@ -33,7 +33,7 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
   const [logs, setLogs] = useState([
     { src: 'SYS', msg: 'Initializing Terminal v5.0...' },
     { src: 'SYS', msg: 'Loading Knowledge Core... OK' },
-    { src: 'SYS', msg: 'Establishing Secure Uplink... ' + (VITE_GEMINI_API ? 'CONNECTED' : 'OFFLINE MODE') },
+    { src: 'SYS', msg: 'Establishing Secure Uplink... CONNECTED' },
     { src: 'AI', msg: "Terminal Ready. Accessing Aman Anubhav's digital consciousness. How can I assist?" }
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -77,77 +77,50 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
     setInput('');
     setIsProcessing(true);
 
-    // Prioritize Gemini for EVERYTHING unless it's a specific system command like 'clear'
     if (userQuery.toLowerCase() === 'clear') {
       setLogs([]);
       setIsProcessing(false);
       return;
     }
 
+    // Create a placeholder for the AI's streaming response
+    setLogs(prev => [...prev, { src: 'AI', msg: '' }]);
+
     try {
-      if (!VITE_GEMINI_API) throw new Error("No API Key");
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userQuery,
+          resumeData: RESUME,
+          adventureData: ADVENTURES
+        })
+      });
 
-      // Construct a rich context object
-      const fullContext = {
-        resume: RESUME,
-        adventures: ADVENTURES,
-        instructions: "You are the AI interface for Aman Anubhav. Speak in the first person as if you are a digital extension of him, or an advanced AI assistant representing him. Be professional, highly technical, and detailed. Use a cool, slightly blue-hued cyberpunk tone but remain readable. You have access to his entire portfolio, resume, and blog stories. Answer widely and comprehensively about his work, life, and philosophy."
-      };
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
-      const systemPrompt = `
-        You are the >_ TERMINAL AI for Aman Anubhav.
-        
-        CONTEXT DATA:
-        ${JSON.stringify(fullContext)}
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-        GUIDELINES:
-        1. Answer strictly based on the provided context.
-        2. If the user asks about Aman, answer as if you know everything about his professional and academic life.
-        3. Keep responses concise but information-dense (under 100 words unless asked for more).
-        4. Tone: Technical, Blue-Cyberpunk, Efficient, Helpful.
-        5. If asked about something not in the context, politely state you only have access to Aman's public archives.
-      `;
+        const chunk = decoder.decode(value, { stream: true });
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${VITE_GEMINI_API}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: `System Instructions: ${systemPrompt}\n\nUser Query: ${userQuery}` }]
-            }]
-          })
-        }
-      );
-
-      if (!response.ok) throw new Error(response.statusText);
-      const data = await response.json();
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (reply) {
-        setLogs(prev => [...prev, { src: 'AI', msg: reply }]);
-      } else {
-        throw new Error("Empty response");
+        // Update the LAST log entry with the new chunk
+        setLogs(prev => {
+          const newLogs = [...prev];
+          const lastIndex = newLogs.length - 1;
+          newLogs[lastIndex] = {
+            ...newLogs[lastIndex],
+            msg: newLogs[lastIndex].msg + chunk
+          };
+          return newLogs;
+        });
       }
-
     } catch (err) {
-      console.warn("API Failed:", err);
-      // Fallback to local if API fails
-      if (!processLocalCommand(userQuery)) {
-        let offlineReply = OFFLINE_RESPONSES.default;
-        for (const [key, response] of Object.entries(OFFLINE_RESPONSES)) {
-          if (userQuery.toLowerCase().includes(key)) offlineReply = response;
-        }
-        setLogs(prev => [...prev, {
-          src: 'SYS',
-          msg: `[!] Connection Lost. Switching to Offline Cache.\n> ${offlineReply}`
-        }]);
-      }
+      setLogs(prev => [...prev, { src: 'SYS', msg: "[!] UPLINK ERROR: " + err.message }]);
     } finally {
       setIsProcessing(false);
-      // Keep focus
-      setTimeout(() => inputRef.current?.focus(), 10);
     }
   };
 
@@ -162,9 +135,9 @@ const TerminalOverlay = ({ isOpen, onClose }) => {
           <div className="flex items-center gap-4 text-xs tracking-widest">
             <Terminal size={16} className="text-blue-500" />
             <span className="text-blue-500 font-bold">TERMINAL</span>
-            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider ${VITE_GEMINI_API ? 'bg-blue-900/20 text-blue-400 border border-blue-800/50' : 'bg-red-900/20 text-red-500 border border-red-800/50'}`}>
-              {VITE_GEMINI_API ? <Wifi size={12} /> : <WifiOff size={12} />}
-              <span>{VITE_GEMINI_API ? 'Mainframe Active' : 'Offline'}</span>
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-blue-900/20 text-blue-400 border border-blue-800/50`}>
+              <Wifi size={12} />
+              <span>Mainframe Active</span>
             </div>
           </div>
           <button onClick={onClose} className="hover:text-blue-400 text-zinc-600 transition-colors p-2 hover:bg-blue-900/10 rounded-full"><X size={18} /></button>
