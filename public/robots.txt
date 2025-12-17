@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://amananubhav.vercel.app/sitemap.xml
+Sitemap: https://amananubhav.com/sitemap.xml

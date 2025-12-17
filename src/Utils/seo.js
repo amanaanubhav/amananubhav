@@ -13,8 +13,8 @@ export const SEO_DATA = {
     "YVOO",
     "PAVANA"
   ],
-  url: "https://your-portfolio-url.vercel.app", // REPLACE THIS with your actual Vercel URL
-  image: "https://your-portfolio-url.vercel.app/og-image.png", // Create an OG image and put it in public folder
-  twitterHandle: "@your_twitter_handle", // Optional
+  url: "https://amananubhav.com",
+  image: "https://amananubhav.com/profile1.jpg",
+  twitterHandle: "@amananubhav",
   author: "Aman Anubhav"
 };
