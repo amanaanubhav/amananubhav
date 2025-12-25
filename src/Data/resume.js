@@ -31,6 +31,7 @@ export const RESUME = {
   projects: [
     {
       id: "p1",
+      featured: true,
       title: "YVOO",
       type: "FinTech AI",
       tech: ["XGBoost", "React", "Flask", "PostgreSQL"],
@@ -40,6 +41,7 @@ export const RESUME = {
     },
     {
       id: "p2",
+      featured: true,
       title: "PAVANA",
       type: "Climate Tech",
       tech: ["Thermodynamics", "CAD", "Simulation"],
@@ -49,6 +51,7 @@ export const RESUME = {
     },
     {
       id: "p3",
+      featured: true,
       title: "OceanBot",
       type: "Marine AI",
       tech: ["InceptionV3", "NLP", "TensorFlow"],
@@ -58,6 +61,7 @@ export const RESUME = {
     },
     {
       id: "p4",
+      featured: true,
       title: "Mario-RL",
       type: "Autonomous Agent",
       tech: ["DDQN", "PPO", "Reinforcement Learning"],
@@ -67,6 +71,7 @@ export const RESUME = {
     },
     {
       id: "p5",
+      featured: true,
       title: "RAKSHAK",
       type: "Clean Energy",
       tech: ["Fluid Dynamics", "Eco-Design"],
