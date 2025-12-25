@@ -33,7 +33,7 @@ const Layout = ({
                 <StoryModal story={selectedStory} onClose={onCloseStory} isDark={isDark} />
             )}
 
-            <div className={`font-sans min-h-screen transition-colors duration-700 selection:bg-gray-500/30 ${isDark ? 'bg-black text-zinc-400' : 'bg-white text-zinc-600'}`}>
+            <div className={`font-sans min-h-screen transition-colors duration-700 selection:bg-gray-500/30 ${isDark ? 'dark bg-black text-zinc-400' : 'bg-white text-zinc-600'}`}>
 
                 {isVaultOpen && (
                     <SecureContact

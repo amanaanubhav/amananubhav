@@ -8,7 +8,7 @@ const Stories = ({ isDark, onOpenStory }) => {
     }, []);
 
     return (
-        <main className={`min-h-screen pt-20 ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}>
+        <main className="min-h-screen pt-20" style={{ backgroundColor: 'var(--bg-primary)' }}>
             <Adventures onOpenStory={onOpenStory} isDark={isDark} />
         </main>
     );
