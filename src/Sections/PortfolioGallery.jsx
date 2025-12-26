@@ -281,9 +281,8 @@ const DesktopCardGallery = ({ items, isDark }) => {
     );
 };
 
-// ----------------------------------------------------------------------
 // MOBILE GALLERY (Safe & Simple)
-// ----------------------------------------------------------------------
+
 const PhotoCardMobile = ({ src, index }) => {
     if (!src) return null;
     const isVideo = src.match(/\.(mp4|webm|ogg)$/i);
@@ -318,9 +317,9 @@ const MobileGallery = ({ images }) => {
     );
 };
 
-// ----------------------------------------------------------------------
+
 // MAIN EXPORT
-// ----------------------------------------------------------------------
+
 const ParallaxPortfolio = ({ isDark }) => {
     return (
         <section className={`relative w-full z-0 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'} min-h-screen`}>
