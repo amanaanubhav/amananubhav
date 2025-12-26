@@ -82,7 +82,7 @@ const Card3D = ({ src, isActive, onClick }) => {
     );
 };
 
-const DesktopCardGallery = ({ items }) => {
+const DesktopCardGallery = ({ items, isDark }) => {
     // 1. Initial Data Guard
     if (!items || !Array.isArray(items) || items.length === 0) {
         return null;
@@ -180,7 +180,7 @@ const DesktopCardGallery = ({ items }) => {
         }
     };
 
-    // 6. Compute Visible Items Safely
+    // 7. Compute Visible Items Safely
     const visibleItems = useMemo(() => {
         const prevIndex = getIndex(activeIndex - 1);
         const nextIndex = getIndex(activeIndex + 1);
@@ -217,11 +217,18 @@ const DesktopCardGallery = ({ items }) => {
     return (
         <div
             onWheel={handleWheel}
-            className="relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden bg-zinc-950 isolate perspective-container"
+            className={`relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden isolate perspective-container transition-colors duration-500 ${isDark ? 'bg-zinc-950' : 'bg-gray-100'}`}
         >
+
+            {/* Background Grid - Theme Aware */}
+            <div className={`absolute inset-0 bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,black_40%,transparent_100%)] pointer-events-none z-0 ${isDark
+                ? 'bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)]'
+                : 'bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)]'
+                }`} />
+
             {/* Header */}
             <div className="absolute top-12 text-center z-10 pointer-events-none">
-                <p className="text-[10px] font-mono tracking-[0.3em] text-zinc-500 uppercase">Archive Secure Deck</p>
+                <p className={`text-[10px] font-mono tracking-[0.3em] uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Archive Secure Deck</p>
             </div>
 
             {/* 3D Stage */}
@@ -252,13 +259,27 @@ const DesktopCardGallery = ({ items }) => {
 
             {/* Controls */}
             <div className="absolute bottom-6 flex items-center gap-12 z-30">
-                <button onClick={handlePrev} className="p-3 rounded-full border border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600 hover:bg-zinc-900 transition-all active:scale-95">
+                <button
+                    onClick={handlePrev}
+                    className={`p-3 rounded-full border transition-all active:scale-95 ${isDark
+                        ? 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600 hover:bg-zinc-900'
+                        : 'border-zinc-300 text-zinc-400 hover:text-zinc-900 hover:border-zinc-400 hover:bg-white'
+                        }`}
+                >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 18l-6-6 6-6" /></svg>
                 </button>
-                <span className="font-mono text-xs text-zinc-600 tracking-widest">
+
+                <span className={`font-mono text-xs tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
                     {String(activeIndex + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
                 </span>
-                <button onClick={handleNext} className="p-3 rounded-full border border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600 hover:bg-zinc-900 transition-all active:scale-95">
+
+                <button
+                    onClick={handleNext}
+                    className={`p-3 rounded-full border transition-all active:scale-95 ${isDark
+                        ? 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600 hover:bg-zinc-900'
+                        : 'border-zinc-300 text-zinc-400 hover:text-zinc-900 hover:border-zinc-400 hover:bg-white'
+                        }`}
+                >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
             </div>
@@ -311,7 +332,7 @@ const ParallaxPortfolio = ({ isDark }) => {
         <section className={`relative w-full z-0 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-100 text-zinc-900'} min-h-screen`}>
             {/* Desktop */}
             <div className="hidden lg:block">
-                <DesktopCardGallery items={rawImages} />
+                <DesktopCardGallery items={rawImages} isDark={isDark} />
             </div>
 
             {/* Mobile */}
