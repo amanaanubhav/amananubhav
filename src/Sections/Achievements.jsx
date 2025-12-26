@@ -45,7 +45,7 @@ const Achievements = ({ resumeData, isDark }) => {
   }
 
   return (
-    <section className={`px-6 py-32 border-y ${isDark ? 'bg-zinc-950 border-zinc-900' : 'bg-gray-50 border-gray-200'}`}>
+    <section className={`px-6 py-32 border-y ${isDark ? 'bg-zinc-950 border-zinc-950' : 'bg-gray-50 border-gray-50'}`}>
       <div className="max-w-5xl mx-auto">
         <Reveal>
           <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase mb-16 text-left border-b pb-4 ${isDark ? 'text-zinc-600 border-zinc-900' : 'text-zinc-400 border-zinc-200'}`}>

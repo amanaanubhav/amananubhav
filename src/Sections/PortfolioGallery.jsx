@@ -1,218 +1,325 @@
-import React, { useRef } from 'react';
-import { useScroll, useTransform, motion } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Mock Data
-const images = [
-    // Column 1 - Travel & Nature
-    [
-        "/G1.jpg",
-        "/G2.jpg",
-        "/G21.jpg",
-        "/G8.jpg",
-        "/GV7.mp4",
-    ],
-    // Column 2 - Inverse
-    [
-        "/G12.jpg",
-        "/G5.jpg",
-        "/G9.jpg",
-        "/GV3.mp4",
-        "/G17.jpg",
-    ],
-    // Column 3
-    [
-        "/G6.jpg",
-        "/G11.jpg",
-        "/G20.jpg",
-        "/GV16.mp4",
-        "/G18.jpg",
-    ],
-    // Column 4 - Inverse
-    [
-        "/G19.jpg",
-        "/G13.jpg",
-        "/G14.jpg",
-        "/GV10.mp4",
-        "/G4.jpg",
-    ],
+const rawImages = [
+    "/G1.jpg", "/G2.jpg", "/G21.jpg", "/G8.jpg", "/GV7.mp4",
+    "/G12.jpg", "/G5.jpg", "/G9.jpg", "/GV3.mp4", "/G17.jpg",
+    "/G6.jpg", "/G11.jpg", "/G20.jpg", "/GV16.mp4", "/G18.jpg",
+    "/G19.jpg", "/G13.jpg", "/G14.jpg", "/GV10.mp4", "/G4.jpg"
 ];
 
-const PhotoCard = ({ src, index, className, imgClassName }) => {
-    if (!src) return null; // Handle empty strings
+const Card3D = ({ src, isActive, onClick }) => {
+    // Defensive guard: ensure src exists
+    if (!src || typeof src !== 'string') return null;
 
     const isVideo = src.match(/\.(mp4|webm|ogg)$/i);
     const isYoutube = src.includes("youtube.com/embed");
+    const videoRef = useRef(null);
 
-    // Default image classes if not overridden
-    const defaultImgClass = "w-full h-auto object-cover transform scale-100 group-hover:scale-110 transition-transform duration-700 ease-in-out will-change-transform";
-    const appliedImgClass = imgClassName || defaultImgClass;
+    useEffect(() => {
+        if (isVideo && videoRef.current) {
+            if (isActive) {
+                const playPromise = videoRef.current.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Auto-play was prevented:", error);
+                    });
+                }
+            } else {
+                videoRef.current.pause();
+            }
+        }
+    }, [isActive, isVideo]);
 
     return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: index * 0.05, ease: "easeOut" }}
-            viewport={{ once: true, margin: "100px" }}
-            className={`group relative w-full overflow-hidden rounded-sm grayscale hover:grayscale-0 transition-all duration-700 ease-in-out cursor-pointer ${className || 'mb-4 md:mb-6'}`}
+        <div
+            onClick={onClick}
+            className={`
+                relative w-full h-full overflow-hidden rounded-md bg-zinc-900 border border-zinc-800 shadow-2xl origin-center
+                transition-all duration-500 ease-out
+                ${isActive ? 'cursor-default group z-20' : 'cursor-pointer grayscale opacity-40 hover:opacity-70 z-10'}
+            `}
         >
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10 pointer-events-none" />
+            {/* Active Glow */}
+            {isActive && (
+                <div className="absolute inset-0 z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-t from-white/10 via-transparent to-transparent mix-blend-overlay" />
+            )}
 
+            {/* Media */}
             {isYoutube ? (
-                <div className={`relative w-full pointer-events-none ${imgClassName ? 'h-full' : 'aspect-[9/16]'}`}>
-                    <iframe
-                        src={`${src.split('?')[0]}?controls=0&autoplay=1&mute=1&loop=1&playlist=${src.split('/embed/')[1].split('?')[0]}&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1`}
-                        title="YouTube video player"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        className="absolute inset-0 w-full h-full object-cover scale-[1.35]"
-                    ></iframe>
-                </div>
+                <iframe
+                    src={`${src.split('?')[0]}?controls=0&autoplay=${isActive ? 1 : 0}&mute=1&loop=1&playlist=${src.split('/embed/')[1]?.split('?')[0]}&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1`}
+                    title="YT"
+                    frameBorder="0"
+                    className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${isActive ? 'grayscale-0' : 'grayscale'}`}
+                />
             ) : isVideo ? (
-                <motion.video
+                <video
+                    ref={videoRef}
                     src={src}
-                    autoPlay
                     loop
                     muted
                     playsInline
-                    className={appliedImgClass}
+                    className={`
+                        w-full h-full object-cover
+                        transition-[filter,transform] duration-700 ease-out
+                        ${isActive ? 'grayscale group-hover:grayscale-0 group-hover:scale-[1.02]' : 'grayscale'}
+                    `}
                 />
             ) : (
-                <motion.img
+                <img
                     src={src}
-                    alt="Gallery Item"
-                    className={appliedImgClass}
+                    alt="Gallery"
+                    className={`
+                        w-full h-full object-cover
+                        transition-[filter,transform] duration-700 ease-out
+                        ${isActive ? 'grayscale group-hover:grayscale-0 group-hover:scale-[1.02]' : 'grayscale'}
+                    `}
                     loading="lazy"
                 />
+            )}
+        </div>
+    );
+};
+
+const DesktopCardGallery = ({ items }) => {
+    // 1. Initial Data Guard
+    if (!items || !Array.isArray(items) || items.length === 0) {
+        return null;
+    }
+
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [isAnimating, setIsAnimating] = useState(false);
+
+    // 2. Safe Helper for Circular Index
+    const getIndex = useCallback((idx) => {
+        const len = items.length;
+        return ((idx % len) + len) % len;
+    }, [items.length]);
+
+    // 3. Handlers
+    const handleNext = useCallback(() => {
+        if (isAnimating) return;
+        setIsAnimating(true);
+        setActiveIndex((prev) => getIndex(prev + 1));
+        // Unlock slightly faster to allow rapid clicks if desired, but kept to anim duration
+        setTimeout(() => setIsAnimating(false), 500);
+    }, [isAnimating, getIndex]);
+
+    const handlePrev = useCallback(() => {
+        if (isAnimating) return;
+        setIsAnimating(true);
+        setActiveIndex((prev) => getIndex(prev - 1));
+        setTimeout(() => setIsAnimating(false), 500);
+    }, [isAnimating, getIndex]);
+
+    // 4. Keyboard Listener
+    useEffect(() => {
+        const handleKey = (e) => {
+            if (e.key === "ArrowRight") handleNext();
+            if (e.key === "ArrowLeft") handlePrev();
+        };
+        window.addEventListener("keydown", handleKey);
+        return () => window.removeEventListener("keydown", handleKey);
+    }, [handleNext, handlePrev]);
+
+    // 5. Scroll/Wheel Support
+    const handleWheel = useCallback((e) => {
+        if (isAnimating) return;
+
+        // Threshold to prevent accidental jitters
+        if (Math.abs(e.deltaX) < 10 && Math.abs(e.deltaY) < 10) return;
+
+        // Determine primary direction
+        const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+
+        if (isHorizontal) {
+            if (e.deltaX > 0) handleNext();
+            else handlePrev();
+        } else {
+            // Vertical scroll: Down -> Next, Up -> Prev
+            if (e.deltaY > 0) handleNext();
+            else handlePrev();
+        }
+    }, [isAnimating, handleNext, handlePrev]);
+
+    // 6. Variants
+    const variants = {
+        center: {
+            x: 0,
+            scale: 1,
+            zIndex: 20,
+            opacity: 1,
+            rotateY: 0,
+            filter: "brightness(1)",
+            transition: { type: "spring", stiffness: 200, damping: 25 }
+        },
+        left: {
+            x: -350,
+            scale: 0.8,
+            zIndex: 10,
+            opacity: 0.6,
+            rotateY: 25,
+            filter: "brightness(0.5)",
+            transition: { type: "spring", stiffness: 200, damping: 25 }
+        },
+        right: {
+            x: 350,
+            scale: 0.8,
+            zIndex: 10,
+            opacity: 0.6,
+            rotateY: -25,
+            filter: "brightness(0.5)",
+            transition: { type: "spring", stiffness: 200, damping: 25 }
+        },
+        hidden: {
+            opacity: 0,
+            scale: 0.0,
+            zIndex: 0,
+            transition: { duration: 0.2 }
+        }
+    };
+
+    // 6. Compute Visible Items Safely
+    const visibleItems = useMemo(() => {
+        const prevIndex = getIndex(activeIndex - 1);
+        const nextIndex = getIndex(activeIndex + 1);
+
+        // Define positions locally
+        const slots = [
+            { index: prevIndex, position: 'left' },
+            { index: activeIndex, position: 'center' },
+            { index: nextIndex, position: 'right' }
+        ];
+
+        // Deduplicate based on index to strict unique keys
+        const uniqueMap = new Map();
+        slots.forEach(slot => {
+            // If items.length < 3, indices overlap. Map handles last-write-wins (not ideal).
+            // Better: Allow overlap but use unique composite key?
+            // User requires 3 frames. If only 1 image, prev=0, curr=0, next=0.
+            if (!uniqueMap.has(slot.index)) {
+                uniqueMap.set(slot.index, slot.position);
+            } else {
+                // Optimization: If index 0 is both center and prev (1 item list), keep Center.
+                if (slot.position === 'center') uniqueMap.set(slot.index, 'center');
+            }
+        });
+
+        return Array.from(uniqueMap.entries()).map(([idx, pos]) => ({
+            index: idx,
+            position: pos,
+            src: items[idx]
+        }));
+
+    }, [activeIndex, getIndex, items]);
+
+    return (
+        <div
+            onWheel={handleWheel}
+            className="relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden bg-zinc-950 isolate perspective-container"
+        >
+            {/* Header */}
+            <div className="absolute top-12 text-center z-10 pointer-events-none">
+                <p className="text-[10px] font-mono tracking-[0.3em] text-zinc-500 uppercase">Archive Secure Deck</p>
+            </div>
+
+            {/* 3D Stage */}
+            <div className="relative w-full max-w-[1000px] h-[500px] flex items-center justify-center perspective-[1200px]" style={{ perspective: '1200px' }}>
+                <AnimatePresence initial={false}>
+                    {visibleItems.map((item) => (
+                        <motion.div
+                            key={item.src} // Stable Image Key
+                            className="absolute w-[500px] h-[350px] md:w-[600px] md:h-[400px] flex items-center justify-center"
+                            initial={false}
+                            animate={item.position}
+                            variants={variants}
+                            style={{ transformStyle: 'preserve-3d' }}
+                            exit="hidden"
+                        >
+                            <Card3D
+                                src={item.src}
+                                isActive={item.position === 'center'}
+                                onClick={() => {
+                                    if (item.position === 'left') handlePrev();
+                                    if (item.position === 'right') handleNext();
+                                }}
+                            />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+
+            {/* Controls */}
+            <div className="absolute bottom-6 flex items-center gap-12 z-30">
+                <button onClick={handlePrev} className="p-3 rounded-full border border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600 hover:bg-zinc-900 transition-all active:scale-95">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 18l-6-6 6-6" /></svg>
+                </button>
+                <span className="font-mono text-xs text-zinc-600 tracking-widest">
+                    {String(activeIndex + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
+                </span>
+                <button onClick={handleNext} className="p-3 rounded-full border border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600 hover:bg-zinc-900 transition-all active:scale-95">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18l6-6-6-6" /></svg>
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// ----------------------------------------------------------------------
+// MOBILE GALLERY (Safe & Simple)
+// ----------------------------------------------------------------------
+const PhotoCardMobile = ({ src, index }) => {
+    if (!src) return null;
+    const isVideo = src.match(/\.(mp4|webm|ogg)$/i);
+    const isYoutube = src.includes("youtube.com/embed");
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            className="group relative w-full aspect-[4/5] overflow-hidden rounded-sm grayscale hover:grayscale-0 transition-all duration-500"
+        >
+            {isYoutube ? (
+                <iframe src={`${src.split('?')[0]}?controls=0&autoplay=0&mute=1&loop=1&playlist=${src.split('/embed/')[1]?.split('?')[0]}&showinfo=0&rel=0`} className="w-full h-full object-cover pointer-events-none scale-[1.35]" />
+            ) : isVideo ? (
+                <video src={src} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+            ) : (
+                <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
             )}
         </motion.div>
     );
 };
 
-const ParallaxColumn = ({ images, y, className }) => {
-    return (
-        <motion.div style={{ y }} className={`flex flex-col w-full ${className}`}>
-            {images.map((src, i) => (
-                <PhotoCard key={i} src={src} index={i} />
-            ))}
-        </motion.div>
-    );
-};
-
 const MobileGallery = ({ images }) => {
-    const containerRef = useRef(null);
-
-
-    const [activeIndex, setActiveIndex] = React.useState(0);
-
-    const handleScroll = () => {
-        if (!containerRef.current) return;
-        const container = containerRef.current;
-        const center = container.scrollLeft + container.clientWidth / 2;
-
-        const cards = Array.from(container.children);
-        let closestIndex = 0;
-        let minDistance = Infinity;
-
-        cards.forEach((card, index) => {
-            const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-            const distance = Math.abs(center - cardCenter);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestIndex = index;
-            }
-        });
-
-        setActiveIndex(closestIndex);
-    };
-
     return (
-        <div
-            ref={containerRef}
-            onScroll={handleScroll}
-            className="flex relative overflow-x-auto overflow-y-hidden snap-x snap-mandatory w-full h-[60vh] items-center px-[50vw] scroll-smooth no-scrollbar"
-
-            style={{ paddingLeft: '15vw', paddingRight: '15vw' }}
-        >
-            {images.map((src, i) => {
-                const isActive = i === activeIndex;
-                return (
-                    <motion.div
-                        key={i}
-                        className="relative flex-shrink-0 w-[70vw] aspect-[4/5] snap-center mx-4 first:ml-0 last:mr-0 rounded-sm overflow-hidden"
-                        animate={{
-                            scale: isActive ? 1 : 0.9,
-                            opacity: isActive ? 1 : 0.5,
-                            filter: isActive ? 'grayscale(0%)' : 'grayscale(100%)',
-                        }}
-                        transition={{ duration: 0.4, ease: "easeOut" }}
-                    >
-                        <PhotoCard
-                            src={src}
-                            index={i}
-                            className="w-full h-full mb-0"
-                            imgClassName="w-full h-full object-cover"
-                        />
-                    </motion.div>
-                );
-            })}
+        <div className="flex overflow-x-auto snap-x snap-mandatory px-6 gap-4 pb-10 no-scrollbar">
+            {images.map((src, i) => (
+                <div key={i} className="flex-shrink-0 w-[80vw] snap-center">
+                    <PhotoCardMobile src={src} index={i} />
+                </div>
+            ))}
         </div>
     );
 };
 
+// ----------------------------------------------------------------------
+// MAIN EXPORT
+// ----------------------------------------------------------------------
 const ParallaxPortfolio = ({ isDark }) => {
-    const containerRef = useRef(null);
-
-    // Track scroll progress relative to the container for Desktop
-    const { scrollYProgress } = useScroll({
-        target: containerRef,
-        offset: ["start end", "end start"]
-    });
-
-    // Map scroll progress to Y offsets (Reduced intensity to minimize bottom gaps)
-    const y1 = useTransform(scrollYProgress, [0, 1], [0, -100]); // Up
-    const y2 = useTransform(scrollYProgress, [0, 1], [0, 100]);  // Down
-    const y3 = useTransform(scrollYProgress, [0, 1], [0, -200]); // Up faster
-    const y4 = useTransform(scrollYProgress, [0, 1], [0, 200]);  // Down faster
-
-    const allImages = images.flat();
-
     return (
-        <section className={`relative w-full h-auto text-white overflow-hidden py-0 border-t border-b -mb-2em z-0 ${isDark ? 'bg-zinc-950 border-zinc-950' : 'bg-gray-50 border-gray-200'}`}>
-
-            {/* Desktop / Tablet Grid View (>= md) */}
-            <div ref={containerRef} className="hidden md:block px-4 md:px-8">
-                {/* Noise Texture - Commented out for performance
-                <div className="absolute inset-0 pointer-events-none opacity-[0.05]"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
-                />
-                */}
-
-                <div className="max-w-[1600px] mx-auto relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 1 }}
-                        className="my-10 text-center"
-                    >
-                        <h2 className="text-3xl md:text-5xl font-bold tracking-tighter">{/*header optional*/}</h2>
-                        <p className={`mt-2 mb-3 font-mono text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>ARCHIVES</p>
-                    </motion.div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                        <ParallaxColumn images={images[0]} y={y1} className="mt-0 lg:mt-[100px]" />
-                        <ParallaxColumn images={images[1]} y={y2} className="mt-0 lg:-mt-[10px]" />
-                        <ParallaxColumn images={images[2]} y={y3} className="mt-0 lg:mt-[200px]" />
-                        <ParallaxColumn images={images[3]} y={y4} className="mt-0 lg:-mt-[10px]" />
-                    </div>
-                </div>
+        <section className={`relative w-full z-0 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-100 text-zinc-900'} min-h-screen`}>
+            {/* Desktop */}
+            <div className="hidden lg:block">
+                <DesktopCardGallery items={rawImages} />
             </div>
 
-            {/* Mobile Horizontal Scroll View (< md) */}
-            <div className="block md:hidden">
-                <div className={`py-10 text-center absolute top-0 left-0 w-full z-10 pointer-events-none mix-blend-difference -mt-5 mb-10`}>
-                    <p className={`font-mono text-sm uppercase tracking-widest drop-shadow-md ${isDark ? 'text-white' : 'text-zinc-800'}`}>ARCHIVES</p>
+            {/* Mobile */}
+            <div className="block lg:hidden py-10">
+                <div className="mb-8 text-center px-6">
+                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-60">Archive // Mobile</p>
                 </div>
-                <MobileGallery images={allImages} />
+                <MobileGallery images={rawImages} />
             </div>
         </section>
     );
