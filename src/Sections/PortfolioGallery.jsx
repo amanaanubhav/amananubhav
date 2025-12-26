@@ -217,14 +217,8 @@ const DesktopCardGallery = ({ items, isDark }) => {
     return (
         <div
             onWheel={handleWheel}
-            className={`relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden isolate perspective-container transition-colors duration-500 ${isDark ? 'bg-zinc-950' : 'bg-gray-100'}`}
+            className={`relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden isolate perspective-container transition-colors duration-500 ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}
         >
-
-            {/* Background Grid - Theme Aware */}
-            <div className={`absolute inset-0 bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,black_40%,transparent_100%)] pointer-events-none z-0 ${isDark
-                ? 'bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)]'
-                : 'bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)]'
-                }`} />
 
             {/* Header */}
             <div className="absolute top-12 text-center z-10 pointer-events-none">
@@ -329,7 +323,7 @@ const MobileGallery = ({ images }) => {
 // ----------------------------------------------------------------------
 const ParallaxPortfolio = ({ isDark }) => {
     return (
-        <section className={`relative w-full z-0 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-100 text-zinc-900'} min-h-screen`}>
+        <section className={`relative w-full z-0 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'} min-h-screen`}>
             {/* Desktop */}
             <div className="hidden lg:block">
                 <DesktopCardGallery items={rawImages} isDark={isDark} />
