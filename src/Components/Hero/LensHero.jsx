@@ -54,11 +54,17 @@ const LensHero = ({ isDark }) => {
                     <span className="text-neutral-500">//</span>
                     <span>INTELLIGENCE</span>
                     <motion.div
-                        animate={{ opacity: [0, 1, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                        animate={{
+                            opacity: [0.2, 1, 0.2],
+                            scale: [1, 1.5, 1],
+                            boxShadow: isDark
+                                ? ["0px 0px 0px rgba(227, 225, 225, 0)", "0px 0px 10px rgba(227, 225, 225, 0.9)", "0px 0px 0px rgba(227, 225, 225, 0)"]
+                                : ["0px 0px 0px rgba(18, 17, 17, 0)", "0px 0px 10px rgba(18, 17, 17, 0.8)", "0px 0px 0px rgba(18, 17, 17, 0)"]
+                        }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
                         className={cn(
-                            "w-2 h-2 rounded-full",
-                            isDark ? "bg-green-500" : "bg-red-500"
+                            "w-1 h-1 rounded-full",
+                            isDark ? "bg-[#E3E1E1]" : "bg-[#000]"
                         )}
                     />
                 </div>
@@ -66,7 +72,7 @@ const LensHero = ({ isDark }) => {
 
             {/* Large Negative Lens */}
             <motion.div
-                className="absolute top-0 left-0 w-[250px] h-[250px] bg-white rounded-full pointer-events-none z-20 mix-blend-difference"
+                className="absolute top-0 left-0 w-[200px] h-[200px] bg-white rounded-full pointer-events-none z-20 mix-blend-difference"
                 animate={{
                     x: mousePosition.x - 125,
                     y: mousePosition.y - 125,
