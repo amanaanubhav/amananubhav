@@ -74,8 +74,8 @@ const LensHero = ({ isDark }) => {
             <motion.div
                 className="absolute top-0 left-0 w-[200px] h-[200px] bg-white rounded-full pointer-events-none z-20 mix-blend-difference"
                 animate={{
-                    x: mousePosition.x - 125,
-                    y: mousePosition.y - 125,
+                    x: mousePosition.x - 100,
+                    y: mousePosition.y - 100,
                     scale: isHovered ? 1 : 0,
                 }}
                 transition={{
