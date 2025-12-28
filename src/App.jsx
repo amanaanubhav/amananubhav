@@ -11,7 +11,9 @@ import { RESUME } from './Data/resume';
 // Pages
 import Home from './Pages/Home';
 import Stories from './Pages/Stories';
-import Archive from './Pages/Archive';
+
+import ProjectArchive from './Pages/ProjectArchive';
+import AchievementsArchive from './Pages/AchievementsArchive';
 
 const App = () => {
     const [activeSection, setActiveSection] = useState('home');
@@ -58,7 +60,8 @@ const App = () => {
                     <Routes>
                         <Route path="/" element={<Home isDark={isDark} resumeData={RESUME} />} />
                         <Route path="/stories" element={<Stories isDark={isDark} onOpenStory={handleOpenStory} />} />
-                        <Route path="/archive" element={<Archive isDark={isDark} resumeData={RESUME} />} />
+                        <Route path="/project-archive" element={<ProjectArchive isDark={isDark} resumeData={RESUME} />} />
+                        <Route path="/achievements" element={<AchievementsArchive isDark={isDark} resumeData={RESUME} />} />
                     </Routes>
                 ) : (
                     <div className="p-20 text-center text-red-500 font-mono">Error: System Data Corrupted.</div>

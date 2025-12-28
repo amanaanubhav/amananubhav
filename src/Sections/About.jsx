@@ -23,7 +23,13 @@ const About = ({ resumeData, isDark }) => {
 
           {/* PROFILE PICTURE COLUMN */}
           <div className="space-y-4">
-            <div className={`relative w-full aspect-square border-2 ${isDark ? 'border-cyan-600/50 bg-zinc-900' : 'border-cyan-600/20 bg-white'} flex items-center justify-center overflow-hidden shadow-xl`}>
+            <div
+              className={`relative w-full aspect-square border rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-500 group
+                ${isDark
+                  ? 'border-zinc-800 bg-zinc-900/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,1)] hover:shadow-[0_20px_60px_-10px_rgba(8,145,178,0.3)] ring-1 ring-white/10'
+                  : 'border-zinc-200 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.2)]'
+                }`}
+            >
               {/* Placeholder/Profile Image */}
               <img
                 src="/profile1.jpg"

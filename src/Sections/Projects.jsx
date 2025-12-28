@@ -147,7 +147,7 @@ const Projects = ({ resumeData, isDark }) => {
       <Reveal delay={200}>
         <div className="flex justify-center flex-col items-center">
           <button
-            onClick={() => navigate('/archive')}
+            onClick={() => navigate('/project-archive')}
             className={`group flex items-center gap-3 px-8 py-4 rounded-full border transition-all duration-300 ease-out 
                     ${isDark
                 ? 'bg-zinc-900/30 backdrop-blur-md border-zinc-700/50 text-zinc-300 shadow-[0_8px_16px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.5)] hover:bg-zinc-800/50 hover:border-zinc-500 hover:text-white hover:-translate-y-1'

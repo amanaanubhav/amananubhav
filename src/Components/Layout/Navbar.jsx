@@ -184,6 +184,7 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
           >
             <span className="hidden sm:block">Secure Contact</span>
             <span className="block sm:hidden"><Lock className="h-4 w-4" /></span>
+            <span className="absolute inset-x-0 -bottom-px mx-auto h-px w-1/2 bg-gradient-to-r from-transparent via-blue-500 to-transparent  opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:via-indigo-400" />
           </button>
         </div>
       </motion.div>

@@ -17,7 +17,7 @@ const Reveal = ({ children, delay = 0 }) => {
 };
 
 // Archive Page Component
-const Archive = ({ isDark, resumeData }) => {
+const ProjectArchive = ({ isDark, resumeData }) => {
     const navigate = useNavigate();
     const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest'
     const [filterType, setFilterType] = useState('All');
@@ -212,4 +212,4 @@ const Archive = ({ isDark, resumeData }) => {
     );
 };
 
-export default Archive;
+export default ProjectArchive;
