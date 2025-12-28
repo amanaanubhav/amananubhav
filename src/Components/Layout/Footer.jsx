@@ -32,7 +32,7 @@ const Footer = ({ isDark, openVault }) => {
       <div className="flex flex-col items-center gap-8 relative z-10">
         <button
           onClick={openVault}
-          className={`px-8 py-3 rounded-full font-bold tracking-widest text-xs transition-all duration-300 border flex items-center gap-2 font-cyber hover:scale-105 active:scale-95 ${isDark ? 'bg-white text-black border-white hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'bg-black text-white border-black hover:bg-zinc-800 shadow-[0_0_20px_rgba(0,0,0,0.3)]'}`}
+          className={`px-8 py-3 rounded-full font-bold tracking-widest text-xs transition-all duration-300 border flex items-center gap-2 font-cyber hover:scale-105 active:scale-95 ${isDark ? 'bg-[#C9C9C9] text-black border-[#C9C9C9] hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.3)]' : 'bg-black text-white border-black hover:bg-zinc-800 shadow-[0_0_20px_rgba(0,0,0,0.3)]'}`}
         >
           <Lock size={14} /> SECURE CONTACT
         </button>

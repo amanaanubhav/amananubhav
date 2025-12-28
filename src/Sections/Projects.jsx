@@ -123,7 +123,7 @@ const Projects = ({ resumeData, isDark }) => {
   const featuredProjects = resumeData.projects.filter(p => p.featured).slice(0, 4);
 
   return (
-    <section id="projects" className={`relative px-6 md:px-10 py-40 max-w-7xl mx-auto overflow-hidden ${isDark ? 'bg-zinc-950 text-zinc-400' : 'bg-gray-50 text-zinc-600'}`}>
+    <section id="projects" className={`relative px-6 md:px-10 pt-32 pb-10 max-w-7xl mx-auto overflow-hidden ${isDark ? 'bg-zinc-950 text-zinc-400' : 'bg-gray-50 text-zinc-600'}`}>
 
       {/* Section Header */}
       <Reveal>

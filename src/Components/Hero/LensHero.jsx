@@ -36,12 +36,10 @@ const LensHero = ({ isDark }) => {
             {/* Main Content */}
             <div className="relative z-10 flex flex-col items-center justify-center text-center pointer-events-none select-none space-y-6 md:space-y-8">
 
-                {/* Title Group - Relative container for strict centering */}
-                {/* Enabled pointer-events-auto for text interaction */}
                 <div className="relative flex items-center justify-center pointer-events-auto cursor-default z-20">
                     <span className="absolute -left-12 md:-left-24 top-1/2 -translate-y-1/2 text-4xl md:text-6xl font-light text-neutral-500 transition-opacity duration-300 hover:text-white/80">{">_"}</span>
                     <h1 className="text-5xl md:text-8xl font-bold tracking-tighter uppercase font-cyber text-center group">
-                        {/* AMAN */}
+                        {/* AMAN ANUBHAV */}
                         <span
                             className="inline-block transition-all duration-300 ease-out"
                             style={{
@@ -53,20 +51,6 @@ const LensHero = ({ isDark }) => {
                             }}
                         >
                             AMAN  ANUBHAV
-                        </span>
-
-                        {/* ANUBHAV */}
-                        <span
-                            className="ml-4 inline-block transition-all duration-300 ease-out"
-                            style={{
-                                textShadow: isHovered
-                                    ? isDark
-                                        ? "0 0 2px rgba(165,180,252,0.4), 0 0 12px rgba(165,180,252,0.2)" // Dark Hover: Softer Indigo
-                                        : "0 0 2px rgba(165,180,252,0.3), 0 0 10px rgba(165,180,252,0.1)" // Light Hover
-                                    : "none"
-                            }}
-                        >
-
                         </span>
                     </h1>
                 </div>

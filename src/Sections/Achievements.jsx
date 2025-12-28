@@ -36,12 +36,12 @@ const Achievements = ({ resumeData, isDark }) => {
   const displayedItems = items.slice(0, 6);
 
   return (
-    <section className={`px-6 py-32 border-y ${isDark ? 'bg-zinc-950 border-zinc-950' : 'bg-gray-50 border-gray-50'}`}>
+    <section className={`px-6 pt-10 pb-32 border-y ${isDark ? 'bg-zinc-950 border-zinc-950' : 'bg-gray-50 border-gray-50'}`}>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-end mb-16">
           <Reveal>
             <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase text-left ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                // 05. Honors & Recognition
+                // 04. Honors & Recognition
             </h2>
           </Reveal>
 
