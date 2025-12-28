@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import NeuralNetwork from "./NeuralNetwork";
 import WireframeTunnel from "./WireframeTunnel";
+import { BackgroundRippleEffect } from "@/Components/Hero/BackgroundRippleEffect";
+
 
 const LensHero = ({ isDark }) => {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -26,11 +28,10 @@ const LensHero = ({ isDark }) => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            {/* Background Layers */}
+            {/* Background Ripple Effect - Replaces Wireframe/Tunnel */}
             <div className="absolute inset-0 z-0">
-                <WireframeTunnel isDark={isDark} />
+                <BackgroundRippleEffect rows={24} cols={50} />
             </div>
-
 
             {/* Main Content */}
             <div className="relative z-10 flex flex-col items-center justify-center text-center pointer-events-none select-none space-y-6 md:space-y-8">
@@ -70,12 +71,12 @@ const LensHero = ({ isDark }) => {
                 </div>
             </div>
 
-            {/* Large Negative Lens */}
+            {/*Large Negative Lens
             <motion.div
-                className="absolute top-0 left-0 w-[200px] h-[200px] bg-white rounded-full pointer-events-none z-20 mix-blend-difference"
+                className="absolute top-0 left-0 w-[75px] h-[25px] bg-white rounded-full pointer-events-none z-20 mix-blend-difference"
                 animate={{
-                    x: mousePosition.x - 100,
-                    y: mousePosition.y - 100,
+                    x: mousePosition.x - 35,
+                    y: mousePosition.y - 15,
                     scale: isHovered ? 1 : 0,
                 }}
                 transition={{
@@ -83,7 +84,7 @@ const LensHero = ({ isDark }) => {
                     ease: "backOut",
                     duration: 0.15
                 }}
-            />
+            />*/}
 
         </section>
     );
