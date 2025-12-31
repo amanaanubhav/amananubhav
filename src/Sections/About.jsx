@@ -26,7 +26,7 @@ const About = ({ resumeData, isDark }) => {
             <div
               className={`relative w-full aspect-square border rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-500 group
                 ${isDark
-                  ? 'border-zinc-800 bg-zinc-900/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,1)] hover:shadow-[0_20px_60px_-10px_rgba(8,145,178,0.3)] ring-1 ring-white/10'
+                  ? 'border-zinc-800 bg-zinc-900/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,1)] hover:shadow-[0_20px_60px_-10px_rgba(255,255,255,0.2)] ring-1 ring-white/10'
                   : 'border-zinc-200 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.7)] hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9)]'
                 }`}
             >
