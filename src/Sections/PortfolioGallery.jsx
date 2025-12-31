@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const rawImages = [
     "/G1.webp", "/G2.webp", "/G21.webp", "/G8.webp", "/GV7.mp4",
-    "/G12.webp", "/G5.webp", "/G9.webp", "/GV3.mp4", "/G17.webp",
-    "/G6.webp", "/G11.webp", "/G20.webp", "/GV16.mp4", "/G18.webp",
-    "/G19.webp", "/G13.webp", "/G14.webp", "/GV10.mp4", "/G4.webp"
+    "/G12.webp", "/G5.webp", "/G9.webp", "/GV3.mp4", "/G17.jpg",
+    "/G6.webp", "/G11.webp", "/G20.webp", "/GV16.mp4", "/G18.jpg",
+    "/G19.jpg", "/G13.webp", "/G14.webp", "/GV10.mp4", "/G4.webp"
 ];
 
 const Card3D = ({ src, isActive, onClick }) => {
