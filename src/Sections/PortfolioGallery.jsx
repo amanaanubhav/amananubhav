@@ -6,6 +6,7 @@ const rawImages = [
     "/G12.webp", "/G5.webp", "/GV3.mp4",
     "/G6.webp", "/G20.webp", "/GV16.mp4",
     "/G13.webp", "/G14.webp", "/GV10.mp4",
+    "/G2.webp", "/G9.webp", "/GV7.mp4",
 ];
 
 const Card3D = ({ src, isActive, onClick }) => {
