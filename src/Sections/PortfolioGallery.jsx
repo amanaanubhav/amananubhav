@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const rawImages = [
     "/G1.webp", "/G21.webp", "/G8.webp",
-    "/G12.webp", "/G5.webp", "/GV3.mp4",
-    "/G6.webp", "/G20.webp", "/GV16.mp4",
+    "/G5.webp", "/G6.webp", "/GV16.mp4",
     "/G13.webp", "/G14.webp", "/GV10.mp4",
     "/G2.webp", "/G9.webp", "/GV7.mp4",
 ];
@@ -288,17 +287,20 @@ const PhotoCardMobile = ({ src, index }) => {
     if (!src) return null;
     const isVideo = src.match(/\.(mp4|webm|ogg)$/i);
     const isYoutube = src.includes("youtube.com/embed");
+    const videoRef = useRef(null);
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
+            onViewportEnter={() => isVideo && videoRef.current?.play()}
+            onViewportLeave={() => isVideo && videoRef.current?.pause()}
             className="group relative w-full aspect-[4/5] overflow-hidden rounded-sm grayscale hover:grayscale-0 transition-all duration-500"
         >
             {isYoutube ? (
                 <iframe src={`${src.split('?')[0]}?controls=0&autoplay=0&mute=1&loop=1&playlist=${src.split('/embed/')[1]?.split('?')[0]}&showinfo=0&rel=0`} className="w-full h-full object-cover pointer-events-none scale-[1.35]" />
             ) : isVideo ? (
-                <video src={src} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                <video ref={videoRef} src={src} loop muted playsInline className="w-full h-full object-cover" />
             ) : (
                 <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
             )}

@@ -24,6 +24,10 @@ body {
   scrollbar-width: none;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @layer base {
   :root {
     --bg-primary: #FFFFFF;
