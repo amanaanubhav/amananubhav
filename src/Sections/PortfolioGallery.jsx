@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 
 const rawImages = [
-    "/G1.webp", "/G2.webp", "/G21.webp", "/G8.webp", "/GV7.mp4",
-    "/G12.webp", "/G5.webp", "/G9.webp", "/GV3.mp4", "/G17.jpg",
-    "/G6.webp", "/G11.webp", "/G20.webp", "/GV16.mp4", "/G18.jpg",
-    "/G19.jpg", "/G13.webp", "/G14.webp", "/GV10.mp4", "/G4.webp"
+    "/G1.webp", "/G21.webp", "/G8.webp",
+    "/G12.webp", "/G5.webp", "/GV3.mp4",
+    "/G6.webp", "/G20.webp", "/GV16.mp4",
+    "/G13.webp", "/G14.webp", "/GV10.mp4",
 ];
 
 const Card3D = ({ src, isActive, onClick }) => {
