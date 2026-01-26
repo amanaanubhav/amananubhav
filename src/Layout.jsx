@@ -1,12 +1,12 @@
 import React from 'react';
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
-import Navbar from './Navbar';
-import Footer from './Footer';
-import Preloader from '../UI/Preloader';
-import SecureContact from '../UI/SecureContact';
-import TerminalOverlay from '../UI/TerminalOverlay';
-import StoryModal from '../UI/StoryModal';
+import Navbar from './Components/Sections/Navbar';
+import Footer from './Components/Sections/Footer';
+import Preloader from './Components/UI/Preloader';
+import SecureContact from './Components/UI/SecureContact';
+import TerminalOverlay from './Components/UI/TerminalOverlay';
+import StoryModal from './Components/UI/StoryModal';
 
 const Layout = ({
     children,

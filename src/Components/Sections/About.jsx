@@ -1,5 +1,5 @@
 import React from 'react';
-import useScrollReveal from '../Hooks/useScrollReveal';
+import useScrollReveal from '../../Hooks/useScrollReveal';
 import { Github, Linkedin, Mail } from 'lucide-react'; // Added icons
 
 const Reveal = ({ children }) => {

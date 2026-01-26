@@ -1,9 +1,9 @@
 import React from 'react';
 import { Trophy, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import useScrollReveal from '../Hooks/useScrollReveal';
-import { CometCard } from '../Components/UI/CometCard';
-import { normalizeAchievement } from '../lib/utils';
+import useScrollReveal from '../../Hooks/useScrollReveal';
+import { CometCard } from '../UI/CometCard';
+import { normalizeAchievement } from '../../lib/utils';
 
 const Reveal = ({ children, delay = 0 }) => {
   const [ref, isVisible] = useScrollReveal();

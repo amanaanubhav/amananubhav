@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import Adventures from '../Sections/Adventures';
+import Adventures from '../Components/Sections/Adventures';
 
 const Stories = ({ isDark, onOpenStory }) => {
     // Scroll to top on mount

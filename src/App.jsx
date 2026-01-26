@@ -4,7 +4,7 @@ import { auth } from './Utils/firebase';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Layout
-import Layout from './Components/Layout/Layout';
+import Layout from './Layout';
 
 import { RESUME } from './Data/resume';
 

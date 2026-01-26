@@ -3,7 +3,7 @@ import { ArrowUpRight, Sparkles, Clock, ArrowRight, Search, Calendar, ChevronUp 
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ADVENTURES } from '../Data/adventures';
+import { ADVENTURES } from '../../Data/adventures';
 
 gsap.registerPlugin(ScrollTrigger);
 

@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import LensHero from '../Components/Hero/LensHero';
-import About from '../Sections/About';
-import Experience from '../Sections/Experience';
-import Projects from '../Sections/Projects';
-import Achievements from '../Sections/Achievements';
-import PortfolioGallery from '../Sections/PortfolioGallery';
+import Hero from '../Components/Sections/Hero';
+import About from '../Components/Sections/About';
+import Experience from '../Components/Sections/Experience';
+import Projects from '../Components/Sections/Projects';
+import Achievements from '../Components/Sections/Achievements';
+import PortfolioGallery from '../Components/Sections/PortfolioGallery';
 
 const Home = ({ isDark, resumeData }) => {
     const location = useLocation();
@@ -21,7 +21,7 @@ const Home = ({ isDark, resumeData }) => {
 
     return (
         <main className={`relative z-10 ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}>
-            <LensHero isDark={isDark} />
+            <Hero isDark={isDark} />
             <About resumeData={resumeData} isDark={isDark} />
             <Experience resumeData={resumeData} isDark={isDark} />
             <PortfolioGallery isDark={isDark} />

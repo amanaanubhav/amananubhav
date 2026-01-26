@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import NeuralNetwork from "./NeuralNetwork";
-import WireframeTunnel from "./WireframeTunnel";
-import { BackgroundRippleEffect } from "@/Components/Hero/BackgroundRippleEffect";
+import NeuralNetwork from "@/Components/UI/NeuralNetwork";
+import WireframeTunnel from "@/Components/UI/WireframeTunnel";
+import { BackgroundRippleEffect } from "@/Components/UI/BackgroundRippleEffect";
+import { Button as StatefulButton } from "@/Components/UI/StatefulButton";
 
 
-const LensHero = ({ isDark }) => {
+const Hero = ({ isDark }) => {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const [isHovered, setIsHovered] = useState(false);
 
@@ -60,25 +61,50 @@ const LensHero = ({ isDark }) => {
                     ENGINEER <span className="mx-4 md:mx-8">ARCHITECT</span>
                 </h2>
 
-                {/* Footer System Text - Now Relative/Stacked */}
-                <div className="pt-8 md:pt-12 flex items-center gap-4 text-xs md:text-sm font-mono tracking-widest opacity-50 pl-[2px]">{/* Added slight pl to balance visually */}
-                    <span>SYSTEMS</span>
-                    <span className="text-neutral-500">//</span>
-                    <span>INTELLIGENCE</span>
-                    <motion.div
-                        animate={{
-                            opacity: [0.2, 1, 0.2],
-                            scale: [1, 1.5, 1],
-                            boxShadow: isDark
-                                ? ["0px 0px 0px rgba(227, 225, 225, 0)", "0px 0px 10px rgba(227, 225, 225, 0.9)", "0px 0px 0px rgba(227, 225, 225, 0)"]
-                                : ["0px 0px 0px rgba(18, 17, 17, 0)", "0px 0px 10px rgba(18, 17, 17, 0.8)", "0px 0px 0px rgba(18, 17, 17, 0)"]
-                        }}
-                        transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
+                {/* Resume Button - Tailwind Connect Inspired */}
+                <div className="pt-12 md:pt-16 relative z-30 pointer-events-auto">
+                    <StatefulButton
+                        onClick={() => new Promise((resolve) => {
+                            setTimeout(() => {
+                                window.open("https://drive.google.com/drive/folders/1fj8BIHpUcvZEpkfAyvdmK_Ke8jpmRNDv?usp=sharing", "_blank");
+                                resolve();
+                            }, 2000);
+                        })}
                         className={cn(
-                            "w-1 h-1 rounded-full",
-                            isDark ? "bg-[#E3E1E1]" : "bg-[#000]"
+                            // Base styling - Pill shape with gradient glow
+                            "group relative px-6 py-3 rounded-full text-sm font-medium tracking-wide",
+                            "min-w-[180px] overflow-hidden",
+                            // Background & Border
+                            "bg-zinc-900/80 backdrop-blur-md",
+                            "border border-zinc-700/50",
+                            // Text
+                            "text-zinc-100",
+                            // Glow effect on hover
+                            "shadow-[0_0_0_1px_rgba(56,189,248,0.1)]",
+                            "hover:shadow-[0_0_20px_rgba(56,189,248,0.3),0_0_40px_rgba(56,189,248,0.1)]",
+                            "hover:border-cyan-500/50",
+                            // Transition
+                            "transition-all duration-500 ease-out",
+                            // Ring for focus
+                            "focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:ring-offset-2 focus:ring-offset-black"
                         )}
-                    />
+                    >
+                        {/* Gradient overlay on hover */}
+                        <span className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                        {/* Button content with arrow */}
+                        <span className="relative flex items-center justify-center gap-3">
+                            <span>Resume</span>
+                            <svg
+                                className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </span>
+                    </StatefulButton>
                 </div>
             </div>
 
@@ -101,4 +127,4 @@ const LensHero = ({ isDark }) => {
     );
 };
 
-export default LensHero;
+export default Hero;

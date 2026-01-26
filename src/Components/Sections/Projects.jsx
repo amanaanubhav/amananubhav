@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
-import useScrollReveal from '../Hooks/useScrollReveal';
+import useScrollReveal from '../../Hooks/useScrollReveal';
 import { useNavigate } from 'react-router-dom';
 
 const Reveal = ({ children, delay = 0 }) => {
