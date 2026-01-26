@@ -61,8 +61,8 @@ const Hero = ({ isDark }) => {
                     ENGINEER <span className="mx-4 md:mx-8">ARCHITECT</span>
                 </h2>
 
-                {/* Resume Button - Tailwind Connect Inspired */}
-                <div className="pt-12 md:pt-16 relative z-30 pointer-events-auto">
+                {/* Resume Button */}
+                <div className="pt-7 md:pt-11 relative z-30 pointer-events-auto">
                     <StatefulButton
                         onClick={() => new Promise((resolve) => {
                             setTimeout(() => {
@@ -94,9 +94,11 @@ const Hero = ({ isDark }) => {
 
                         {/* Button content with arrow */}
                         <span className="relative flex items-center justify-center gap-3">
-                            <span>Resume</span>
+                            <span className="font-cyber justify-center tracking-[0.2em] text-zinc-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+                                RESUME
+                            </span>
                             <svg
-                                className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                                className="w-4 h-4 text-zinc-400 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-cyan-400"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
