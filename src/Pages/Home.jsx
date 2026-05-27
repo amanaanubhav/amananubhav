@@ -3,9 +3,6 @@ import { useLocation } from 'react-router-dom';
 import VerticalNavbar from '../Components/UI/VerticalNavbar';
 import Hero from '../Components/Sections/Hero';
 import About from '../Components/Sections/About';
-import Experience from '../Components/Sections/Experience';
-import Projects from '../Components/Sections/Projects';
-import Achievements from '../Components/Sections/Achievements';
 import PortfolioGallery from '../Components/Sections/PortfolioGallery';
 
 const Home = ({ isDark, resumeData }) => {
@@ -14,9 +11,6 @@ const Home = ({ isDark, resumeData }) => {
     const sections = [
         { id: 'home', label: 'Hero' },
         { id: 'about', label: 'About' },
-        { id: 'experience', label: 'Experience' },
-        { id: 'projects', label: 'Projects' },
-        { id: 'achievements', label: 'Achievements' },
     ];
 
     useEffect(() => {
@@ -33,10 +27,7 @@ const Home = ({ isDark, resumeData }) => {
             <VerticalNavbar sections={sections} />
             <Hero isDark={isDark} />
             <About resumeData={resumeData} isDark={isDark} />
-            <Experience resumeData={resumeData} isDark={isDark} />
             <PortfolioGallery isDark={isDark} />
-            <Projects resumeData={resumeData} isDark={isDark} />
-            <Achievements resumeData={resumeData} isDark={isDark} />
         </main>
     );
 };
