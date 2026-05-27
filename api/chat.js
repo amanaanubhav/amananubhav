@@ -1,4 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { groq } from '@ai-sdk/groq';
+import { streamText } from 'ai';
 
 export const config = {
     runtime: 'edge',
@@ -11,7 +12,6 @@ export default async function handler(req) {
 
     try {
         const { userQuery, resumeData, adventureData } = await req.json();
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
         // High-accuracy System Instruction
         const systemInstruction = `
@@ -28,30 +28,15 @@ RULES:
       4. SCOPE: Only discuss Aman's work/life. If unknown, say: "[!] ERROR: Data not found in public archives."
     `;
 
-        const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
-            systemInstruction: { parts: [{ text: systemInstruction }] }
+        const result = streamText({
+            model: groq('llama-3.3-70b-versatile'),
+            system: systemInstruction,
+            prompt: userQuery,
         });
 
-        const result = await model.generateContentStream(userQuery);
-
-        // Create a readable stream from the async generator
-        const stream = new ReadableStream({
-            async start(controller) {
-                const encoder = new TextEncoder();
-                try {
-                    for await (const chunk of result.stream) {
-                        const chunkText = chunk.text();
-                        controller.enqueue(encoder.encode(chunkText));
-                    }
-                    controller.close();
-                } catch (err) {
-                    controller.error(err);
-                }
-            }
-        });
-
-        return new Response(stream, {
+        // toTextStreamResponse streams raw text chunks directly instead of AI SDK's data stream format.
+        // This makes it seamlessly compatible with your existing TerminalOverlay.jsx.
+        return result.toTextStreamResponse({
             headers: {
                 'Content-Type': 'text/event-stream',
                 'Cache-Control': 'no-cache',
@@ -60,7 +45,7 @@ RULES:
         });
 
     } catch (error) {
-        console.error("Gemini Error:", error);
+        console.error("Groq Error:", error);
         return new Response(JSON.stringify({ error: error.message || "Internal Server Error" }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
