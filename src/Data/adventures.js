@@ -50,7 +50,7 @@ export const ADVENTURES = [
     subtitle: "A brutal, beautiful climb to 5,000m in the extreme winter of the North Sikkim Himalayas.",
     date: "Nov 2025",
     category: "Expedition & Mountaineering",
-    coverImage: "https://images.unsplash.com/photo-1518545802353-83921221ddb6?auto=format&fit=crop&w=1200&q=80",
+    coverImage: "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1200&q=80",
     content: `
       <h3 class="text-2xl font-bold mb-4">The Challenge of Yumsedong</h3>
       <p class="mb-6">
@@ -75,8 +75,8 @@ export const ADVENTURES = [
       </p>
     `,
     media: [
-      { type: "image", url: "https://images.unsplash.com/photo-1549487224-b3864c2069e7?auto=format&fit=crop&w=800&q=80" },
-      { type: "image", url: "https://images.unsplash.com/photo-1518545802353-83921221ddb6?auto=format&fit=crop&w=800&q=80" }
+      { type: "image", url: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=800&q=80" },
+      { type: "image", url: "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=800&q=80" }
     ],
     links: [
       { label: "Yumesamdong (Zero Point)", url: "https://en.wikipedia.org/wiki/Yumesamdong" }
