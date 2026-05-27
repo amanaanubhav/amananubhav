@@ -1,5 +1,88 @@
 export const ADVENTURES = [
   {
+    id: "annapurna-circuit-solo",
+    title: "Into the Wild: 150km Solo Across the Annapurna Circuit",
+    subtitle: "14 days, an 18kg backpack, and a journey through Nepal's most formidable landscapes.",
+    date: "Recent Adventure",
+    category: "Expedition & Mountaineering",
+    coverImage: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80",
+    content: `
+      <h3 class="text-2xl font-bold mb-4">The Call of the Himalayas</h3>
+      <p class="mb-6">
+        Sometimes, to truly understand resilience, you have to strip away the comforts of modern life. I embarked on a 14-day, 150km solo trek across the legendary <strong>Annapurna Circuit</strong> in Nepal. Starting from the lush, low-altitude jungles of Besisahar, my goal was the sacred town of Muktinath in the arid Mustang region, navigating some of the world's most unforgiving and breathtaking terrain.
+      </p>
+
+      <h3 class="text-2xl font-bold mb-4 mt-8">Into the Thin Air</h3>
+      <p class="mb-6">
+        Carrying an 18kg backpack, I pushed my physical and mental limits to conquer three major high-altitude milestones:
+      </p>
+      
+      <ul class="list-disc pl-6 mb-6 space-y-2">
+        <li><strong>Ice Lake (4,800m):</strong> A grueling acclimatization climb rewarded with panoramic views of the Annapurna massifs.</li>
+        <li><strong>Tilicho Lake (5,200m):</strong> Trekking through treacherous landslide zones to reach one of the highest lakes in the world, a crystal-clear body of water nestled amidst towering peaks.</li>
+        <li><strong>Thorong La Pass (5,416m):</strong> The ultimate crux of the circuit. Crossing this formidable mountain pass pushed me to the absolute limit of endurance, fighting thin air and freezing winds.</li>
+      </ul>
+
+      <h3 class="text-2xl font-bold mb-4 mt-8">Pure Wild Adventure</h3>
+      <p class="mb-6">
+        This wasn't just a hike; it was an exercise in self-reliance. I pitched my own camp under the star-studded Himalayan sky, cooked my own meals on a portable stove, and drank straight from glacial streams and high-altitude lakes.
+      </p>
+
+      <blockquote class="border-l-4 border-green-500 pl-4 my-8 italic">
+        "Surrounded by sheer cliffs, deep jungles, and snow-capped peaks, I encountered diverse wildlife and lived completely in the moment. It was a raw, unfiltered connection with nature."
+      </blockquote>
+      
+      <p class="mb-6">
+        The journey from Besisahar to Muktinath taught me that we are capable of far more than we believe. The mountains demand respect, but they reward you with an unparalleled sense of freedom and clarity.
+      </p>
+    `,
+    media: [
+      { type: "image", url: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80" },
+      { type: "image", url: "https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=800&q=80" }
+    ],
+    links: [
+      { label: "Annapurna Circuit Info", url: "https://en.wikipedia.org/wiki/Annapurna_Circuit" }
+    ]
+  },
+  {
+    id: "kun-tso-winter-climb",
+    title: "Frozen Peaks: The Winter Ascent of Kun Tso",
+    subtitle: "A brutal, beautiful climb to 5,000m in the extreme winter of the North Sikkim Himalayas.",
+    date: "Nov 2025",
+    category: "Expedition & Mountaineering",
+    coverImage: "https://images.unsplash.com/photo-1518545802353-83921221ddb6?auto=format&fit=crop&w=1200&q=80",
+    content: `
+      <h3 class="text-2xl font-bold mb-4">The Challenge of Yumsedong</h3>
+      <p class="mb-6">
+        The Himalayas don't just test your physical strength; they test your spirit. In November 2025, I found myself in Yumsedong, a remote village in the North Sikkim Himalayas. The goal was to summit Kun Tso, starting from the formidable 'Zero Point' at 4,600m. 
+      </p>
+
+      <h3 class="text-2xl font-bold mb-4 mt-8">Extreme Winter Conditions</h3>
+      <p class="mb-6">
+        Ascending from 4,600m to 5,000m doesn't sound like a massive elevation gain on paper, but doing it in extreme winter conditions changes the equation entirely. We were hit with fresh, deep snow and biting winds that threatened to turn every step into a battle against exhaustion and the cold.
+      </p>
+      
+      <p class="mb-6">
+        Navigating the snow-blanketed trails required a relentless, undefeated mindset. There were moments where the sheer cold and the thinning oxygen made every movement feel incredibly slow, but the mountain's stark, frozen beauty kept me pushing forward.
+      </p>
+
+      <blockquote class="border-l-4 border-green-500 pl-4 my-8 italic">
+        "It was a peak adventure—a fun but punishing climb where the elements threw everything at me. Reaching the frozen expanse of Kun Tso at 5,000m made every frozen step worth it."
+      </blockquote>
+      
+      <p class="mb-6">
+        Standing at the top, surrounded by the silent, towering peaks of North Sikkim, was a profound experience. It was a reminder that an undefeated mindset can conquer even the harshest of winter environments.
+      </p>
+    `,
+    media: [
+      { type: "image", url: "https://images.unsplash.com/photo-1549487224-b3864c2069e7?auto=format&fit=crop&w=800&q=80" },
+      { type: "image", url: "https://images.unsplash.com/photo-1518545802353-83921221ddb6?auto=format&fit=crop&w=800&q=80" }
+    ],
+    links: [
+      { label: "Yumesamdong (Zero Point)", url: "https://en.wikipedia.org/wiki/Yumesamdong" }
+    ]
+  },
+  {
     id: "leetcode-sync-github-actions",
     title: "LeetCode → GitHub, Automated: A Secure Sync with GitHub Actions",
     subtitle:
