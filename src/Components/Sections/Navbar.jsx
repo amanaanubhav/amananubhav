@@ -11,7 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Briefcase, FolderGit2, BookOpen, Terminal, Sun, Moon, Lock } from 'lucide-react';
 import { BackgroundGradient } from "@/Components/UI/BackgroundGradient";
 
-const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerminal, openVault }) => {
+const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerminal, openVault, closeStory }) => {
   const { scrollYProgress } = useScroll();
   const [visible, setVisible] = useState(true); // Default to true so it shows initially
   const navigate = useNavigate();
@@ -34,48 +34,34 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
     }
   });
 
-  const handleNavigation = (id) => {
-    if (id === 'home') {
-      if (location.pathname !== '/') {
-        navigate('/', { state: { scrollTo: 'top' } });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setActiveSection('home');
-      }
-    } else if (id === 'blogs') {
-      navigate('/stories');
-    } else {
-      if (location.pathname !== '/') {
-        navigate('/', { state: { scrollTo: id } });
-      } else {
-        const section = document.getElementById(id);
-        if (section) {
-          section.scrollIntoView({ behavior: 'smooth' });
-          setActiveSection(id);
-        }
-      }
+  const handleNavigation = (link) => {
+    if (closeStory) {
+      closeStory();
     }
+    navigate(link);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setActiveSection(link);
   };
 
   const navItems = [
     {
       name: "Home",
-      link: "home",
+      link: "/",
       icon: <Home className="h-4 w-4" />,
     },
     {
-      name: "Experience",
-      link: "experience",
+      name: "Personal",
+      link: "/personal",
       icon: <Briefcase className="h-4 w-4" />,
     },
     {
-      name: "Projects",
-      link: "projects",
+      name: "Professional",
+      link: "/professional",
       icon: <FolderGit2 className="h-4 w-4" />,
     },
     {
       name: "Blogs",
-      link: "blogs",
+      link: "/stories",
       icon: <BookOpen className="h-4 w-4" />,
     },
   ];

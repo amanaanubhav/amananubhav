@@ -11,6 +11,8 @@ import { RESUME } from './Data/resume';
 // Pages
 import Home from './Pages/Home';
 import Stories from './Pages/Stories';
+import Personal from './Pages/Personal';
+import Professional from './Pages/Professional';
 
 import ProjectArchive from './Pages/ProjectArchive';
 import AchievementsArchive from './Pages/AchievementsArchive';
@@ -59,6 +61,8 @@ const App = () => {
                 {RESUME ? (
                     <Routes>
                         <Route path="/" element={<Home isDark={isDark} resumeData={RESUME} />} />
+                        <Route path="/personal" element={<Personal isDark={isDark} />} />
+                        <Route path="/professional" element={<Professional isDark={isDark} />} />
                         <Route path="/stories" element={<Stories isDark={isDark} onOpenStory={handleOpenStory} />} />
                         <Route path="/project-archive" element={<ProjectArchive isDark={isDark} resumeData={RESUME} />} />
                         <Route path="/achievements" element={<AchievementsArchive isDark={isDark} resumeData={RESUME} />} />

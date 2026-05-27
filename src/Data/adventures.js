@@ -1,7 +1,7 @@
 export const ADVENTURES = [
   {
     id: "annapurna-circuit-solo",
-    title: "Into the Wild: 150km Solo Across the Annapurna Circuit",
+    title: "Into the Wild: 250km Solo Across the Annapurna Circuit",
     subtitle: "14 days, an 18kg backpack, and a journey through Nepal's most formidable landscapes.",
     date: "Recent Adventure",
     category: "Expedition & Mountaineering",
@@ -9,7 +9,7 @@ export const ADVENTURES = [
     content: `
       <h3 class="text-2xl font-bold mb-4">The Call of the Himalayas</h3>
       <p class="mb-6">
-        Sometimes, to truly understand resilience, you have to strip away the comforts of modern life. I embarked on a 14-day, 150km solo trek across the legendary <strong>Annapurna Circuit</strong> in Nepal. Starting from the lush, low-altitude jungles of Besisahar, my goal was the sacred town of Muktinath in the arid Mustang region, navigating some of the world's most unforgiving and breathtaking terrain.
+        Sometimes, to truly understand resilience, you have to strip away the comforts of modern life. I embarked on a grueling 14-day, 250km solo trek across the legendary <strong>Annapurna Circuit</strong> in Nepal. Starting from the lush, low-altitude jungles of Besisahar, my ultimate goal was the sacred town of Muktinath in the arid Mustang region. This wasn't merely a hike; it was an intense physical and mental battle navigating some of the world's most unforgiving, yet breathtakingly beautiful, terrain.
       </p>
 
       <h3 class="text-2xl font-bold mb-4 mt-8">Into the Thin Air</h3>
@@ -59,7 +59,7 @@ export const ADVENTURES = [
 
       <h3 class="text-2xl font-bold mb-4 mt-8">Extreme Winter Conditions</h3>
       <p class="mb-6">
-        Ascending from 4,600m to 5,000m doesn't sound like a massive elevation gain on paper, but doing it in extreme winter conditions changes the equation entirely. We were hit with fresh, deep snow and biting winds that threatened to turn every step into a battle against exhaustion and the cold.
+        Ascending from 4,600m to 5,000m doesn't sound like a massive elevation gain on paper, but doing it in extreme winter conditions changes the equation entirely. The mountain unleashed its fury with fresh, waist-deep snow and biting, sub-zero winds that threatened to turn every step into a battle against frostbite and pure exhaustion. Survival instincts took over as the margin for error dropped to zero.
       </p>
       
       <p class="mb-6">
@@ -67,7 +67,7 @@ export const ADVENTURES = [
       </p>
 
       <blockquote class="border-l-4 border-green-500 pl-4 my-8 italic">
-        "It was a peak adventure—a fun but punishing climb where the elements threw everything at me. Reaching the frozen expanse of Kun Tso at 5,000m made every frozen step worth it."
+        "It was a peak adventure—an incredibly fun yet punishing climb where the elements threw absolutely everything at me. Standing at the frozen expanse of Kun Tso at 5,000m, completely untouched by civilization, made every agonizing, frozen step worth it."
       </blockquote>
       
       <p class="mb-6">

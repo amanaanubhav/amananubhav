@@ -53,6 +53,7 @@ const Layout = ({
                         toggleTheme={toggleTheme}
                         openTerminal={() => setIsTerminalOpen(true)}
                         openVault={handleOpenVault}
+                        closeStory={onCloseStory}
                     />
                 )}
 
