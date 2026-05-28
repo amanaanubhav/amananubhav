@@ -93,7 +93,9 @@ const AdminChat = ({ isDark }) => {
                         to_name: activeChat.visitorName,
                         reply_message: text,
                     },
-                    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+                    {
+                        publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+                    }
                 ).catch(err => console.error("EmailJS Error:", err));
             } else {
                 console.warn("EmailJS credentials not configured yet.");

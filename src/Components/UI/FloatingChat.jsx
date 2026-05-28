@@ -98,7 +98,9 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
                         message: text,
                         reply_to: visitor.email,
                     },
-                    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+                    {
+                        publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+                    }
                 ).catch(err => console.error("EmailJS Error:", err));
             } else {
                 console.warn("EmailJS credentials not configured yet.");
