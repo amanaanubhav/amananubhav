@@ -9,9 +9,11 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
     const [visitor, setVisitor] = useState(null);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [chatId, setChatId] = useState(null);
+    const [isBlocked, setIsBlocked] = useState(false);
     const messagesEndRef = useRef(null);
 
     // Persist visitor session
@@ -20,10 +22,15 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
         if (savedSession) {
             try {
                 const parsed = JSON.parse(savedSession);
-                setVisitor({ name: parsed.name, email: parsed.email });
-                setName(parsed.name);
-                setEmail(parsed.email);
-                setChatId(parsed.id);
+                if (parsed.name && parsed.email && parsed.phone) {
+                    setVisitor({ name: parsed.name, email: parsed.email, phone: parsed.phone });
+                    setName(parsed.name);
+                    setEmail(parsed.email);
+                    setPhone(parsed.phone);
+                    setChatId(parsed.id);
+                } else {
+                    localStorage.removeItem('portfolio_chat_session');
+                }
             } catch (e) {
                 console.error("Failed to parse session", e);
             }
@@ -45,7 +52,7 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
         if (!chatId || !db) return;
 
         const q = query(collection(db, 'contact_chats', chatId, 'messages'), orderBy('timestamp', 'asc'));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribeMsgs = onSnapshot(q, (snapshot) => {
             const msgs = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -53,12 +60,21 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
             setMessages(msgs);
         });
 
-        return () => unsubscribe();
+        const unsubscribeDoc = onSnapshot(doc(db, 'contact_chats', chatId), (docSnap) => {
+            if (docSnap.exists()) {
+                setIsBlocked(docSnap.data().isBlocked || false);
+            }
+        });
+
+        return () => {
+            unsubscribeMsgs();
+            unsubscribeDoc();
+        };
     }, [chatId]);
 
     const handleStartChat = async (e) => {
         e.preventDefault();
-        if (!name.trim() || !email.trim()) return;
+        if (!name.trim() || !email.trim() || !phone.trim()) return;
 
         const id = email.toLowerCase().replace(/[^a-z0-9]/g, '_');
         setChatId(id);
@@ -67,6 +83,7 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
             await setDoc(doc(db, 'contact_chats', id), {
                 visitorName: name,
                 visitorEmail: email,
+                visitorPhone: phone,
                 lastActive: serverTimestamp(),
                 unreadCount: 0
             }, { merge: true });
@@ -74,13 +91,13 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
             console.error("Error starting chat:", error);
         }
 
-        setVisitor({ name, email });
-        localStorage.setItem('portfolio_chat_session', JSON.stringify({ name, email, id }));
+        setVisitor({ name, email, phone });
+        localStorage.setItem('portfolio_chat_session', JSON.stringify({ name, email, phone, id }));
     };
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!newMessage.trim() || !chatId || !db) return;
+        if (!newMessage.trim() || !chatId || !db || isBlocked) return;
 
         const text = newMessage;
         setNewMessage('');
@@ -99,6 +116,9 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
 
             // 2. Update parent chat document
             await setDoc(doc(db, 'contact_chats', chatId), {
+                visitorName: visitor.name,
+                visitorEmail: visitor.email,
+                visitorPhone: visitor.phone || '',
                 lastMessage: text,
                 lastActive: serverTimestamp(),
                 unreadCount: 1
@@ -113,6 +133,7 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
                         {
                             from_name: visitor.name,
                             from_email: visitor.email,
+                            from_phone: visitor.phone || 'Not provided',
                             message: text,
                             reply_to: visitor.email,
                         },
@@ -185,6 +206,14 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
                                     onChange={(e) => setEmail(e.target.value)}
                                     className={`w-full px-4 py-3 rounded-lg border outline-none transition-colors text-sm ${isDark ? 'bg-zinc-950 border-zinc-800 focus:border-zinc-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-zinc-400'}`}
                                 />
+                                <input
+                                    type="tel"
+                                    placeholder="Your Phone Number"
+                                    required
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    className={`w-full px-4 py-3 rounded-lg border outline-none transition-colors text-sm ${isDark ? 'bg-zinc-950 border-zinc-800 focus:border-zinc-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-zinc-400'}`}
+                                />
                                 <button
                                     type="submit"
                                     className={`w-full font-bold py-3 border transition-colors text-xs ${isDark ? 'bg-zinc-100 border-zinc-100 text-black hover:bg-white hover:border-white' : 'bg-zinc-900 border-zinc-900 text-white hover:bg-black hover:border-black'}`}
@@ -249,15 +278,16 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
                                         type="text"
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
-                                        placeholder="Type a message..."
-                                        className={`flex-1 px-4 py-2 text-xs outline-none transition-colors border ${isDark ? 'bg-black text-white placeholder-zinc-600 border-zinc-800 focus:border-zinc-500' : 'bg-gray-50 text-black placeholder-zinc-400 border-gray-200 focus:border-zinc-400'}`}
+                                        disabled={isBlocked}
+                                        placeholder={isBlocked ? "Blocked by Admin" : "Type a message..."}
+                                        className={`flex-1 px-4 py-2 text-xs outline-none transition-colors border ${isDark ? 'bg-black text-white placeholder-zinc-600 border-zinc-800 focus:border-zinc-500' : 'bg-gray-50 text-black placeholder-zinc-400 border-gray-200 focus:border-zinc-400'} ${isBlocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     />
                                     <button
                                         type="submit"
-                                        disabled={!newMessage.trim()}
-                                        className={`w-10 h-10 flex items-center justify-center transition-colors border shadow-sm ${newMessage.trim() ? (isDark ? 'bg-white text-black border-white' : 'bg-black text-white border-black') : (isDark ? 'bg-black text-zinc-700 border-zinc-800' : 'bg-gray-50 text-zinc-300 border-gray-200')} `}
+                                        disabled={!newMessage.trim() || isBlocked}
+                                        className={`w-10 h-10 flex items-center justify-center transition-colors border shadow-sm ${newMessage.trim() && !isBlocked ? (isDark ? 'bg-white text-black border-white' : 'bg-black text-white border-black') : (isDark ? 'bg-black text-zinc-700 border-zinc-800 cursor-not-allowed' : 'bg-gray-50 text-zinc-300 border-gray-200 cursor-not-allowed')} `}
                                     >
-                                        <Send size={18} className={newMessage.trim() ? 'mr-0.5 mt-0.5' : ''} />
+                                        <Send size={18} className={newMessage.trim() && !isBlocked ? 'mr-0.5 mt-0.5' : ''} />
                                     </button>
                                 </form>
                             </div>
