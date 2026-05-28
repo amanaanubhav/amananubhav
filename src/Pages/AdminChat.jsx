@@ -14,10 +14,29 @@ const AdminChat = ({ isDark }) => {
     
     const messagesEndRef = useRef(null);
 
+    // CSS injection to hide the floating chat on the admin portal
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.id = 'hide-floating-chat';
+        style.innerHTML = `
+            .fixed.bottom-6.right-6.z-\\[100\\],
+            .fixed.bottom-6.right-6.z-[100] {
+                display: none !important;
+            }
+        `;
+        document.head.appendChild(style);
+        return () => {
+            const existingStyle = document.getElementById('hide-floating-chat');
+            if (existingStyle) {
+                existingStyle.remove();
+            }
+        };
+    }, []);
+
     // Mock authentication for prototype
     const handleLogin = (e) => {
         e.preventDefault();
-        if (authInput === 'admin123') { // Simple mock password
+        if (authInput === 'youcantguess') {
             setIsAuthenticated(true);
         }
     };
@@ -117,18 +136,23 @@ const AdminChat = ({ isDark }) => {
 
     if (!isAuthenticated) {
         return (
-            <div className={`min-h-screen flex items-center justify-center p-4 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-100 text-black'}`}>
-                <div className={`w-full max-w-sm p-8 rounded-2xl shadow-xl border ${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'}`}>
-                    <h2 className="text-2xl font-bold mb-6 text-center">Admin Access</h2>
+            <div className={`min-h-screen flex flex-col items-center justify-center p-4 pt-28 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-100 text-black'}`}>
+                <div className={`w-full max-w-sm p-8 rounded-xl shadow-2xl border font-mono ${isDark ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-gray-200'}`}>
+                    <h2 className="text-xl font-bold uppercase tracking-widest mb-6 text-center">Admin Access</h2>
                     <form onSubmit={handleLogin} className="space-y-4">
                         <input 
                             type="password" 
-                            placeholder="Enter password (admin123)" 
+                            placeholder="Enter password" 
                             value={authInput}
                             onChange={(e) => setAuthInput(e.target.value)}
-                            className={`w-full px-4 py-3 rounded-lg border outline-none ${isDark ? 'bg-zinc-950 border-zinc-800 focus:border-green-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-green-500'}`}
+                            className={`w-full px-4 py-3 rounded-md border outline-none text-xs ${isDark ? 'bg-zinc-950 border-zinc-800 focus:border-zinc-500 text-white' : 'bg-gray-50 border-gray-200 focus:border-zinc-400'}`}
                         />
-                        <button type="submit" className="w-full bg-green-500 text-white font-bold py-3 rounded-lg hover:bg-green-600">Login</button>
+                        <button 
+                            type="submit" 
+                            className={`w-full font-bold py-3 rounded-md transition-colors text-xs border uppercase tracking-widest ${isDark ? 'bg-zinc-100 border-zinc-100 text-black hover:bg-white' : 'bg-zinc-900 border-zinc-900 text-white hover:bg-black'}`}
+                        >
+                            Login
+                        </button>
                     </form>
                 </div>
             </div>
@@ -136,8 +160,8 @@ const AdminChat = ({ isDark }) => {
     }
 
     return (
-        <div className={`min-h-screen flex p-4 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-100 text-black'}`}>
-            <div className={`w-full max-w-6xl mx-auto h-[90vh] flex rounded-xl overflow-hidden shadow-2xl border ${isDark ? 'border-zinc-800 bg-[#111b21]' : 'border-gray-200 bg-white'}`}>
+        <div className={`min-h-screen flex flex-col pt-28 pb-8 px-4 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-100 text-black'}`}>
+            <div className={`w-full max-w-6xl mx-auto flex-1 flex rounded-xl overflow-hidden shadow-2xl border ${isDark ? 'border-zinc-800 bg-[#111b21]' : 'border-gray-200 bg-white'}`}>
                 
                 {/* LEFT PANEL: Chat List */}
                 <div className={`w-1/3 min-w-[300px] flex flex-col border-r ${isDark ? 'border-zinc-800' : 'border-gray-200'}`}>
@@ -223,14 +247,14 @@ const AdminChat = ({ isDark }) => {
                             
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                                    <div className={`max-w-[65%] p-2 px-3 rounded-lg relative shadow-sm
+                                    <div className={`max-w-[70%] p-3 relative shadow-sm border font-mono
                                         ${msg.sender === 'admin' 
-                                            ? (isDark ? 'bg-zinc-700 rounded-tr-sm text-white' : 'bg-zinc-200 rounded-tr-sm text-black') 
-                                            : (isDark ? 'bg-zinc-900 rounded-tl-sm text-white border border-zinc-800' : 'bg-white rounded-tl-sm text-black border border-gray-100')}`}>
-                                        <p className="text-sm">{msg.text}</p>
-                                        <div className={`text-[10px] flex items-center justify-end gap-1 mt-1 ${isDark ? 'text-zinc-400' : 'text-gray-500'}`}>
+                                            ? (isDark ? 'bg-zinc-100 text-black border-zinc-100 rounded-sm rounded-tr-none' : 'bg-zinc-900 text-white border-zinc-900 rounded-sm rounded-tr-none') 
+                                            : (isDark ? 'bg-zinc-900/50 text-zinc-100 border-zinc-800 rounded-sm rounded-tl-none' : 'bg-white text-zinc-800 border-gray-200 rounded-sm rounded-tl-none')}`}>
+                                        <p className="text-xs leading-relaxed">{msg.text}</p>
+                                        <div className={`text-[9px] flex items-center justify-end gap-1 mt-2 ${msg.sender === 'admin' ? (isDark ? 'text-zinc-500' : 'text-zinc-400') : (isDark ? 'text-zinc-500' : 'text-gray-400')}`}>
                                             {formatTime(msg.timestamp)}
-                                            {msg.sender === 'admin' && <CheckCheck size={14} className={isDark ? 'text-zinc-300' : 'text-zinc-600'} />}
+                                            {msg.sender === 'admin' && <CheckCheck size={12} className={isDark ? 'text-zinc-500' : 'text-zinc-400'} />}
                                         </div>
                                     </div>
                                 </div>
