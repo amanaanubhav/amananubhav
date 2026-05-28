@@ -7,6 +7,7 @@ import Preloader from './Components/UI/Preloader';
 import SecureContact from './Components/UI/SecureContact';
 import TerminalOverlay from './Components/UI/TerminalOverlay';
 import StoryModal from './Components/UI/StoryModal';
+import FloatingChat from './Components/UI/FloatingChat';
 
 const Layout = ({
     children,
@@ -63,6 +64,11 @@ const Layout = ({
                 </main>
 
                 <Footer isDark={isDark} openVault={handleOpenVault} />
+                <FloatingChat 
+                    isDark={isDark} 
+                    onOpenTerminal={() => setIsTerminalOpen(true)}
+                    onOpenVault={handleOpenVault}
+                />
             </div>
             <Analytics />
             <SpeedInsights />
