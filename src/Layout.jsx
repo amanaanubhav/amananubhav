@@ -64,11 +64,13 @@ const Layout = ({
                 </main>
 
                 <Footer isDark={isDark} openVault={handleOpenVault} />
-                <FloatingChat 
-                    isDark={isDark} 
-                    onOpenTerminal={() => setIsTerminalOpen(true)}
-                    onOpenVault={handleOpenVault}
-                />
+                {!loading && !isVaultOpen && !isTerminalOpen && (
+                    <FloatingChat 
+                        isDark={isDark} 
+                        onOpenTerminal={() => setIsTerminalOpen(true)}
+                        onOpenVault={handleOpenVault}
+                    />
+                )}
             </div>
             <Analytics />
             <SpeedInsights />
