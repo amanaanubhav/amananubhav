@@ -120,8 +120,10 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
                   "relative items-center flex space-x-1 transition-colors duration-300 ease-out px-3 py-1.5 rounded-full",
                   // Typography
                   "text-xs uppercase tracking-widest font-medium",
-                  // Default Text
-                  "text-neutral-600 dark:text-neutral-400",
+                  // Default/Active Text
+                  location.pathname === navItem.link 
+                    ? "text-black dark:text-white" 
+                    : "text-neutral-600 dark:text-neutral-400",
                   // Hover Text -> Pearl Accent
                   "hover:text-indigo-600 dark:hover:text-indigo-300",
                   // NO Background on Hover

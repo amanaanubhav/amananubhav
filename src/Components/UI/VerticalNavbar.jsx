@@ -65,8 +65,8 @@ const VerticalNavbar = ({ sections }) => {
                         <motion.div
                             className={`
                                 w-3 h-3 rounded-full transition-all duration-300
-                                ${isActive ? 'bg-indigo-500 scale-125' : 'bg-neutral-300 dark:bg-neutral-700 border border-neutral-400 dark:border-neutral-600'}
-                                group-hover:bg-indigo-400 group-hover:scale-110
+                                ${isActive ? 'bg-zinc-800 dark:bg-zinc-200 scale-125' : 'bg-neutral-300 dark:bg-neutral-700 border border-neutral-400 dark:border-neutral-600'}
+                                group-hover:bg-zinc-600 dark:group-hover:bg-zinc-400 group-hover:scale-110
                             `}
                         />
                     </div>

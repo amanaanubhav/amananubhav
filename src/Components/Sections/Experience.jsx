@@ -24,7 +24,7 @@ const Experience = ({ resumeData, isDark }) => {
       <div className="max-w-4xl mx-auto">
         <Reveal>
           <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase mb-16 border-b pb-4 ${isDark ? 'text-zinc-500 border-zinc-900' : 'text-zinc-400 border-zinc-200'}`}>
-             // 02. Experience Log
+             // Experience Log
           </h2>
         </Reveal>
 

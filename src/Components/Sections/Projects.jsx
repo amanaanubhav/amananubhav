@@ -126,13 +126,26 @@ const Projects = ({ resumeData, isDark }) => {
     <section id="projects" className={`relative px-6 md:px-10 pt-32 pb-10 max-w-7xl mx-auto overflow-hidden ${isDark ? 'bg-zinc-950 text-zinc-400' : 'bg-gray-50 text-zinc-600'}`}>
 
       {/* Section Header */}
-      <Reveal>
-        <div className="flex flex-col mb-24">
-          <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase mb-6 border-b pb-4 w-full ${isDark ? 'text-zinc-500 border-zinc-900' : 'text-zinc-400 border-zinc-200'}`}>
-            // 03. Selected Works
+      <div className="flex justify-between items-end mb-16">
+        <Reveal>
+          <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase text-left ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
+            // FEATURED PROJECTS
           </h2>
-        </div>
-      </Reveal>
+        </Reveal>
+
+        <Reveal delay={200}>
+          <button
+            onClick={() => navigate('/project-archive')}
+            className={`group flex items-center gap-2 px-4 py-2 border rounded-sm text-xs font-cyber tracking-widest uppercase transition-colors duration-300
+                        ${isDark ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-600 hover:text-black hover:bg-zinc-100'}`}
+          >
+            MORE PROJECTS
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </button>
+        </Reveal>
+      </div>
+
+      <br />
 
       {/* TIER 1: FEATURED PROJECTS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 mb-32">
@@ -143,29 +156,20 @@ const Projects = ({ resumeData, isDark }) => {
         ))}
       </div>
 
-      {/* TIER 2 CTA: ARCHIVE LINK */}
+      {/* TIER 2 CTA: ARCHIVE LINK 
       <Reveal delay={200}>
         <div className="flex justify-center flex-col items-center">
           <button
             onClick={() => navigate('/project-archive')}
-            className={`group flex items-center gap-3 px-8 py-4 rounded-full border transition-all duration-300 ease-out 
-                    ${isDark
-                ? 'bg-zinc-900/30 backdrop-blur-md border-zinc-700/50 text-zinc-300 shadow-[0_8px_16px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.5)] hover:bg-zinc-800/50 hover:border-zinc-500 hover:text-white hover:-translate-y-1'
-                : 'bg-white/60 backdrop-blur-md border-zinc-300/80 text-zinc-600 shadow-[0_8px_16px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.12)] hover:bg-white/80 hover:border-zinc-400 hover:text-black hover:-translate-y-1'}`}
+            className={`group flex items-center gap-2 px-6 py-3 border rounded-sm text-xs font-cyber tracking-widest uppercase transition-colors duration-300
+                ${isDark ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-600 hover:text-black hover:bg-zinc-100'}`}
           >
-            <span className="text-xs font-cyber uppercase tracking-widest">Project Archive</span>
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all duration-300
-                    ${isDark
-                ? 'border-zinc-600 group-hover:border-zinc-400 group-hover:bg-zinc-400/20'
-                : 'border-zinc-400 group-hover:border-zinc-600 group-hover:bg-zinc-600/10'}`}>
-              <ArrowRight size={12} />
-            </div>
+            More Projects
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </button>
-          <p className="mt-8 font-mono text-[10px] opacity-30 uppercase tracking-[0.2em] transition-opacity duration-300 group-hover:opacity-50">
-                // Access complete technical database
-          </p>
         </div>
       </Reveal>
+      */}
     </section>
   );
 };

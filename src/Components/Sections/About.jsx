@@ -16,7 +16,7 @@ const About = ({ resumeData, isDark }) => {
     <section id="about" className="px-6 py-32 max-w-4xl mx-auto font-cyber">
       <Reveal>
         <h2 className="text-xs tracking-[0.3em] uppercase opacity-50 mb-12 border-b border-current pb-4">
-          // 01. Identity Core
+          // Identity Core
         </h2>
 
         <div className="grid md:grid-cols-[1fr_2fr] gap-12">

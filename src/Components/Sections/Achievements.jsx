@@ -36,23 +36,23 @@ const Achievements = ({ resumeData, isDark }) => {
   const displayedItems = items.slice(0, 6);
 
   return (
-    <section className={`px-6 pt-10 pb-32 border-y ${isDark ? 'bg-zinc-950 border-zinc-950' : 'bg-gray-50 border-gray-50'}`}>
+    <section id="achievements" className={`px-6 pt-10 pb-32 border-y ${isDark ? 'bg-zinc-950 border-zinc-950' : 'bg-gray-50 border-gray-50'}`}>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-end mb-16">
           <Reveal>
             <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase text-left ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                // 04. Honors & Recognition
+                // Honors & Recognition
             </h2>
           </Reveal>
 
           <Reveal delay={200}>
             <button
               onClick={() => navigate('/achievements')}
-              className={`group flex items-center gap-2 text-xs font-cyber tracking-widest uppercase transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'
-                }`}
+              className={`group flex items-center gap-2 px-4 py-2 border rounded-sm text-xs font-cyber tracking-widest uppercase transition-colors duration-300
+                  ${isDark ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-600 hover:text-black hover:bg-zinc-100'}`}
             >
-              View All
-              <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+              MORE HONORS
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
           </Reveal>
         </div>

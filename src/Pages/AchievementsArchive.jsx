@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, Search } from 'lucide-react';
-import { CometCard } from '../Components/UI/CometCard';
 import { normalizeAchievement } from '../lib/utils';
 import useScrollReveal from '../Hooks/useScrollReveal';
 
@@ -21,6 +20,10 @@ const Reveal = ({ children, delay = 0 }) => {
 const AchievementsArchive = ({ isDark, resumeData }) => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = React.useState('');
+
+    React.useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     // Normalize and Filter
     const allAchievements = React.useMemo(() => {
@@ -42,7 +45,7 @@ const AchievementsArchive = ({ isDark, resumeData }) => {
             <Reveal>
                 <div className="max-w-7xl mx-auto mb-16">
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate(-1)}
                         className={`group flex items-center gap-2 mb-8 text-xs font-cyber tracking-widest uppercase transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}
                     >
                         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
@@ -72,59 +75,57 @@ const AchievementsArchive = ({ isDark, resumeData }) => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 gap-3">
                         {allAchievements.map((item, i) => (
-                            <Reveal key={i} delay={i * 50}>
-                                <CometCard className="w-full h-full">
-                                    <div
-                                        className={`relative flex flex-col justify-between p-5 h-full rounded-xl border transition-all duration-300 ${isDark
-                                            ? 'bg-[#1F2121] border-zinc-800 text-white'
-                                            : 'bg-white border-zinc-200 text-zinc-800 shadow-sm'
-                                            }`}
-                                        style={{ transformStyle: 'preserve-3d' }}
-                                    >
-                                        {/* Top Section */}
-                                        <div>
-                                            <div className="flex justify-between items-start mb-3">
-                                                <span className={`text-[10px] font-mono ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                                    {String(i + 1).padStart(2, '0')}
-                                                </span>
-                                                <div className={`p-1.5 rounded-full ${isDark ? 'bg-zinc-900/50' : 'bg-zinc-100'}`}>
-                                                    <Trophy size={12} className={isDark ? 'text-yellow-500' : 'text-yellow-600'} />
-                                                </div>
-                                            </div>
+                            <Reveal key={i} delay={i * 30}>
+                                <div
+                                    className={`group md:grid md:grid-cols-12 md:gap-4 md:items-center p-6 md:py-5 md:px-6 border rounded-sm transition-colors duration-200 
+                                        ${isDark
+                                            ? 'bg-zinc-900/5 border-zinc-800/40 hover:bg-zinc-900/30 hover:border-zinc-700 text-zinc-400'
+                                            : 'bg-white/50 border-zinc-200 hover:border-zinc-300 hover:shadow-sm text-zinc-600'}`}
+                                >
+                                    {/* Mobile: Top Row */}
+                                    <div className="flex justify-between md:hidden mb-2">
+                                        <span className="font-mono text-xs opacity-60">{String(i + 1).padStart(2, '0')}</span>
+                                        <Trophy size={14} className={isDark ? 'text-zinc-500' : 'text-zinc-400'} />
+                                    </div>
 
-                                            <h3 className="text-sm font-bold mb-1 leading-tight">
+                                    {/* Index (Desktop) */}
+                                    <div className="hidden md:flex items-center gap-2 col-span-1 font-mono text-xs opacity-50 group-hover:opacity-100 transition-opacity">
+                                        <span>{String(i + 1).padStart(2, '0')}</span>
+                                    </div>
+
+                                    {/* Title & Desc */}
+                                    <div className="col-span-6 mb-3 md:mb-0">
+                                        <div className="flex items-baseline gap-3">
+                                            <h3 className={`text-base font-bold font-sans ${isDark ? 'text-zinc-300 group-hover:text-zinc-100' : 'text-zinc-700 group-hover:text-black'}`}>
                                                 {item.title}
                                             </h3>
-
-                                            <div className={`text-[9px] font-cyber uppercase tracking-widest mb-2 opacity-70 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                                {item.rank}
-                                            </div>
+                                            {item.rank && (
+                                                <span className={`text-[10px] font-cyber uppercase tracking-widest opacity-60 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                                                    {item.rank}
+                                                </span>
+                                            )}
                                         </div>
-
-                                        {/* Bottom Section */}
-                                        <div>
-                                            <p className={`text-xs mb-3 leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                                                {item.desc}
-                                            </p>
-
-                                            <div className="flex flex-wrap gap-1.5 overflow-hidden">
-                                                {item.skills?.slice(0, 2).map((skill, idx) => (
-                                                    <span
-                                                        key={idx}
-                                                        className={`text-[9px] font-cyber px-1.5 py-0.5 rounded border ${isDark
-                                                            ? 'border-zinc-700 bg-zinc-900/50 text-zinc-300'
-                                                            : 'border-zinc-200 bg-zinc-50 text-zinc-600'
-                                                            }`}
-                                                    >
-                                                        {skill}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
+                                        <p className="text-xs opacity-50 line-clamp-1 mt-0.5 font-sans group-hover:opacity-70 transition-opacity">
+                                            {item.desc}
+                                        </p>
                                     </div>
-                                </CometCard>
+
+                                    {/* Skills (Desktop & Mobile) */}
+                                    <div className="col-span-4 flex flex-wrap gap-2 mt-2 md:mt-0 justify-end md:justify-start">
+                                        {item.skills?.slice(0, 4).map((skill, idx) => (
+                                            <span key={idx} className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 border rounded-sm opacity-60 group-hover:opacity-90 transition-opacity ${isDark ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    {/* Trophy Icon (Desktop) */}
+                                    <div className="col-span-1 hidden md:flex justify-end">
+                                        <Trophy className={`w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity duration-300 ${isDark ? 'text-white' : 'text-black'}`} />
+                                    </div>
+                                </div>
                             </Reveal>
                         ))}
                     </div>

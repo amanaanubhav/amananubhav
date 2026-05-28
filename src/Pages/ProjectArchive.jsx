@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, Filter, ChevronDown, Calendar, Search } from 'lucide-react';
 import useScrollReveal from '../Hooks/useScrollReveal';
@@ -22,6 +22,10 @@ const ProjectArchive = ({ isDark, resumeData }) => {
     const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest'
     const [filterType, setFilterType] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     // Extract unique domains/types for filter
     const allTypes = ['All', ...new Set(resumeData.projects.map(p => p.type))];
@@ -76,7 +80,7 @@ const ProjectArchive = ({ isDark, resumeData }) => {
             <Reveal>
                 <div className="max-w-7xl mx-auto mb-16">
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate(-1)}
                         className={`group flex items-center gap-2 mb-8 text-xs font-cyber tracking-widest uppercase transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}`}
                     >
                         <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
