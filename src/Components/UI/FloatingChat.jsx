@@ -14,6 +14,22 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
     const [chatId, setChatId] = useState(null);
     const messagesEndRef = useRef(null);
 
+    // Persist visitor session
+    useEffect(() => {
+        const savedSession = localStorage.getItem('portfolio_chat_session');
+        if (savedSession) {
+            try {
+                const parsed = JSON.parse(savedSession);
+                setVisitor({ name: parsed.name, email: parsed.email });
+                setName(parsed.name);
+                setEmail(parsed.email);
+                setChatId(parsed.id);
+            } catch (e) {
+                console.error("Failed to parse session", e);
+            }
+        }
+    }, []);
+
     // Auto-scroll to bottom
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -59,6 +75,7 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
         }
 
         setVisitor({ name, email });
+        localStorage.setItem('portfolio_chat_session', JSON.stringify({ name, email, id }));
     };
 
     const handleSendMessage = async (e) => {
@@ -89,21 +106,24 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
 
             // 3. Trigger Email to Aman using EmailJS (Free Tier)
             if (import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-                emailjs.send(
-                    import.meta.env.VITE_EMAILJS_SERVICE_ID,
-                    import.meta.env.VITE_EMAILJS_TEMPLATE_ID_TO_AMAN,
-                    {
-                        from_name: visitor.name,
-                        from_email: visitor.email,
-                        message: text,
-                        reply_to: visitor.email,
-                    },
-                    {
-                        publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
-                    }
-                ).catch(err => console.error("EmailJS Error:", err));
+                try {
+                    const res = await emailjs.send(
+                        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                        import.meta.env.VITE_EMAILJS_TEMPLATE_ID_TO_AMAN,
+                        {
+                            from_name: visitor.name,
+                            from_email: visitor.email,
+                            message: text,
+                            reply_to: visitor.email,
+                        },
+                        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+                    );
+                    console.log("EmailJS Success (to Aman):", res.status, res.text);
+                } catch (err) {
+                    console.error("EmailJS Error (to Aman):", err);
+                }
             } else {
-                console.warn("EmailJS credentials not configured yet.");
+                console.warn("EmailJS credentials not configured yet. Check .env file.");
             }
 
         } catch (error) {
