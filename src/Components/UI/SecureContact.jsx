@@ -333,7 +333,7 @@ const SecureContact = ({ isOpen, onClose }) => {
                             <HelpCircle size={20} />
                         </button>
                         {/* TOOLTIP */}
-                        <div className="absolute top-12 left-0 w-96 p-4 bg-black/90 backdrop-blur-md border border-zinc-800 rounded shadow-2xl text-xs text-zinc-400 font-mono hidden group-hover:block z-50 pointer-events-none">
+                        <div className="absolute top-12 left-0 w-[85vw] sm:w-96 p-4 bg-black/95 backdrop-blur-md border border-zinc-800 rounded shadow-2xl text-xs text-zinc-400 font-mono hidden group-hover:block group-focus:block group-active:block z-50 pointer-events-none">
                             <div className="font-bold text-white mb-2 flex items-center gap-2"><Lock size={12} /> SECURE PROTOCOL V5</div>
                             <p className="leading-relaxed text-justify">
                                 The Secure Contact interface represents a cryptographic upgrade from standard contact forms, engineered on a custom blockchain architecture with end-to-end 256-bit encryption. Messages are strictly confidential, accessible only to you and the administrator. Note that to ensure absolute privacy, we employ a zero-knowledge protocol regarding your credentials; therefore, password recovery is impossible. Please secure your password diligently, as its loss will result in permanent account inaccessibility.
