@@ -15,6 +15,7 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
     const [newMessage, setNewMessage] = useState('');
     const [chatId, setChatId] = useState(null);
     const [isBlocked, setIsBlocked] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     const messagesEndRef = useRef(null);
 
     // Persist visitor session
@@ -163,6 +164,10 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
         <motion.div 
             drag
             dragMomentum={false}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={() => {
+                setTimeout(() => setIsDragging(false), 150);
+            }}
             className="fixed bottom-6 right-6 z-[100] flex flex-col items-end"
         >
             {/* Chat Window */}
@@ -305,12 +310,22 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
             )}
 
             {/* Floating Toggle Button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`w-14 h-14 rounded-xl shadow-2xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 ${isDark ? 'bg-zinc-100 text-black hover:bg-white' : 'bg-zinc-900 text-white hover:bg-black'}`}
+            <motion.button
+                onClick={(e) => {
+                    if (isDragging) {
+                        e.preventDefault();
+                        return;
+                    }
+                    setIsOpen(!isOpen);
+                }}
+                animate={{ y: [0, -4, 0] }}
+                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`w-14 h-14 rounded-2xl shadow-[0_15px_30px_-5px_rgba(0,0,0,0.3)] flex items-center justify-center border transition-colors ${isDark ? 'bg-zinc-100 text-black border-white/20 hover:bg-white hover:shadow-[0_20px_40px_-5px_rgba(255,255,255,0.3)]' : 'bg-zinc-900 text-white border-black/10 hover:bg-black hover:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.4)]'}`}
             >
                 {isOpen ? <X size={24} /> : <Send size={24} className="-ml-1 mt-1" />}
-            </button>
+            </motion.button>
         </motion.div>
     );
 };
