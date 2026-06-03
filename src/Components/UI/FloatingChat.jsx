@@ -65,6 +65,15 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
         const unsubscribeDoc = onSnapshot(doc(db, 'contact_chats', chatId), (docSnap) => {
             if (docSnap.exists()) {
                 setIsBlocked(docSnap.data().isBlocked || false);
+            } else {
+                localStorage.removeItem('portfolio_chat_session');
+                setVisitor(null);
+                setChatId(null);
+                setIsBlocked(false);
+                setMessages([]);
+                setName('');
+                setEmail('');
+                setPhone('');
             }
         });
 

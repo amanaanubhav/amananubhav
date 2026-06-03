@@ -128,30 +128,50 @@ const AdminChat = ({ isDark }) => {
         }
     };
 
-    const handleDeleteChat = async () => {
+    const handleClearChat = async () => {
         if (!activeChat || !db) return;
-        if (window.confirm(`Are you sure you want to permanently delete all transmissions from ${activeChat.visitorName || activeChat.id}? This will erase all data globally from the Firebase database.`)) {
+        if (window.confirm(`Are you sure you want to clear this chat? This will erase all messages but keep the user.`)) {
             try {
-                // To fully delete a document in Firebase from the client, we must delete its subcollections first
                 const messagesRef = collection(db, 'contact_chats', activeChat.id, 'messages');
                 const messagesSnapshot = await getDocs(messagesRef);
                 
                 const batch = writeBatch(db);
-                // Add all messages to the batch delete
                 messagesSnapshot.forEach((messageDoc) => {
                     batch.delete(messageDoc.ref);
                 });
                 
-                // Add the parent document to the batch delete
+                await batch.commit();
+                
+                await setDoc(doc(db, 'contact_chats', activeChat.id), {
+                    lastMessage: "[CHAT CLEARED]",
+                    unreadCount: 0
+                }, { merge: true });
+            } catch (error) {
+                console.error("Error clearing chat:", error);
+            }
+        }
+    };
+
+    const handleDeleteUser = async () => {
+        if (!activeChat || !db) return;
+        if (window.confirm(`Are you sure you want to permanently delete user ${activeChat.visitorName || activeChat.id}? This will erase all data and reset their chat.`)) {
+            try {
+                const messagesRef = collection(db, 'contact_chats', activeChat.id, 'messages');
+                const messagesSnapshot = await getDocs(messagesRef);
+                
+                const batch = writeBatch(db);
+                messagesSnapshot.forEach((messageDoc) => {
+                    batch.delete(messageDoc.ref);
+                });
+                
                 const parentDocRef = doc(db, 'contact_chats', activeChat.id);
                 batch.delete(parentDocRef);
                 
-                // Commit the global deletion to Firebase
                 await batch.commit();
                 
                 setActiveChat(null);
             } catch (error) {
-                console.error("Error deleting chat globally from Firebase:", error);
+                console.error("Error deleting user:", error);
             }
         }
     };
@@ -311,9 +331,13 @@ const AdminChat = ({ isDark }) => {
                                     <Ban size={12} />
                                     {activeChat.isBlocked ? 'UNBLOCK' : 'BLOCK'}
                                 </button>
-                                <button onClick={handleDeleteChat} className={`text-[10px] uppercase tracking-widest px-3 py-2 border transition-all flex items-center gap-1 ${isDark ? 'hover:bg-red-900/20 border-zinc-800 text-zinc-400 hover:text-red-500 hover:border-red-900' : 'hover:bg-red-50 border-gray-300 text-gray-500 hover:text-red-600 hover:border-red-200'}`} title="Delete Transmission">
+                                <button onClick={handleClearChat} className={`text-[10px] uppercase tracking-widest px-3 py-2 border transition-all flex items-center gap-1 ${isDark ? 'hover:bg-yellow-900/20 border-zinc-800 text-zinc-400 hover:text-yellow-500 hover:border-yellow-900' : 'hover:bg-yellow-50 border-gray-300 text-gray-500 hover:text-yellow-600 hover:border-yellow-200'}`} title="Clear Chat">
                                     <Trash2 size={12} />
-                                    DELETE
+                                    CLEAR
+                                </button>
+                                <button onClick={handleDeleteUser} className={`text-[10px] uppercase tracking-widest px-3 py-2 border transition-all flex items-center gap-1 ${isDark ? 'hover:bg-red-900/20 border-zinc-800 text-zinc-400 hover:text-red-500 hover:border-red-900' : 'hover:bg-red-50 border-gray-300 text-gray-500 hover:text-red-600 hover:border-red-200'}`} title="Delete User">
+                                    <Trash2 size={12} />
+                                    DELETE USER
                                 </button>
                                 <span className={`text-[10px] uppercase tracking-widest px-2 py-2 border ${isDark ? 'border-zinc-800 text-zinc-500 bg-zinc-900' : 'border-gray-300 text-gray-500 bg-gray-100'}`}>
                                     LIVE CONNECTION
