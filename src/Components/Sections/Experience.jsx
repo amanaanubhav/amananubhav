@@ -20,7 +20,7 @@ const Experience = ({ resumeData, isDark }) => {
   const dotColor = isDark ? 'bg-zinc-950 border-zinc-400 group-hover:border-white group-hover:bg-white' : 'bg-white border-zinc-400 group-hover:border-black group-hover:bg-black';
 
   return (
-    <section id="experience" className={`px-6 py-40 antialiased ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}>
+    <section id="experience" className={`px-6 py-40 antialiased ${isDark ? 'bg-black' : 'bg-white'}`}>
       <div className="max-w-4xl mx-auto">
         <Reveal>
           <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase mb-16 border-b pb-4 ${isDark ? 'text-zinc-500 border-zinc-900' : 'text-zinc-400 border-zinc-200'}`}>

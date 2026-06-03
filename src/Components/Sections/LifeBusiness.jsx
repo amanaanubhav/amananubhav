@@ -1,38 +1,55 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ExternalLink } from 'lucide-react';
 
 const LifeBusiness = ({ isDark }) => {
     const [hoveredIndex, setHoveredIndex] = useState(null);
 
-    const traits = [
-        { 
-            title: 'Entrepreneurial Mindset', 
-            desc: 'Building from the ground up. Identifying hidden opportunities, aggressively executing with precision, and scaling relentlessly.',
-            metric: '01'
+    const ventures = [
+        {
+            title: 'Accolades',
+            subtitle: 'Founder / The Command Center for Human Potential',
+            desc: 'An elite discovery framework shifting students from passive searching to strategic career engineering. Democratizing access to high-value technical opportunities globally by mitigating noise and curating premium data.',
+            metric: '01',
+            links: [
+                { name: 'Website', url: 'https://www.accolades.site' }
+            ]
         },
-        { 
-            title: 'Finance & Strategy', 
-            desc: 'Deep understanding of market mechanics. Optimizing capital allocation, leveraging resources, and driving sustainable, long-term growth.',
-            metric: '02'
+        {
+            title: 'TheTravStory',
+            subtitle: 'Founder / AI Travel Ecosystem',
+            desc: 'An AI-powered platform generating personalized itineraries and facilitating direct bookings. Solving travel friction by saving time through hyper-curated, seamless experiences without the hustle and hiccups.',
+            metric: '02',
+            links: [
+                { name: 'Website', url: 'https://www.thetravstory.com' },
+                { name: 'Instagram', url: 'https://www.instagram.com/the_travstory/' }
+            ]
         },
-        { 
-            title: 'Calculated Risk', 
-            desc: 'Willingness to explore uncharted territories. Embracing extreme calculated risks for asymmetric, outsized returns.',
-            metric: '03'
+        {
+            title: 'Deuxstem',
+            subtitle: 'Founder',
+            desc: 'An entrepreneurial venture focused on scaling innovative solutions. Driving impact through strategic development and focused execution.',
+            metric: '03',
+            links: [
+                { name: 'LinkedIn', url: 'https://in.linkedin.com/company/deuxstem' },
+                { name: 'Instagram', url: 'https://www.instagram.com/deuxstem/' },
+                { name: 'Google', url: 'https://www.google.com/search?q=deuxstem' }
+            ]
         },
-        { 
-            title: 'Business Acumen', 
-            desc: 'Aptitude for analyzing complex business models, parsing data signals from noise, and making high-impact decisions under pressure.',
-            metric: '04'
+        {
+            title: 'MIT Launch X & Sedu',
+            subtitle: 'Top 8% International Full Ride (2022)',
+            desc: 'Selected as top 8% from all international applicants for a full ride to MIT Launch X. Developed a business named Sedu, engineering a rapid go-to-market strategy that generated $875 in sales within just 5 weeks.',
+            metric: '04',
+            links: []
         }
     ];
 
     return (
-        <section className={`py-32 relative ${isDark ? 'bg-black text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
+        <section className={`py-32 relative ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}>
             <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
-                    
+
                     {/* Sticky Left Column */}
                     <div className="lg:col-span-5 lg:sticky lg:top-32 h-auto lg:h-[calc(100vh-16rem)] flex flex-col justify-between">
                         <motion.div
@@ -45,12 +62,12 @@ const LifeBusiness = ({ isDark }) => {
                                 Sector 03 — Index
                             </span>
                             <h2 className="text-5xl md:text-7xl font-bold tracking-tighter uppercase mb-6 leading-none">
-                                Business
+                                Entrepreneurship
                                 <br />
-                                <span className={isDark ? 'text-zinc-500' : 'text-zinc-400'}>Acumen</span>
+                                <span className={isDark ? 'text-zinc-500' : 'text-zinc-400'}>& Finance</span>
                             </h2>
                             <p className={`text-lg font-light leading-relaxed max-w-sm ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                                Showcasing entrepreneurial capability, financial intuition, and an innate drive to disrupt standard conventions.
+                                Building from the ground up. Identifying hidden market opportunities, executing with precision, and scaling relentlessly.
                             </p>
                         </motion.div>
 
@@ -67,7 +84,7 @@ const LifeBusiness = ({ isDark }) => {
                                 >
                                     <div className={`w-16 h-[2px] ${isDark ? 'bg-zinc-100' : 'bg-zinc-900'}`} />
                                     <span className="font-mono text-4xl font-light">
-                                        {hoveredIndex !== null ? traits[hoveredIndex].metric : '00'}
+                                        {hoveredIndex !== null ? ventures[hoveredIndex].metric : '00'}
                                     </span>
                                 </motion.div>
                             </AnimatePresence>
@@ -77,7 +94,7 @@ const LifeBusiness = ({ isDark }) => {
                     {/* Scrolling Right Column */}
                     <div className="lg:col-span-7 pb-32 lg:pb-0">
                         <div className="flex flex-col">
-                            {traits.map((trait, index) => (
+                            {ventures.map((venture, index) => (
                                 <motion.div
                                     key={index}
                                     onMouseEnter={() => setHoveredIndex(index)}
@@ -86,24 +103,60 @@ const LifeBusiness = ({ isDark }) => {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ duration: 0.6, delay: index * 0.1 }}
-                                    className={`group flex flex-col justify-center py-16 border-t ${index === traits.length - 1 ? 'border-b' : ''} ${isDark ? 'border-zinc-800' : 'border-zinc-300'} cursor-default relative overflow-hidden`}
+                                    className={`group flex flex-col justify-center py-16 border-t ${index === ventures.length - 1 ? 'border-b' : ''} ${isDark ? 'border-zinc-800' : 'border-zinc-300'} cursor-default relative overflow-hidden`}
                                 >
                                     {/* Hover background slide effect */}
-                                    <div className={`absolute inset-0 w-full h-full transform -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-[0.16,1,0.3,1] ${isDark ? 'bg-zinc-900' : 'bg-white'}`} />
-                                    
-                                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 px-4 md:px-8">
+                                    <div className={`absolute inset-0 w-full h-full transform -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-[0.16,1,0.3,1] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'}`} />
+
+                                    <div className="relative z-10 flex flex-col px-4 md:px-8">
                                         <div className="max-w-lg">
-                                            <h3 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-4 group-hover:translate-x-2 transition-transform duration-500">
-                                                {trait.title}
+                                            <h3 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-2 group-hover:translate-x-2 transition-transform duration-500">
+                                                {venture.title}
                                             </h3>
-                                            <p className={`text-lg font-light leading-relaxed group-hover:translate-x-2 transition-transform duration-500 delay-75 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                                                {trait.desc}
+                                            <span className={`block font-mono text-xs uppercase tracking-wider mb-6 group-hover:translate-x-2 transition-transform duration-500 ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                                                {venture.subtitle}
+                                            </span>
+                                            <p className={`text-lg font-light leading-relaxed mb-8 group-hover:translate-x-2 transition-transform duration-500 delay-75 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                                                {venture.desc}
                                             </p>
+
+                                            {venture.links && venture.links.length > 0 && (
+                                                <div className="flex flex-wrap gap-6 group-hover:translate-x-2 transition-transform duration-500 delay-100">
+                                                    {venture.links.map((link, i) => (
+                                                        <a 
+                                                            key={i} 
+                                                            href={link.url} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest border-b pb-1 transition-colors ${isDark ? 'border-zinc-700 hover:border-white text-zinc-300 hover:text-white' : 'border-zinc-300 hover:border-black text-zinc-600 hover:text-black'}`}
+                                                        >
+                                                            {link.name} <ExternalLink size={14} />
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         
-                                        <div className={`hidden md:flex shrink-0 transform -translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
-                                            <ArrowRight size={32} strokeWidth={1} />
-                                        </div>
+                                        {/* Abstract Graphic on Right Side for extra visual flair */}
+                                        <AnimatePresence>
+                                            {hoveredIndex === index && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    exit={{ opacity: 0, scale: 0.95 }}
+                                                    transition={{ duration: 0.5, ease: "easeOut" }}
+                                                    className="absolute right-0 top-0 bottom-0 w-1/4 pointer-events-none overflow-hidden hidden md:block"
+                                                >
+                                                    <svg className={`w-full h-full ${isDark ? 'text-zinc-800/30' : 'text-zinc-200/50'}`} viewBox="0 0 100 100" preserveAspectRatio="none">
+                                                        <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="0.5" />
+                                                        <line x1="20" y1="100" x2="100" y2="20" stroke="currentColor" strokeWidth="0.5" />
+                                                        <line x1="40" y1="100" x2="100" y2="40" stroke="currentColor" strokeWidth="0.5" />
+                                                        <circle cx="80" cy="20" r="2" fill="currentColor" />
+                                                    </svg>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+
                                     </div>
                                 </motion.div>
                             ))}

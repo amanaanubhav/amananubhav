@@ -33,7 +33,7 @@ const Professional = ({ isDark, resumeData }) => {
     }, [location]);
 
     return (
-        <main className={`relative z-10 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-black'}`}>
+        <main className={`relative z-10 ${isDark ? 'bg-black text-white' : 'bg-white text-black'}`}>
             <VerticalNavbar sections={sections} />
             <div className="pt-20">
                 <ProfessionalHero isDark={isDark} />

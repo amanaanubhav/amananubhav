@@ -37,7 +37,7 @@ const Card3D = ({ src, isActive, onClick }) => {
             className={`
                 relative w-full h-full overflow-hidden rounded-md bg-zinc-900 border border-zinc-800 shadow-2xl origin-center
                 transition-all duration-500 ease-out
-                ${isActive ? 'cursor-default group z-20' : 'cursor-pointer grayscale opacity-40 hover:opacity-70 z-10'}
+                ${isActive ? 'cursor-default group z-20 hover:scale-[1.02]' : 'cursor-pointer opacity-40 hover:opacity-70 z-10'}
             `}
         >
             {/* Active Glow */}
@@ -51,7 +51,7 @@ const Card3D = ({ src, isActive, onClick }) => {
                     src={`${src.split('?')[0]}?controls=0&autoplay=${isActive ? 1 : 0}&mute=1&loop=1&playlist=${src.split('/embed/')[1]?.split('?')[0]}&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1`}
                     title="YT"
                     frameBorder="0"
-                    className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${isActive ? 'grayscale-0' : 'grayscale'}`}
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                 />
             ) : isVideo ? (
                 <video
@@ -60,21 +60,13 @@ const Card3D = ({ src, isActive, onClick }) => {
                     loop
                     muted
                     playsInline
-                    className={`
-                        w-full h-full object-cover
-                        transition-[filter,transform] duration-700 ease-out
-                        ${isActive ? 'grayscale group-hover:grayscale-0 group-hover:scale-[1.02]' : 'grayscale'}
-                    `}
+                    className="w-full h-full object-cover transition-[filter,transform] duration-700 ease-out"
                 />
             ) : (
                 <img
                     src={src}
                     alt="Gallery"
-                    className={`
-                        w-full h-full object-cover
-                        transition-[filter,transform] duration-700 ease-out
-                        ${isActive ? 'grayscale group-hover:grayscale-0 group-hover:scale-[1.02]' : 'grayscale'}
-                    `}
+                    className="w-full h-full object-cover transition-[filter,transform] duration-700 ease-out"
                     loading="lazy"
                 />
             )}
@@ -90,6 +82,7 @@ const DesktopCardGallery = ({ items, isDark }) => {
 
     const [activeIndex, setActiveIndex] = useState(0);
     const [isAnimating, setIsAnimating] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
     // 2. Safe Helper for Circular Index
     const getIndex = useCallback((idx) => {
@@ -123,6 +116,16 @@ const DesktopCardGallery = ({ items, isDark }) => {
         return () => window.removeEventListener("keydown", handleKey);
     }, [handleNext, handlePrev]);
 
+    // Auto-scroll loop
+    useEffect(() => {
+        if (!isHovered) {
+            const interval = setInterval(() => {
+                setActiveIndex((prev) => getIndex(prev + 1));
+            }, 1500);
+            return () => clearInterval(interval);
+        }
+    }, [isHovered, getIndex]);
+
     // 5. Scroll/Wheel Support
     const handleWheel = useCallback((e) => {
         if (isAnimating) return;
@@ -152,25 +155,25 @@ const DesktopCardGallery = ({ items, isDark }) => {
             opacity: 1,
             rotateY: 0,
             filter: "brightness(1)",
-            transition: { type: "spring", stiffness: 200, damping: 25 }
+            transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
         },
         left: {
-            x: -350,
-            scale: 0.8,
+            x: -300,
+            scale: 0.6,
             zIndex: 10,
             opacity: 0.6,
             rotateY: 25,
             filter: "brightness(0.5)",
-            transition: { type: "spring", stiffness: 200, damping: 25 }
+            transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
         },
         right: {
-            x: 350,
-            scale: 0.8,
+            x: 300,
+            scale: 0.6,
             zIndex: 10,
             opacity: 0.6,
             rotateY: -25,
             filter: "brightness(0.5)",
-            transition: { type: "spring", stiffness: 200, damping: 25 }
+            transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
         },
         hidden: {
             opacity: 0,
@@ -217,21 +220,26 @@ const DesktopCardGallery = ({ items, isDark }) => {
     return (
         <div
             onWheel={handleWheel}
-            className={`relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden isolate perspective-container transition-colors duration-500 ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}
+            className={`relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden isolate perspective-container transition-colors duration-500 ${isDark ? 'bg-black' : 'bg-white'}`}
         >
 
             {/* Header */}
             <div className="absolute top-12 text-center z-10 pointer-events-none">
-                <p className={`text-[10px] font-mono tracking-[0.3em] uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>Archive Secure Deck</p>
+                <p className={`text-[10px] font-mono tracking-[0.3em] uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>{/* Archive Secure Deck */}</p>
             </div>
 
             {/* 3D Stage */}
-            <div className="relative w-full max-w-[1000px] h-[500px] flex items-center justify-center perspective-[1200px]" style={{ perspective: '1200px' }}>
+            <div
+                className="relative w-full max-w-[1000px] h-[500px] flex items-center justify-center perspective-[1200px]"
+                style={{ perspective: '1200px' }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
                 <AnimatePresence initial={false}>
                     {visibleItems.map((item) => (
                         <motion.div
                             key={item.src} // Stable Image Key
-                            className="absolute w-[500px] h-[350px] md:w-[600px] md:h-[400px] flex items-center justify-center"
+                            className="absolute w-[400px] h-[280px] md:w-[480px] md:h-[320px] flex items-center justify-center"
                             initial={false}
                             animate={item.position}
                             variants={variants}
@@ -249,33 +257,6 @@ const DesktopCardGallery = ({ items, isDark }) => {
                         </motion.div>
                     ))}
                 </AnimatePresence>
-            </div>
-
-            {/* Controls */}
-            <div className="absolute bottom-6 flex items-center gap-12 z-30">
-                <button
-                    onClick={handlePrev}
-                    className={`p-3 rounded-full border transition-all active:scale-95 ${isDark
-                        ? 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600 hover:bg-zinc-900'
-                        : 'border-zinc-300 text-zinc-400 hover:text-zinc-900 hover:border-zinc-400 hover:bg-white'
-                        }`}
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 18l-6-6 6-6" /></svg>
-                </button>
-
-                <span className={`font-mono text-xs tracking-widest ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                    {String(activeIndex + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
-                </span>
-
-                <button
-                    onClick={handleNext}
-                    className={`p-3 rounded-full border transition-all active:scale-95 ${isDark
-                        ? 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600 hover:bg-zinc-900'
-                        : 'border-zinc-300 text-zinc-400 hover:text-zinc-900 hover:border-zinc-400 hover:bg-white'
-                        }`}
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18l6-6-6-6" /></svg>
-                </button>
             </div>
         </div>
     );
@@ -295,7 +276,7 @@ const PhotoCardMobile = ({ src, index }) => {
             whileInView={{ opacity: 1 }}
             onViewportEnter={() => isVideo && videoRef.current?.play()}
             onViewportLeave={() => isVideo && videoRef.current?.pause()}
-            className="group relative w-full aspect-[4/5] overflow-hidden rounded-sm grayscale hover:grayscale-0 transition-all duration-500"
+            className="group relative w-full aspect-[4/5] overflow-hidden rounded-sm transition-all duration-500"
         >
             {isYoutube ? (
                 <iframe src={`${src.split('?')[0]}?controls=0&autoplay=0&mute=1&loop=1&playlist=${src.split('/embed/')[1]?.split('?')[0]}&showinfo=0&rel=0`} className="w-full h-full object-cover pointer-events-none scale-[1.35]" />
@@ -325,7 +306,7 @@ const MobileGallery = ({ images }) => {
 
 const ParallaxPortfolio = ({ isDark }) => {
     return (
-        <section className={`relative w-full z-0 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'} min-h-screen`}>
+        <section className={`relative w-full z-0 ${isDark ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-900'} min-h-screen`}>
             {/* Desktop */}
             <div className="hidden lg:block">
                 <DesktopCardGallery items={rawImages} isDark={isDark} />
@@ -334,7 +315,7 @@ const ParallaxPortfolio = ({ isDark }) => {
             {/* Mobile */}
             <div className="block lg:hidden py-10">
                 <div className="mb-8 text-center px-6">
-                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-60">Archive // Mobile</p>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-60">{/* Archive // Mobile */}</p>
                 </div>
                 <MobileGallery images={rawImages} />
             </div>

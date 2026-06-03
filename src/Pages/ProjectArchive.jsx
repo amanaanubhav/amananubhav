@@ -74,7 +74,7 @@ const ProjectArchive = ({ isDark, resumeData }) => {
     }, [filteredProjects]);
 
     return (
-        <div className={`min-h-screen pt-32 pb-20 px-6 md:px-12 transition-colors duration-500 ${isDark ? 'bg-zinc-950 text-zinc-400' : 'bg-gray-50 text-zinc-600'}`}>
+        <div className={`min-h-screen pt-32 pb-20 px-6 md:px-12 transition-colors duration-500 ${isDark ? 'bg-black text-zinc-400' : 'bg-white text-zinc-600'}`}>
 
             {/* Header & Controls */}
             <Reveal>

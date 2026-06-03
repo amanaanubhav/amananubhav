@@ -16,7 +16,7 @@ const Personal = ({ isDark, resumeData }) => {
     ];
 
     return (
-        <main className={`relative z-10 min-h-screen ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-black'}`}>
+        <main className={`relative z-10 min-h-screen ${isDark ? 'bg-black text-white' : 'bg-white text-black'}`}>
             <VerticalNavbar sections={sections} />
             <div id="about">
                 <About resumeData={resumeData} isDark={isDark} />

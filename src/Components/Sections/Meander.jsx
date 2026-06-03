@@ -189,7 +189,7 @@ const Meander = ({ isDark }) => {
     return (
         <section
             ref={sectionRef}
-            className={`relative ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}
+            className={`relative ${isDark ? 'bg-black' : 'bg-white'}`}
             // Increase the total height to give each chapter much more scroll distance
             style={{ height: `${(totalChapters * 3) * 100}vh` }}
         >

@@ -28,7 +28,7 @@ const Home = ({ isDark, resumeData }) => {
     }, [location]);
 
     return (
-        <main className={`relative z-10 ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}>
+        <main className={`relative z-10 ${isDark ? 'bg-black' : 'bg-white'}`}>
             <VerticalNavbar sections={sections} />
             <Hero isDark={isDark} />
             <div id="meander">

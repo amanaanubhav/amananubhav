@@ -36,7 +36,7 @@ const Achievements = ({ resumeData, isDark }) => {
   const displayedItems = items.slice(0, 6);
 
   return (
-    <section id="achievements" className={`px-6 pt-10 pb-32 border-y ${isDark ? 'bg-zinc-950 border-zinc-950' : 'bg-gray-50 border-gray-50'}`}>
+    <section id="achievements" className={`px-6 pt-10 pb-32 border-y ${isDark ? 'bg-black border-black' : 'bg-white border-white'}`}>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-end mb-16">
           <Reveal>

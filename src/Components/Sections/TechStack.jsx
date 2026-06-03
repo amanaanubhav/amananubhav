@@ -87,7 +87,7 @@ const TechStack = ({ resumeData, isDark }) => {
   };
 
   return (
-    <section id="techstack" className={`px-6 py-24 md:py-32 antialiased relative overflow-hidden ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}>
+    <section id="techstack" className={`px-6 py-24 md:py-32 antialiased relative overflow-hidden ${isDark ? 'bg-black' : 'bg-white'}`}>
 
       {/* Background decoration */}
       <div className="absolute top-1/4 -left-64 w-96 h-96 bg-zinc-500/5 rounded-full blur-3xl pointer-events-none"></div>

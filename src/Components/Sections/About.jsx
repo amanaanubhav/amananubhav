@@ -13,7 +13,7 @@ const Reveal = ({ children }) => {
 
 const About = ({ resumeData, isDark }) => {
   return (
-    <section id="about" className="px-6 py-32 max-w-4xl mx-auto font-cyber">
+    <section id="about" className={`px-6 py-32 max-w-4xl mx-auto font-cyber ${isDark ? 'bg-black' : 'bg-white'}`}>
       <Reveal>
         <h2 className="text-xs tracking-[0.3em] uppercase opacity-50 mb-12 border-b border-current pb-4">
           // Identity Core
