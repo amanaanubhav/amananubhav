@@ -62,7 +62,7 @@ const LifeBusiness = ({ isDark }) => {
                     className="mb-20 md:mb-32"
                 >
                     <span className={`font-mono text-xs tracking-[0.3em] uppercase block mb-6 ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                        Sector 03 — Index
+                        Index
                     </span>
                     <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter uppercase mb-6 leading-tight max-w-4xl">
                         Entrepreneurship <br className="hidden md:block"/>

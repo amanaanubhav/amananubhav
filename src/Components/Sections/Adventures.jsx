@@ -200,7 +200,7 @@ const Adventures = ({ onOpenStory, isDark }) => {
         <div className="absolute top-20 left-4 md:left-20 z-0">
           <div className="flex items-center gap-2 mb-2" style={{ color: 'var(--text-secondary)' }}>
             <Sparkles size={14} />
-            <span className="text-[10px] font-cyber tracking-[0.3em] uppercase">Sector 04 // Archives</span>
+            <span className="text-[10px] font-cyber tracking-[0.3em] uppercase">Archives</span>
           </div>
           <h2 className="text-6xl md:text-9xl font-black tracking-tighter uppercase opacity-20" style={{ color: 'var(--text-secondary)' }}>
             DATA<br />LOGS

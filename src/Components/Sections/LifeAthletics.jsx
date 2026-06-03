@@ -30,13 +30,13 @@ const slides = [
         category: "Adventure Sports / Mountaineering",
         title: "Ice Lake",
         desc: "Elevation: 4800m",
-        image: "https://images.unsplash.com/photo-1528659134015-81206f0e4bbf?auto=format&fit=crop&q=80", 
+        image: "/ice_lake_placeholder.png", 
     },
     {
         category: "Videography",
         title: "Visual Storytelling",
         desc: "Capturing raw moments. Translating adrenaline and silence into a universal cinematic language.",
-        image: "https://images.unsplash.com/photo-1517512140411-97b7cb4200ec?auto=format&fit=crop&q=80", 
+        image: "/videography_placeholder.png", 
     }
 ];
 
@@ -89,7 +89,7 @@ const LifeAthletics = ({ isDark }) => {
                             initial={{ opacity: 0, scale: 1.05 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 1.5, ease: "easeInOut" }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
                             className="absolute inset-0 z-0"
                         >
                             <div 

@@ -7,21 +7,31 @@ const LifeSTEM = ({ isDark }) => {
     const skills = [
         {
             num: '01',
-            title: 'SYSTEMS ENGINEERING',
-            desc: 'Building robust, scalable architectures and complex digital systems.',
-            tags: ['Architecture', 'Scalability', 'Infrastructure']
+            title: 'DEFYING SCHRODINGER EQUATION',
+            desc: 'A theory research proposed to accurately discover the position of an electron near the atom using Bekenstein bound and other physics principles.',
+            tags: ['Quantum Physics', 'Theoretical Physics', 'Bekenstein Bound'],
+            image: '/schrodinger_bg.png'
         },
         {
             num: '02',
-            title: 'CREATIVE INNOVATION',
-            desc: 'Solving complex problems with creative, outside-the-box technical solutions.',
-            tags: ['R&D', 'Problem Solving', 'Prototyping']
+            title: 'PAVANA',
+            desc: 'A carbon sequestration system using solar heat.',
+            tags: ['Carbon Sequestration', 'Solar Heat', 'Sustainability'],
+            image: '/pavana_bg.png'
         },
         {
             num: '03',
-            title: 'TECHNICAL EXECUTION',
-            desc: 'Hands-on experience in cutting-edge technologies and modern development.',
-            tags: ['Full Stack', 'Cloud', 'Optimization']
+            title: 'VYOMAGAMI',
+            desc: 'A solid fuel 2-stage rocket capable of flying into earth orbit.',
+            tags: ['Aerospace', 'Propulsion', 'Orbital Mechanics'],
+            image: '/vyomagami_bg.png'
+        },
+        {
+            num: '04',
+            title: 'VT60 & UF78',
+            desc: 'Two Near-Earth Object asteroids discovered and currently in monitoring by NASA.',
+            tags: ['Astronomy', 'NEO Discovery', 'NASA'],
+            image: '/asteroids_bg.png'
         }
     ];
 
@@ -86,7 +96,14 @@ const LifeSTEM = ({ isDark }) => {
                                     className={`group flex flex-col justify-center py-16 border-t ${index === skills.length - 1 ? 'border-b' : ''} ${isDark ? 'border-zinc-800' : 'border-zinc-300'} cursor-default relative overflow-hidden`}
                                 >
                                     {/* Hover background slide effect */}
-                                    <div className={`absolute inset-0 w-full h-full transform -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-[0.16,1,0.3,1] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'}`} />
+                                    <div className={`absolute inset-0 w-full h-full transform -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-[0.16,1,0.3,1] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} overflow-hidden`}>
+                                        {item.image && (
+                                            <>
+                                                <img src={item.image} alt={item.title} className="absolute inset-0 w-full h-full object-cover opacity-60 scale-105 group-hover:scale-100 transition-transform duration-1000" />
+                                                <div className={`absolute inset-0 bg-gradient-to-r ${isDark ? 'from-black/90 to-black/40' : 'from-white/90 to-white/40'}`} />
+                                            </>
+                                        )}
+                                    </div>
                                     
                                     <div className="relative z-10 flex flex-col px-4 md:px-8">
                                         <h3 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-4 group-hover:translate-x-2 transition-transform duration-500">
