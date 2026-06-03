@@ -220,7 +220,7 @@ const DesktopCardGallery = ({ items, isDark }) => {
     return (
         <div
             onWheel={handleWheel}
-            className={`relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden isolate perspective-container transition-colors duration-500 ${isDark ? 'bg-black' : 'bg-white'}`}
+            className={`relative w-full h-[80vh] min-h-[600px] flex flex-col items-center justify-center overflow-hidden isolate perspective-container transition-colors duration-500`}
         >
 
             {/* Header */}
@@ -306,7 +306,7 @@ const MobileGallery = ({ images }) => {
 
 const ParallaxPortfolio = ({ isDark }) => {
     return (
-        <section className={`relative w-full z-0 ${isDark ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-900'} min-h-screen`}>
+        <section className={`relative w-full z-0 ${isDark ? 'bg-black text-white' : 'bg-white text-zinc-900'}`}>
             {/* Desktop */}
             <div className="hidden lg:block">
                 <DesktopCardGallery items={rawImages} isDark={isDark} />
