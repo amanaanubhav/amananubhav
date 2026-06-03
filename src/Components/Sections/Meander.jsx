@@ -137,7 +137,7 @@ const ChapterText = ({ point, index, isDark }) => {
 /* ─────────────────────────────────────────────
    MAIN COMPONENT
    ───────────────────────────────────────────── */
-const StoryGuide = ({ isDark }) => {
+const Meander = ({ isDark }) => {
     const totalChapters = storyPoints.length;
     const sectionRef = useRef(null);
     const [activeIndex, setActiveIndex] = useState(-1);
@@ -355,4 +355,4 @@ const StoryGuide = ({ isDark }) => {
     );
 };
 
-export default StoryGuide;
+export default Meander;
