@@ -307,9 +307,9 @@ const AdminChat = ({ isDark }) => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={handleBlockUser} className={`text-[10px] uppercase tracking-widest px-3 py-2 border transition-all flex items-center gap-1 ${activeChat.isBlocked ? (isDark ? 'bg-red-900/20 text-red-500 border-red-900' : 'bg-red-100 text-red-600 border-red-200') : (isDark ? 'hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-white' : 'hover:bg-gray-200 border-gray-300 text-gray-500 hover:text-black')}`} title={activeChat.isBlocked ? "Unblock Origin" : "Block Origin"}>
+                                <button onClick={handleBlockUser} className={`text-[10px] uppercase tracking-widest px-3 py-2 border transition-all flex items-center gap-1 ${activeChat.isBlocked ? (isDark ? 'bg-red-900/20 text-red-500 border-red-900 hover:bg-red-900/40' : 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200') : (isDark ? 'hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-white' : 'hover:bg-gray-200 border-gray-300 text-gray-500 hover:text-black')}`} title={activeChat.isBlocked ? "Unblock Origin" : "Block Origin"}>
                                     <Ban size={12} />
-                                    {activeChat.isBlocked ? 'BLOCKED' : 'BLOCK'}
+                                    {activeChat.isBlocked ? 'UNBLOCK' : 'BLOCK'}
                                 </button>
                                 <button onClick={handleDeleteChat} className={`text-[10px] uppercase tracking-widest px-3 py-2 border transition-all flex items-center gap-1 ${isDark ? 'hover:bg-red-900/20 border-zinc-800 text-zinc-400 hover:text-red-500 hover:border-red-900' : 'hover:bg-red-50 border-gray-300 text-gray-500 hover:text-red-600 hover:border-red-200'}`} title="Delete Transmission">
                                     <Trash2 size={12} />
