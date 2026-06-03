@@ -179,12 +179,18 @@ const AdminChat = ({ isDark }) => {
     const handleBlockUser = async () => {
         if (!activeChat || !db) return;
         const newStatus = !activeChat.isBlocked;
+        
+        // Optimistically update the activeChat state so the UI button toggles instantly
+        setActiveChat(prev => ({ ...prev, isBlocked: newStatus }));
+        
         try {
             await setDoc(doc(db, 'contact_chats', activeChat.id), {
                 isBlocked: newStatus
             }, { merge: true });
         } catch (error) {
             console.error("Error toggling block status:", error);
+            // Revert on error
+            setActiveChat(prev => ({ ...prev, isBlocked: !newStatus }));
         }
     };
 
