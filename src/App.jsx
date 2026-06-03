@@ -62,7 +62,7 @@ const App = () => {
                 {RESUME ? (
                     <Routes>
                         <Route path="/" element={<Home isDark={isDark} resumeData={RESUME} />} />
-                        <Route path="/personal" element={<Personal isDark={isDark} resumeData={resumeData} />} />
+                        <Route path="/personal" element={<Personal isDark={isDark} resumeData={RESUME} />} />
                         <Route path="/professional" element={<Professional isDark={isDark} resumeData={RESUME} />} />
                         <Route path="/stories" element={<Stories isDark={isDark} onOpenStory={handleOpenStory} />} />
                         <Route path="/project-archive" element={<ProjectArchive isDark={isDark} resumeData={RESUME} />} />
