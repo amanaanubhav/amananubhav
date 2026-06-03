@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import VerticalNavbar from '../Components/UI/VerticalNavbar';
+import ProfessionalHero from '../Components/Sections/ProfessionalHero';
 import Experience from '../Components/Sections/Experience';
 import TechStack from '../Components/Sections/TechStack';
 import Projects from '../Components/Sections/Projects';
@@ -35,6 +36,7 @@ const Professional = ({ isDark, resumeData }) => {
         <main className={`relative z-10 ${isDark ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-black'}`}>
             <VerticalNavbar sections={sections} />
             <div className="pt-20">
+                <ProfessionalHero isDark={isDark} />
                 <Experience resumeData={resumeData} isDark={isDark} />
                 <TechStack resumeData={resumeData} isDark={isDark} />
                 <Projects resumeData={resumeData} isDark={isDark} />

@@ -11,6 +11,7 @@ export default {
         sans: ['Inter', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
         cyber: ['JetBrains Mono', 'monospace'], // Custom alias
+        serif: ['Playfair Display', 'Georgia', 'serif'],
         colors: {
           // We map these to CSS variables defined in index.css
           'app-bg': 'var(--bg-color)',

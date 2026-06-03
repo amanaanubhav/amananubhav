@@ -1,7 +1,7 @@
 import React from 'react';
 import useScrollReveal from '../../Hooks/useScrollReveal';
 import Magnetic from '../UI/Magnetic';
-import { Github, Linkedin, Mail, Lock } from 'lucide-react';
+import { Github, Linkedin, Mail, Lock, Instagram } from 'lucide-react';
 
 const Reveal = ({ children }) => {
   const [ref, isVisible] = useScrollReveal();
@@ -16,7 +16,8 @@ const Footer = ({ isDark, openVault }) => {
   const socialLinks = [
     { icon: <Mail size={20} />, href: "mailto:amannbhv.cswork@gmail.com", label: "Email" },
     { icon: <Linkedin size={20} />, href: "https://www.linkedin.com/in/amananubhav/", label: "LinkedIn" },
-    { icon: <Github size={20} />, href: "https://github.com/amanaanubhav", label: "GitHub" }
+    { icon: <Github size={20} />, href: "https://github.com/amanaanubhav", label: "GitHub" },
+    { icon: <Instagram size={20} />, href: "https://www.instagram.com/amansanubhav/", label: "Instagram" },
   ];
 
   return (

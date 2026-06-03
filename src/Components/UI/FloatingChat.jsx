@@ -3,6 +3,7 @@ import { Send, User, X, MessageCircle, CheckCheck, Terminal, Lock } from 'lucide
 import emailjs from '@emailjs/browser';
 import { db } from '../../Utils/firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { motion } from 'framer-motion';
 
 const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -159,10 +160,17 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end">
+        <motion.div 
+            drag
+            dragMomentum={false}
+            className="fixed bottom-6 right-6 z-[100] flex flex-col items-end"
+        >
             {/* Chat Window */}
             {isOpen && (
-                <div className={`mb-4 w-80 sm:w-96 h-[500px] flex flex-col rounded-sm overflow-hidden shadow-2xl border transition-all origin-bottom-right animate-in zoom-in-95 duration-200 font-mono ${isDark ? 'border-zinc-800 bg-zinc-950' : 'border-gray-200 bg-white'}`}>
+                <div 
+                    onPointerDownCapture={(e) => e.stopPropagation()}
+                    className={`mb-4 w-80 sm:w-96 h-[500px] flex flex-col rounded-sm overflow-hidden shadow-2xl border transition-all origin-bottom-right animate-in zoom-in-95 duration-200 font-mono ${isDark ? 'border-zinc-800 bg-zinc-950' : 'border-gray-200 bg-white'}`}
+                >
 
                     {/* Header */}
                     <div className={`flex items-center justify-between px-4 py-3 z-10 shadow-sm ${isDark ? 'bg-black border-b border-zinc-800' : 'bg-gray-100 border-b border-gray-200'}`}>
@@ -303,7 +311,7 @@ const FloatingChat = ({ isDark, onOpenTerminal, onOpenVault }) => {
             >
                 {isOpen ? <X size={24} /> : <Send size={24} className="-ml-1 mt-1" />}
             </button>
-        </div>
+        </motion.div>
     );
 };
 

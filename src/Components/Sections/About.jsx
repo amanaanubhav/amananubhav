@@ -1,6 +1,6 @@
 import React from 'react';
 import useScrollReveal from '../../Hooks/useScrollReveal';
-import { Github, Linkedin, Mail } from 'lucide-react'; // Added icons
+import { Github, Linkedin, Mail, Instagram } from 'lucide-react'; // Added icons
 
 const Reveal = ({ children }) => {
   const [ref, isVisible] = useScrollReveal();
@@ -47,6 +47,7 @@ const About = ({ resumeData, isDark }) => {
               <a href={resumeData.links.linkedin} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Linkedin size={20} /></a>
               <a href={resumeData.links.github} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Github size={20} /></a>
               <a href={`mailto:${resumeData.links.email}`} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Mail size={20} /></a>
+              <a href={resumeData.links.instagram} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Instagram size={20} /></a>
             </div>
           </div>
 

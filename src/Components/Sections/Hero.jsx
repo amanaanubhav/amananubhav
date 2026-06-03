@@ -58,7 +58,7 @@ const Hero = ({ isDark }) => {
 
                 {/* Subtitle - Negative margin to compensate for tracking space */}
                 <h2 className="text-lg md:text-2xl font-light tracking-[0.3em] md:tracking-[0.5em] uppercase opacity-70 text-center -mr-[0.3em] md:-mr-[0.5em] pointer-events-auto transition-all duration-300 hover:opacity-100 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                    ENGINEER <span className="mx-4 md:mx-8">ARCHITECT</span>
+                    ENGINEER <span className="mx-4 md:mx-8">ATHLETE</span>
                 </h2>
 
                 {/* Resume Button */}

@@ -1,3 +1,5 @@
+import { Instagram } from "lucide-react";
+
 export const RESUME = {
   name: "AMAN KUMAR ANUBHAV",
   role: "AI RESEARCHER / ENGINEER",
@@ -10,7 +12,8 @@ export const RESUME = {
     news: "https://www.globalindian.com/youth/story/cover-story/aman-anubhav-the-bihar-teen-impresses-nasa/",
     website: "https://amananubhav.com",
     kaggle: "https://www.kaggle.com/amananubhav",
-    phone: "+91-7541872501"
+    phone: "+91-7541872501",
+    instagram: "https://www.instagram.com/amansanubhav/",
   },
   education: [
     {

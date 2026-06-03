@@ -2,15 +2,14 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import VerticalNavbar from '../Components/UI/VerticalNavbar';
 import Hero from '../Components/Sections/Hero';
-import About from '../Components/Sections/About';
-import PortfolioGallery from '../Components/Sections/PortfolioGallery';
+import StoryGuide from '../Components/Sections/StoryGuide';
 
 const Home = ({ isDark, resumeData }) => {
     const location = useLocation();
 
     const sections = [
         { id: 'home', label: 'Hero' },
-        { id: 'about', label: 'About' },
+        { id: 'story', label: 'Story Guide' },
     ];
 
     useEffect(() => {
@@ -32,8 +31,9 @@ const Home = ({ isDark, resumeData }) => {
         <main className={`relative z-10 ${isDark ? 'bg-zinc-950' : 'bg-gray-50'}`}>
             <VerticalNavbar sections={sections} />
             <Hero isDark={isDark} />
-            <About resumeData={resumeData} isDark={isDark} />
-            <PortfolioGallery isDark={isDark} />
+            <div id="story">
+                <StoryGuide isDark={isDark} />
+            </div>
         </main>
     );
 };
