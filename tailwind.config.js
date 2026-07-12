@@ -27,6 +27,11 @@ export default {
       },
       animation: {
         "spin-slow": "spin 3s linear infinite",
+        "twinkle": "twinkle 4s ease-in-out infinite",
+        "float-nebula": "float-nebula 20s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 6s ease-in-out infinite",
+        "rotate-slow": "rotate-slow 30s linear infinite",
+        "drift": "drift 25s ease-in-out infinite",
       },
     },
   },
