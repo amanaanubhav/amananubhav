@@ -50,14 +50,14 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
       icon: <Home className="h-4 w-4" />,
     },
     {
-      name: "Life",
-      link: "/personal",
-      icon: <Briefcase className="h-4 w-4" />,
-    },
-    {
       name: "Professional",
       link: "/professional",
       icon: <FolderGit2 className="h-4 w-4" />,
+    },
+    {
+      name: "Life",
+      link: "/life",
+      icon: <Briefcase className="h-4 w-4" />,
     },
     {
       name: "Blogs",
