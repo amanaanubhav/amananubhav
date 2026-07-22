@@ -65,8 +65,8 @@ const Layout = ({
 
                 <Footer isDark={isDark} openVault={handleOpenVault} />
                 {!loading && !isVaultOpen && !isTerminalOpen && (
-                    <FloatingChat 
-                        isDark={isDark} 
+                    <FloatingChat
+                        isDark={isDark}
                         onOpenTerminal={() => setIsTerminalOpen(true)}
                         onOpenVault={handleOpenVault}
                     />

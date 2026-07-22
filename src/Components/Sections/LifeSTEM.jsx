@@ -39,7 +39,7 @@ const LifeSTEM = ({ isDark }) => {
         <section className={`py-32 relative ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}>
             <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
-                    
+
                     {/* Sticky Left Column */}
                     <div className="lg:col-span-5 lg:sticky lg:top-32 h-auto lg:h-[calc(100vh-16rem)] flex flex-col justify-between">
                         <motion.div
@@ -104,7 +104,7 @@ const LifeSTEM = ({ isDark }) => {
                                             </>
                                         )}
                                     </div>
-                                    
+
                                     <div className="relative z-10 flex flex-col px-4 md:px-8">
                                         <h3 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-4 group-hover:translate-x-2 transition-transform duration-500">
                                             {item.title}
@@ -123,7 +123,7 @@ const LifeSTEM = ({ isDark }) => {
                                             ))}
                                         </div>
                                     </div>
-                                    
+
                                     {/* Abstract Graphic on Right Side */}
                                     <AnimatePresence>
                                         {hoveredIndex === index && (

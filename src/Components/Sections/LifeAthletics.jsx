@@ -12,31 +12,31 @@ const slides = [
         category: "Adventure Sports / Mountaineering",
         title: "Thorong La Pass",
         desc: "Elevation: 5416m",
-        image: "https://images.unsplash.com/photo-1522163182402-834f871fd851?auto=format&fit=crop&q=80", 
+        image: "https://images.unsplash.com/photo-1522163182402-834f871fd851?auto=format&fit=crop&q=80",
     },
     {
         category: "Adventure Sports / Mountaineering",
         title: "Tilicho Lake",
         desc: "Elevation: 5200m — World's highest glacial lake.",
-        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80", 
+        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80",
     },
     {
         category: "Adventure Sports / Mountaineering",
         title: "Kun Tso",
         desc: "Elevation: 5000m",
-        image: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&q=80", 
+        image: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&q=80",
     },
     {
         category: "Adventure Sports / Mountaineering",
         title: "Ice Lake",
         desc: "Elevation: 4800m",
-        image: "/ice_lake_placeholder.png", 
+        image: "/ice_lake_placeholder.png",
     },
     {
         category: "Videography",
         title: "Visual Storytelling",
         desc: "Capturing raw moments. Translating adrenaline and silence into a universal cinematic language.",
-        image: "/videography_placeholder.png", 
+        image: "/videography_placeholder.png",
     }
 ];
 
@@ -81,7 +81,7 @@ const LifeAthletics = ({ isDark }) => {
 
                 {/* Massive Unified Carousel */}
                 <div className="relative w-full h-[70vh] md:h-[80vh] rounded-md overflow-hidden bg-black flex items-center justify-center isolate shadow-2xl">
-                    
+
                     {/* Background Media Crossfade */}
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -92,8 +92,8 @@ const LifeAthletics = ({ isDark }) => {
                             transition={{ duration: 0.5, ease: "easeInOut" }}
                             className="absolute inset-0 z-0"
                         >
-                            <div 
-                                className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-60 grayscale hover:grayscale-0 transition-all duration-700" 
+                            <div
+                                className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
                                 style={{ backgroundImage: `url(${slides[activeIndex].image})` }}
                             />
                         </motion.div>
@@ -125,7 +125,7 @@ const LifeAthletics = ({ isDark }) => {
                             </motion.div>
                         </AnimatePresence>
                     </div>
-                    
+
                     {/* Progress Indicator Dots / Bars */}
                     <div className="absolute bottom-8 right-8 md:bottom-16 md:right-16 z-20 flex gap-2 md:gap-4">
                         {slides.map((_, i) => (

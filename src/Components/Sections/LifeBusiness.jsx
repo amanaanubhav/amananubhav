@@ -54,7 +54,7 @@ const LifeBusiness = ({ isDark }) => {
         <section className={`py-32 relative ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}>
             <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
                 {/* Header Section - Non Sticky to avoid clutter/overlap */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -65,7 +65,7 @@ const LifeBusiness = ({ isDark }) => {
                         Index
                     </span>
                     <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter uppercase mb-6 leading-tight max-w-4xl">
-                        Entrepreneurship <br className="hidden md:block"/>
+                        Entrepreneurship <br className="hidden md:block" />
                         <span className={isDark ? 'text-zinc-600' : 'text-zinc-400'}>& Finance</span>
                     </h2>
                     <p className={`text-lg md:text-xl font-light leading-relaxed max-w-2xl ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
@@ -75,11 +75,11 @@ const LifeBusiness = ({ isDark }) => {
 
                 {/* Content Section: Split Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
-                    
+
                     {/* Left: Interactive List */}
                     <div className="lg:col-span-7 flex flex-col relative z-20">
                         {ventures.map((venture, index) => (
-                            <div 
+                            <div
                                 key={index}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 onClick={() => setActiveIndex(index)}
@@ -93,8 +93,8 @@ const LifeBusiness = ({ isDark }) => {
                                         {venture.metric}
                                     </span>
                                 </div>
-                                
-                                <div 
+
+                                <div
                                     className={`overflow-hidden transition-all duration-500 ease-in-out ${activeIndex === index ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
                                 >
                                     <span className={`block font-mono text-xs uppercase tracking-wider mb-6 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
@@ -107,10 +107,10 @@ const LifeBusiness = ({ isDark }) => {
                                     {venture.links && venture.links.length > 0 && (
                                         <div className="flex flex-wrap gap-6 mt-4">
                                             {venture.links.map((link, i) => (
-                                                <a 
-                                                    key={i} 
-                                                    href={link.url} 
-                                                    target="_blank" 
+                                                <a
+                                                    key={i}
+                                                    href={link.url}
+                                                    target="_blank"
                                                     rel="noopener noreferrer"
                                                     className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest border-b pb-1 transition-colors ${isDark ? 'border-zinc-700 hover:border-white text-zinc-300 hover:text-white' : 'border-zinc-300 hover:border-black text-zinc-600 hover:text-black'}`}
                                                 >

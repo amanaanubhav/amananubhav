@@ -50,14 +50,14 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
       icon: <Home className="h-4 w-4" />,
     },
     {
+      name: "Life",
+      link: "/personal",
+      icon: <Briefcase className="h-4 w-4" />,
+    },
+    {
       name: "Professional",
       link: "/professional",
       icon: <FolderGit2 className="h-4 w-4" />,
-    },
-    {
-      name: "Life",
-      link: "/life",
-      icon: <Briefcase className="h-4 w-4" />,
     },
     {
       name: "Blogs",
@@ -121,8 +121,8 @@ const Navbar = ({ activeSection, setActiveSection, isDark, toggleTheme, openTerm
                   // Typography
                   "text-xs uppercase tracking-widest font-medium",
                   // Default/Active Text
-                  location.pathname === navItem.link 
-                    ? "text-black dark:text-white" 
+                  location.pathname === navItem.link
+                    ? "text-black dark:text-white"
                     : "text-neutral-600 dark:text-neutral-400",
                   // Hover Text -> Pearl Accent
                   "hover:text-indigo-600 dark:hover:text-indigo-300",
