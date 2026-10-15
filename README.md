@@ -94,54 +94,66 @@ MLOps Monitoring: Integrate real-time project metrics (e.g., YVOO model drift da
 
 III. Local Setup & Deployment
 
-This project requires Node.js, npm, and a Firebase project setup for data persistence.
+The site is a Next.js 16 (App Router) app written in TypeScript and organised with Feature-Sliced Design. See docs/ARCHITECTURE.md for the layer layout and conventions.
 
 Prerequisites
 
-Node.js (v18+)
-
-A Firebase Project (with Firestore enabled).
-
-A Gemini API Key.
+- Node.js 20.9 or newer, and npm.
+- A Firebase project with Firestore and Anonymous Auth enabled (visitor chat, secure vault, admin inbox).
+- An EmailJS account (chat notifications).
+- An OpenRouter API key (AI terminal; default model openai/gpt-oss-120b, change it with OPENROUTER_MODEL).
 
 Installation
 
-# 1. Clone the repository
-git clone [https://github.com/YOUR_USERNAME/portfolio-v5.git](https://github.com/YOUR_USERNAME/portfolio-v5.git)
-cd portfolio-v5
+    npm install
 
-# 2. Install dependencies
-npm install
+Scripts
 
-# 3. Install Tailwind CSS
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Start the Next.js dev server on http://localhost:3000 |
+| `npm run build` | Production build (`next build`) |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint 9 flat config (`eslint-config-next` core-web-vitals + typescript) |
+| `npm run lint:fsd` | Steiger FSD architecture lint over `./src` |
+| `npm run typecheck` | `tsc --noEmit` |
 
 Configuration
 
-Create .env: In the root directory, create a .env file and populate it with your keys.
+Create `.env.local` in the repo root (it is gitignored). Client variables must use the `NEXT_PUBLIC_` prefix:
 
-VITE_FIREBASE_API_KEY="..."
-VITE_FIREBASE_AUTH_DOMAIN="..."
-VITE_FIREBASE_PROJECT_ID="..."
-VITE_GEMINI_API_KEY="AIzaSyCV..." # <-- Use your key here
-# ... include all other Firebase details
+    NEXT_PUBLIC_FIREBASE_API_KEY=
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+    NEXT_PUBLIC_FIREBASE_APP_ID=
+    NEXT_PUBLIC_EMAILJS_SERVICE_ID=
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_TO_AMAN=
+    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_TO_VISITOR=
+    NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=
+    OPENROUTER_API_KEY=      # server-only, read by the /api/chat edge route
+    OPENROUTER_MODEL=        # optional, any OpenRouter model id (default openai/gpt-oss-120b)
 
+Legacy names keep working. `next.config.ts` maps the old Vite names onto the `NEXT_PUBLIC_*` names at build time when the new name is not set, so existing `.env` / `.env.local` files and Vercel project variables need no change:
+
+- `VITE_FIREBASE_API_KEY` or `VITE_FIREBASE_API`
+- `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET` or `VITE_FIREBASE_STORAGE`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID` or `VITE_FIREBASE_MESSAGING`
+- `VITE_FIREBASE_APP_ID` or `VITE_FIREBASE_APP`
+- `VITE_EMAILJS_SERVICE_ID`, `VITE_EMAILJS_TEMPLATE_ID_TO_AMAN`, `VITE_EMAILJS_TEMPLATE_ID_TO_VISITOR`, `VITE_EMAILJS_PUBLIC_KEY`
+
+`OPENROUTER_API_KEY` is never exposed to the browser. Client values are inlined at build time, so rebuild after changing them.
 
 Run Development Server
 
-npm run dev
+    npm run dev
 
+Deployment (Vercel)
 
-Deployment (Recommended: Vercel)
+`vercel.json` is `{"framework": "nextjs"}`, so Vercel uses its standard Next.js build (`next build`) with no custom output directory.
 
-The easiest way to deploy this React/Vite app is via Vercel.
-
-Push your code to a GitHub repository.
-
-Go to Vercel.com and import the repository.
-
-Crucially: Add all VITE_FIREBASE_... and VITE_GEMINI_API_KEY variables to the Environment Variables section in your Vercel project settings.
-
-Deploy. Vercel automatically handles the Vite build process.
+1. Import the repository in Vercel (framework preset: Next.js).
+2. Add the environment variables above (either the `NEXT_PUBLIC_*` names or the legacy `VITE_*` names, plus `OPENROUTER_API_KEY` and optionally `OPENROUTER_MODEL`) for Production and Preview.
+3. Deploy. `/api/chat` runs on the Edge runtime; `robots.txt` and `sitemap.xml` are generated from `app/robots.ts` and `app/sitemap.ts`.
