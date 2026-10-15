@@ -1,20 +1,11 @@
-import React from 'react';
-import useScrollReveal from '../../Hooks/useScrollReveal';
+'use client';
 
-const Reveal = ({ children, delay = 0 }) => {
-  const [ref, isVisible] = useScrollReveal();
-  return (
-    <div
-      ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 transform ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}
-    >
-      {children}
-    </div>
-  );
-};
+import { EXPERIENCE } from '@/entities/experience';
+import { useTheme } from '@/shared/lib/theme';
+import { Reveal } from '@/shared/ui/reveal';
 
-const Experience = ({ resumeData, isDark }) => {
+export function ExperienceSection() {
+  const { isDark } = useTheme();
   // Brighter, sharper colors for "HD" feel
   const lineColor = isDark ? 'bg-zinc-800' : 'bg-zinc-200';
   const dotColor = isDark ? 'bg-zinc-950 border-zinc-400 group-hover:border-white group-hover:bg-white' : 'bg-white border-zinc-400 group-hover:border-black group-hover:bg-black';
@@ -22,9 +13,9 @@ const Experience = ({ resumeData, isDark }) => {
   return (
     <section id="experience" className={`px-6 py-40 antialiased ${isDark ? 'bg-black' : 'bg-white'}`}>
       <div className="max-w-4xl mx-auto">
-        <Reveal>
+        <Reveal preset="timeline">
           <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase mb-16 border-b pb-4 ${isDark ? 'text-zinc-500 border-zinc-900' : 'text-zinc-400 border-zinc-200'}`}>
-             // Experience Log
+            {'// Experience Log'}
           </h2>
         </Reveal>
 
@@ -36,8 +27,8 @@ const Experience = ({ resumeData, isDark }) => {
           ></div>
 
           <div className="space-y-12">
-            {resumeData.experience.map((exp, i) => (
-              <Reveal key={i} delay={i * 120}>
+            {EXPERIENCE.map((exp, i) => (
+              <Reveal key={i} preset="timeline" delay={i * 120}>
                 <div className="relative pl-8 md:pl-12 group">
 
                   {/* Timeline Dot - Smaller (6px), Brighter Glow */}
@@ -75,6 +66,4 @@ const Experience = ({ resumeData, isDark }) => {
       </div>
     </section>
   );
-};
-
-export default Experience;
+}

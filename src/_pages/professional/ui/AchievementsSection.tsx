@@ -1,28 +1,19 @@
-import React from 'react';
-import { Trophy, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import useScrollReveal from '../../Hooks/useScrollReveal';
-import { CometCard } from '../UI/CometCard';
-import { normalizeAchievement } from '../../lib/utils';
+'use client';
 
-const Reveal = ({ children, delay = 0 }) => {
-  const [ref, isVisible] = useScrollReveal();
-  return (
-    <div
-      ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-    >
-      {children}
-    </div>
-  );
-};
+import { useRouter } from 'next/navigation';
+import { ArrowRight, Trophy } from 'lucide-react';
+import { ACHIEVEMENTS, normalizeAchievement, type Achievement } from '@/entities/achievement';
+import { ROUTES } from '@/shared/config';
+import { useTheme } from '@/shared/lib/theme';
+import { CometCard } from '@/shared/ui/comet-card';
+import { Reveal } from '@/shared/ui/reveal';
 
-const Achievements = ({ resumeData, isDark }) => {
-  const navigate = useNavigate();
+export function AchievementsSection() {
+  const { isDark } = useTheme();
+  const router = useRouter();
 
   // Use normalized data
-  let items = resumeData.achievements.map(normalizeAchievement);
+  const items: Achievement[] = ACHIEVEMENTS.map(normalizeAchievement);
 
   // Add dummy data if needed for UI fullness on landing page
   if (items.length < 6) {
@@ -39,15 +30,15 @@ const Achievements = ({ resumeData, isDark }) => {
     <section id="achievements" className={`px-6 pt-10 pb-32 border-y ${isDark ? 'bg-black border-black' : 'bg-white border-white'}`}>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-end mb-16">
-          <Reveal>
+          <Reveal preset="section">
             <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase text-left ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                // Honors & Recognition
+              {'// Honors & Recognition'}
             </h2>
           </Reveal>
 
-          <Reveal delay={200}>
+          <Reveal preset="section" delay={200}>
             <button
-              onClick={() => navigate('/achievements')}
+              onClick={() => router.push(ROUTES.achievements)}
               className={`group flex items-center gap-2 px-4 py-2 border rounded-sm text-xs font-cyber tracking-widest uppercase transition-colors duration-300
                   ${isDark ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-600 hover:text-black hover:bg-zinc-100'}`}
             >
@@ -59,7 +50,7 @@ const Achievements = ({ resumeData, isDark }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayedItems.map((item, i) => (
-            <Reveal key={i} delay={i * 100}>
+            <Reveal key={i} preset="section" delay={i * 100}>
               <CometCard className="w-full h-full">
                 <div
                   className={`relative flex flex-col justify-between p-5 h-full rounded-xl border transition-all duration-300 ${isDark
@@ -114,6 +105,4 @@ const Achievements = ({ resumeData, isDark }) => {
       </div>
     </section>
   );
-};
-
-export default Achievements;
+}

@@ -1,67 +1,20 @@
-import React, { useEffect, useRef } from 'react';
-import { ArrowUpRight, ArrowRight } from 'lucide-react';
-import useScrollReveal from '../../Hooks/useScrollReveal';
-import { useNavigate } from 'react-router-dom';
+'use client';
 
-const Reveal = ({ children, delay = 0 }) => {
-  const [ref, isVisible] = useScrollReveal();
-  return (
-    <div
-      ref={ref}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-1000 ease-out transform perspective-1000 
-        ${isVisible
-          ? 'opacity-100 translate-y-0 rotate-x-0'
-          : 'opacity-0 translate-y-12 rotate-x-6'}`}
-    >
-      {children}
-    </div>
-  );
-};
+import { useRouter } from 'next/navigation';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { PROJECTS, selectFeaturedProjects, type Project } from '@/entities/project';
+import { ROUTES } from '@/shared/config';
+import { useTheme } from '@/shared/lib/theme';
+import { Reveal } from '@/shared/ui/reveal';
+import { useTilt } from '../lib/use-tilt';
 
-// Subtle 3D Tilt Hook for Cards
-const useTilt = () => {
-  const ref = useRef(null);
+interface ProjectCardProps {
+  p: Project;
+  isDark: boolean;
+}
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const handleMouseMove = (e) => {
-      const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      // Calculate center
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-
-      // Calculate tilt (increased for "machined object" feel)
-      const rotateX = ((y - centerY) / centerY) * -4; // Increased from 2 to 4
-      const rotateY = ((x - centerX) / centerX) * 4;
-
-      // Lower perspective = stronger 3D effect. Added translateZ for true depth.
-      el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-    };
-
-    const handleMouseLeave = () => {
-      el.style.transform = `perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-    };
-
-    el.addEventListener('mousemove', handleMouseMove);
-    el.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      el.removeEventListener('mousemove', handleMouseMove);
-      el.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
-
-  return ref;
-};
-
-const ProjectCard = ({ p, isDark }) => {
-  const tiltRef = useTilt();
+function ProjectCard({ p, isDark }: ProjectCardProps) {
+  const tiltRef = useTilt<HTMLAnchorElement>();
 
   return (
     <a
@@ -71,12 +24,12 @@ const ProjectCard = ({ p, isDark }) => {
       rel="noopener noreferrer"
       className={`group block h-full min-h-[360px] p-10 transition-all duration-500 relative overflow-hidden flex flex-col border border-transparent
             ${isDark
-          ? 'bg-zinc-950/90 hover:border-zinc-600/50 shadow-2xl shadow-black/60' // Deepened bg and shadow
+          ? 'bg-zinc-950/90 hover:border-zinc-600/50 shadow-2xl shadow-black/60'
           : 'bg-white hover:border-zinc-400 shadow-xl'}`}
       style={{
         transformStyle: 'preserve-3d',
         transition: 'transform 0.1s ease-out', // Fast response
-        willChange: 'transform'
+        willChange: 'transform',
       }}
     >
       {/* Metallic Border Gradient (Pseudo) */}
@@ -105,7 +58,7 @@ const ProjectCard = ({ p, isDark }) => {
       {/* Tech Tags - Limit to 3-5 */}
       <div className="flex flex-wrap gap-2 mt-auto relative z-10" style={{ transform: 'translateZ(20px)' }}>
         {p.tech.slice(0, 4).map((t) => (
-          <span key={t} className={`text-[10px] font-cyber uppercase tracking-wider px-3 py-1.5 border rounded-sm transition-colors 
+          <span key={t} className={`text-[10px] font-cyber uppercase tracking-wider px-3 py-1.5 border rounded-sm transition-colors
                 ${isDark
               ? 'border-zinc-800 bg-zinc-900/50 text-zinc-500 group-hover:border-zinc-600 group-hover:text-zinc-300'
               : 'border-zinc-200 bg-zinc-50 text-zinc-500 group-hover:border-zinc-300 group-hover:text-zinc-700'}`}>
@@ -114,28 +67,29 @@ const ProjectCard = ({ p, isDark }) => {
         ))}
       </div>
     </a>
-  )
+  );
 }
 
-const Projects = ({ resumeData, isDark }) => {
-  const navigate = useNavigate();
+export function FeaturedProjectsSection() {
+  const { isDark } = useTheme();
+  const router = useRouter();
   // FILTER: Strictly top 4 Featured Projects
-  const featuredProjects = resumeData.projects.filter(p => p.featured).slice(0, 4);
+  const featuredProjects = selectFeaturedProjects(PROJECTS, 4);
 
   return (
     <section id="projects" className={`relative px-6 md:px-10 pt-32 pb-10 max-w-7xl mx-auto overflow-hidden ${isDark ? 'bg-black text-zinc-400' : 'bg-white text-zinc-600'}`}>
 
       {/* Section Header */}
       <div className="flex justify-between items-end mb-16">
-        <Reveal>
+        <Reveal preset="tilt">
           <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase text-left ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-            // FEATURED PROJECTS
+            {'// FEATURED PROJECTS'}
           </h2>
         </Reveal>
 
-        <Reveal delay={200}>
+        <Reveal preset="tilt" delay={200}>
           <button
-            onClick={() => navigate('/project-archive')}
+            onClick={() => router.push(ROUTES.projectArchive)}
             className={`group flex items-center gap-2 px-4 py-2 border rounded-sm text-xs font-cyber tracking-widest uppercase transition-colors duration-300
                         ${isDark ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-600 hover:text-black hover:bg-zinc-100'}`}
           >
@@ -150,28 +104,11 @@ const Projects = ({ resumeData, isDark }) => {
       {/* TIER 1: FEATURED PROJECTS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 mb-32">
         {featuredProjects.map((p, i) => (
-          <Reveal key={i} delay={i * 150}>
+          <Reveal key={i} preset="tilt" delay={i * 150}>
             <ProjectCard p={p} isDark={isDark} />
           </Reveal>
         ))}
       </div>
-
-      {/* TIER 2 CTA: ARCHIVE LINK 
-      <Reveal delay={200}>
-        <div className="flex justify-center flex-col items-center">
-          <button
-            onClick={() => navigate('/project-archive')}
-            className={`group flex items-center gap-2 px-6 py-3 border rounded-sm text-xs font-cyber tracking-widest uppercase transition-colors duration-300
-                ${isDark ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-600 hover:text-black hover:bg-zinc-100'}`}
-          >
-            More Projects
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </button>
-        </div>
-      </Reveal>
-      */}
     </section>
   );
-};
-
-export default Projects;
+}
