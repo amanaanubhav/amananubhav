@@ -1,39 +1,15 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+'use client';
 
-const LifeSTEM = ({ isDark }) => {
-    const [hoveredIndex, setHoveredIndex] = useState(null);
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 
-    const skills = [
-        {
-            num: '01',
-            title: 'DEFYING SCHRODINGER EQUATION',
-            desc: 'A theory research proposed to accurately discover the position of an electron near the atom using Bekenstein bound and other physics principles.',
-            tags: ['Quantum Physics', 'Theoretical Physics', 'Bekenstein Bound'],
-            image: '/schrodinger_bg.png'
-        },
-        {
-            num: '02',
-            title: 'PAVANA',
-            desc: 'A carbon sequestration system using solar heat.',
-            tags: ['Carbon Sequestration', 'Solar Heat', 'Sustainability'],
-            image: '/pavana_bg.png'
-        },
-        {
-            num: '03',
-            title: 'VYOMAGAMI',
-            desc: 'A solid fuel 2-stage rocket capable of flying into earth orbit.',
-            tags: ['Aerospace', 'Propulsion', 'Orbital Mechanics'],
-            image: '/vyomagami_bg.png'
-        },
-        {
-            num: '04',
-            title: 'VT60 & UF78',
-            desc: 'Two Near-Earth Object asteroids discovered and currently in monitoring by NASA.',
-            tags: ['Astronomy', 'NEO Discovery', 'NASA'],
-            image: '/asteroids_bg.png'
-        }
-    ];
+import { useTheme } from '@/shared/lib/theme';
+
+import { STEM_ITEMS as skills } from '../config/content';
+
+export function StemSection() {
+    const { isDark } = useTheme();
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     return (
         <section className={`py-32 relative ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}>
@@ -99,6 +75,7 @@ const LifeSTEM = ({ isDark }) => {
                                     <div className={`absolute inset-0 w-full h-full transform -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-[0.16,1,0.3,1] ${isDark ? 'bg-zinc-900' : 'bg-zinc-100'} overflow-hidden`}>
                                         {item.image && (
                                             <>
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img src={item.image} alt={item.title} className="absolute inset-0 w-full h-full object-cover opacity-60 scale-105 group-hover:scale-100 transition-transform duration-1000" />
                                                 <div className={`absolute inset-0 bg-gradient-to-r ${isDark ? 'from-black/90 to-black/40' : 'from-white/90 to-white/40'}`} />
                                             </>
@@ -152,6 +129,4 @@ const LifeSTEM = ({ isDark }) => {
             </div>
         </section>
     );
-};
-
-export default LifeSTEM;
+}

@@ -1,27 +1,35 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+'use client';
 
-const rawImages = [
-    "/G1.webp", "/G21.webp", "/G8.webp",
-    "/G5.webp", "/G6.webp", "/GV16.mp4",
-    "/G13.webp", "/G14.webp", "/GV10.mp4",
-    "/G2.webp", "/G9.webp", "/GV7.mp4",
-];
+import { useState, useEffect, useCallback, useMemo, useRef, type WheelEvent } from 'react';
+import { motion, AnimatePresence, type Variants } from 'motion/react';
 
-const Card3D = ({ src, isActive, onClick }) => {
-    // Defensive guard: ensure src exists
-    if (!src || typeof src !== 'string') return null;
+import { useTheme } from '@/shared/lib/theme';
 
-    const isVideo = src.match(/\.(mp4|webm|ogg)$/i);
-    const isYoutube = src.includes("youtube.com/embed");
-    const videoRef = useRef(null);
+import { GALLERY_ITEMS } from '../config/content';
+import { useInterval } from '../lib/use-interval';
+
+type SlotPosition = 'left' | 'center' | 'right';
+
+const VIDEO_RE = /\.(mp4|webm|ogg)$/i;
+
+interface Card3DProps {
+    src: string;
+    isActive: boolean;
+    onClick: () => void;
+}
+
+const Card3D = ({ src, isActive, onClick }: Card3DProps) => {
+    const isValid = typeof src === 'string' && src.length > 0;
+    const isVideo = isValid && VIDEO_RE.test(src);
+    const isYoutube = isValid && src.includes("youtube.com/embed");
+    const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         if (isVideo && videoRef.current) {
             if (isActive) {
                 const playPromise = videoRef.current.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(error => {
+                    playPromise.catch((error: unknown) => {
                         console.log("Auto-play was prevented:", error);
                     });
                 }
@@ -30,6 +38,9 @@ const Card3D = ({ src, isActive, onClick }) => {
             }
         }
     }, [isActive, isVideo]);
+
+    // Defensive guard: ensure src exists (after hooks, rules-of-hooks)
+    if (!isValid) return null;
 
     return (
         <div
@@ -63,6 +74,7 @@ const Card3D = ({ src, isActive, onClick }) => {
                     className="w-full h-full object-cover transition-[filter,transform] duration-700 ease-out"
                 />
             ) : (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={src}
                     alt="Gallery"
@@ -74,28 +86,64 @@ const Card3D = ({ src, isActive, onClick }) => {
     );
 };
 
-const DesktopCardGallery = ({ items, isDark }) => {
-    // 1. Initial Data Guard
-    if (!items || !Array.isArray(items) || items.length === 0) {
-        return null;
+const variants: Variants = {
+    center: {
+        x: 0,
+        scale: 1,
+        zIndex: 20,
+        opacity: 1,
+        rotateY: 0,
+        filter: "brightness(1)",
+        transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
+    },
+    left: {
+        x: -300,
+        scale: 0.6,
+        zIndex: 10,
+        opacity: 0.6,
+        rotateY: 25,
+        filter: "brightness(0.5)",
+        transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
+    },
+    right: {
+        x: 300,
+        scale: 0.6,
+        zIndex: 10,
+        opacity: 0.6,
+        rotateY: -25,
+        filter: "brightness(0.5)",
+        transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
+    },
+    hidden: {
+        opacity: 0,
+        scale: 0.0,
+        zIndex: 0,
+        transition: { duration: 0.2 }
     }
+};
 
+interface DesktopCardGalleryProps {
+    items: readonly string[];
+    isDark: boolean;
+}
+
+const DesktopCardGallery = ({ items, isDark }: DesktopCardGalleryProps) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [isAnimating, setIsAnimating] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const hasItems = Array.isArray(items) && items.length > 0;
 
-    // 2. Safe Helper for Circular Index
-    const getIndex = useCallback((idx) => {
+    // Safe Helper for Circular Index
+    const getIndex = useCallback((idx: number) => {
         const len = items.length;
         return ((idx % len) + len) % len;
     }, [items.length]);
 
-    // 3. Handlers
+    // Handlers
     const handleNext = useCallback(() => {
         if (isAnimating) return;
         setIsAnimating(true);
         setActiveIndex((prev) => getIndex(prev + 1));
-        // Unlock slightly faster to allow rapid clicks if desired, but kept to anim duration
         setTimeout(() => setIsAnimating(false), 500);
     }, [isAnimating, getIndex]);
 
@@ -106,9 +154,9 @@ const DesktopCardGallery = ({ items, isDark }) => {
         setTimeout(() => setIsAnimating(false), 500);
     }, [isAnimating, getIndex]);
 
-    // 4. Keyboard Listener
+    // Keyboard Listener
     useEffect(() => {
-        const handleKey = (e) => {
+        const handleKey = (e: KeyboardEvent) => {
             if (e.key === "ArrowRight") handleNext();
             if (e.key === "ArrowLeft") handlePrev();
         };
@@ -116,18 +164,14 @@ const DesktopCardGallery = ({ items, isDark }) => {
         return () => window.removeEventListener("keydown", handleKey);
     }, [handleNext, handlePrev]);
 
-    // Auto-scroll loop
-    useEffect(() => {
-        if (!isHovered) {
-            const interval = setInterval(() => {
-                setActiveIndex((prev) => getIndex(prev + 1));
-            }, 1500);
-            return () => clearInterval(interval);
-        }
-    }, [isHovered, getIndex]);
+    // Auto-scroll loop (paused while hovered)
+    const autoAdvance = useCallback(() => {
+        setActiveIndex((prev) => getIndex(prev + 1));
+    }, [getIndex]);
+    useInterval(autoAdvance, !isHovered && hasItems ? 1500 : null);
 
-    // 5. Scroll/Wheel Support
-    const handleWheel = useCallback((e) => {
+    // Scroll/Wheel Support
+    const handleWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
         if (isAnimating) return;
 
         // Threshold to prevent accidental jitters
@@ -146,65 +190,24 @@ const DesktopCardGallery = ({ items, isDark }) => {
         }
     }, [isAnimating, handleNext, handlePrev]);
 
-    // 6. Variants
-    const variants = {
-        center: {
-            x: 0,
-            scale: 1,
-            zIndex: 20,
-            opacity: 1,
-            rotateY: 0,
-            filter: "brightness(1)",
-            transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
-        },
-        left: {
-            x: -300,
-            scale: 0.6,
-            zIndex: 10,
-            opacity: 0.6,
-            rotateY: 25,
-            filter: "brightness(0.5)",
-            transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
-        },
-        right: {
-            x: 300,
-            scale: 0.6,
-            zIndex: 10,
-            opacity: 0.6,
-            rotateY: -25,
-            filter: "brightness(0.5)",
-            transition: { type: "tween", ease: "easeInOut", duration: 0.6 }
-        },
-        hidden: {
-            opacity: 0,
-            scale: 0.0,
-            zIndex: 0,
-            transition: { duration: 0.2 }
-        }
-    };
-
-    // 7. Compute Visible Items Safely
+    // Compute Visible Items Safely
     const visibleItems = useMemo(() => {
+        if (!hasItems) return [];
         const prevIndex = getIndex(activeIndex - 1);
         const nextIndex = getIndex(activeIndex + 1);
 
-        // Define positions locally
-        const slots = [
+        const slots: { index: number; position: SlotPosition }[] = [
             { index: prevIndex, position: 'left' },
             { index: activeIndex, position: 'center' },
             { index: nextIndex, position: 'right' }
         ];
 
-        // Deduplicate based on index to strict unique keys
-        const uniqueMap = new Map();
+        // Deduplicate based on index; when indices overlap (< 3 items) keep Center.
+        const uniqueMap = new Map<number, SlotPosition>();
         slots.forEach(slot => {
-            // If items.length < 3, indices overlap. Map handles last-write-wins (not ideal).
-            // Better: Allow overlap but use unique composite key?
-            // User requires 3 frames. If only 1 image, prev=0, curr=0, next=0.
             if (!uniqueMap.has(slot.index)) {
                 uniqueMap.set(slot.index, slot.position);
             } else {
-                // Optimization: If index 0 is both center and prev (1 item list), keep Center.
                 if (slot.position === 'center') uniqueMap.set(slot.index, 'center');
             }
         });
@@ -215,7 +218,12 @@ const DesktopCardGallery = ({ items, isDark }) => {
             src: items[idx]
         }));
 
-    }, [activeIndex, getIndex, items]);
+    }, [activeIndex, getIndex, items, hasItems]);
+
+    // Initial Data Guard (after hooks, rules-of-hooks)
+    if (!hasItems) {
+        return null;
+    }
 
     return (
         <div
@@ -264,18 +272,18 @@ const DesktopCardGallery = ({ items, isDark }) => {
 
 // MOBILE GALLERY (Safe & Simple)
 
-const PhotoCardMobile = ({ src, index }) => {
+const PhotoCardMobile = ({ src }: { src: string }) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
     if (!src) return null;
-    const isVideo = src.match(/\.(mp4|webm|ogg)$/i);
+    const isVideo = VIDEO_RE.test(src);
     const isYoutube = src.includes("youtube.com/embed");
-    const videoRef = useRef(null);
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            onViewportEnter={() => isVideo && videoRef.current?.play()}
-            onViewportLeave={() => isVideo && videoRef.current?.pause()}
+            onViewportEnter={() => { if (isVideo) void videoRef.current?.play(); }}
+            onViewportLeave={() => { if (isVideo) videoRef.current?.pause(); }}
             className="group relative w-full aspect-[4/5] overflow-hidden rounded-sm transition-all duration-500"
         >
             {isYoutube ? (
@@ -283,33 +291,33 @@ const PhotoCardMobile = ({ src, index }) => {
             ) : isVideo ? (
                 <video ref={videoRef} src={src} loop muted playsInline className="w-full h-full object-cover" />
             ) : (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
             )}
         </motion.div>
     );
 };
 
-const MobileGallery = ({ images }) => {
+const MobileGallery = ({ images }: { images: readonly string[] }) => {
     return (
         <div className="flex overflow-x-auto snap-x snap-mandatory px-6 gap-4 pb-10 no-scrollbar">
             {images.map((src, i) => (
                 <div key={i} className="flex-shrink-0 w-[80vw] snap-center">
-                    <PhotoCardMobile src={src} index={i} />
+                    <PhotoCardMobile src={src} />
                 </div>
             ))}
         </div>
     );
 };
 
+export function GallerySection() {
+    const { isDark } = useTheme();
 
-// MAIN EXPORT
-
-const ParallaxPortfolio = ({ isDark }) => {
     return (
         <section className={`relative w-full z-0 ${isDark ? 'bg-black text-white' : 'bg-white text-zinc-900'}`}>
             {/* Desktop */}
             <div className="hidden lg:block">
-                <DesktopCardGallery items={rawImages} isDark={isDark} />
+                <DesktopCardGallery items={GALLERY_ITEMS} isDark={isDark} />
             </div>
 
             {/* Mobile */}
@@ -317,10 +325,8 @@ const ParallaxPortfolio = ({ isDark }) => {
                 <div className="mb-8 text-center px-6">
                     <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-60">{/* Archive // Mobile */}</p>
                 </div>
-                <MobileGallery images={rawImages} />
+                <MobileGallery images={GALLERY_ITEMS} />
             </div>
         </section>
     );
-};
-
-export default ParallaxPortfolio;
+}

@@ -1,54 +1,18 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+'use client';
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ExternalLink, Image as ImageIcon } from 'lucide-react';
 
-const LifeBusiness = ({ isDark }) => {
-    const [activeIndex, setActiveIndex] = useState(0);
+import { useTheme } from '@/shared/lib/theme';
 
-    const ventures = [
-        {
-            title: 'Accolades',
-            subtitle: 'Founder / The Command Center for Human Potential',
-            desc: 'An elite discovery framework shifting students from passive searching to strategic career engineering. Democratizing access to high-value technical opportunities globally by mitigating noise and curating premium data.',
-            metric: '01',
-            links: [
-                { name: 'Website', url: 'https://www.accolades.site' }
-            ],
-            // Media placeholder styling
-            mediaColor: isDark ? 'from-zinc-800 to-zinc-900' : 'from-zinc-100 to-zinc-200'
-        },
-        {
-            title: 'TheTravStory',
-            subtitle: 'Founder / AI Travel Ecosystem',
-            desc: 'An AI-powered platform generating personalized itineraries and facilitating direct bookings. Solving travel friction by saving time through hyper-curated, seamless experiences without the hustle and hiccups.',
-            metric: '02',
-            links: [
-                { name: 'Website', url: 'https://www.thetravstory.com' },
-                { name: 'Instagram', url: 'https://www.instagram.com/the_travstory/' }
-            ],
-            mediaColor: isDark ? 'from-zinc-800 to-zinc-900' : 'from-zinc-100 to-zinc-200'
-        },
-        {
-            title: 'Deuxstem',
-            subtitle: 'Founder',
-            desc: 'An entrepreneurial venture focused on scaling innovative solutions. Driving impact through strategic development and focused execution.',
-            metric: '03',
-            links: [
-                { name: 'LinkedIn', url: 'https://in.linkedin.com/company/deuxstem' },
-                { name: 'Instagram', url: 'https://www.instagram.com/deuxstem/' },
-                { name: 'Google', url: 'https://www.google.com/search?q=deuxstem' }
-            ],
-            mediaColor: isDark ? 'from-zinc-800 to-zinc-900' : 'from-zinc-100 to-zinc-200'
-        },
-        {
-            title: 'MIT Launch X & Sedu',
-            subtitle: 'Top 8% International Full Ride (2022)',
-            desc: 'Selected as top 8% from all international applicants for a full ride to MIT Launch X. Developed a business named Sedu, engineering a rapid go-to-market strategy that generated $875 in sales within just 5 weeks.',
-            metric: '04',
-            links: [],
-            mediaColor: isDark ? 'from-zinc-800 to-zinc-900' : 'from-zinc-100 to-zinc-200'
-        }
-    ];
+import { VENTURES as ventures } from '../config/content';
+
+export function BusinessSection() {
+    const { isDark } = useTheme();
+    const [activeIndex, setActiveIndex] = useState(0);
+    const activeVenture = ventures[activeIndex];
+    const activeMediaColor = isDark ? activeVenture.mediaColor.dark : activeVenture.mediaColor.light;
 
     return (
         <section className={`py-32 relative ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}>
@@ -133,14 +97,14 @@ const LifeBusiness = ({ isDark }) => {
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                                className={`absolute inset-0 w-full h-full bg-gradient-to-br ${ventures[activeIndex].mediaColor} flex flex-col items-center justify-center p-8 text-center`}
+                                className={`absolute inset-0 w-full h-full bg-gradient-to-br ${activeMediaColor} flex flex-col items-center justify-center p-8 text-center`}
                             >
                                 {/* Media Placeholder Content */}
                                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 border backdrop-blur-sm transition-colors duration-300 ${isDark ? 'border-white/10 bg-black/50 text-white/50' : 'border-black/10 bg-white/50 text-black/50'}`}>
                                     <ImageIcon size={24} />
                                 </div>
                                 <h4 className={`text-xl font-bold uppercase tracking-widest mb-2 ${isDark ? 'text-white' : 'text-black'}`}>
-                                    {ventures[activeIndex].title}
+                                    {activeVenture.title}
                                 </h4>
                                 <p className={`text-sm font-mono uppercase tracking-widest ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
                                     Media Space Reserved
@@ -153,6 +117,4 @@ const LifeBusiness = ({ isDark }) => {
             </div>
         </section>
     );
-};
-
-export default LifeBusiness;
+}

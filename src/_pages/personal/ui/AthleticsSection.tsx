@@ -1,54 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+'use client';
 
-const slides = [
-    {
-        category: "Fitness & Athletics",
-        title: "High Energy Maintenance",
-        desc: "Pushing physical limits, embracing risk, and maintaining peak performance.",
-        image: "https://images.unsplash.com/photo-1518602164578-cd0074062767?auto=format&fit=crop&q=80",
-    },
-    {
-        category: "Adventure Sports / Mountaineering",
-        title: "Thorong La Pass",
-        desc: "Elevation: 5416m",
-        image: "https://images.unsplash.com/photo-1522163182402-834f871fd851?auto=format&fit=crop&q=80",
-    },
-    {
-        category: "Adventure Sports / Mountaineering",
-        title: "Tilicho Lake",
-        desc: "Elevation: 5200m — World's highest glacial lake.",
-        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80",
-    },
-    {
-        category: "Adventure Sports / Mountaineering",
-        title: "Kun Tso",
-        desc: "Elevation: 5000m",
-        image: "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&q=80",
-    },
-    {
-        category: "Adventure Sports / Mountaineering",
-        title: "Ice Lake",
-        desc: "Elevation: 4800m",
-        image: "/ice_lake_placeholder.png",
-    },
-    {
-        category: "Videography",
-        title: "Visual Storytelling",
-        desc: "Capturing raw moments. Translating adrenaline and silence into a universal cinematic language.",
-        image: "/videography_placeholder.png",
-    }
-];
+import { useCallback, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 
-const LifeAthletics = ({ isDark }) => {
+import { useTheme } from '@/shared/lib/theme';
+
+import { ATHLETICS_SLIDES as slides } from '../config/content';
+import { useInterval } from '../lib/use-interval';
+
+export function AthleticsSection() {
+    const { isDark } = useTheme();
     const [activeIndex, setActiveIndex] = useState(0);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setActiveIndex((prev) => (prev + 1) % slides.length);
-        }, 4000);
-        return () => clearInterval(interval);
+    const advance = useCallback(() => {
+        setActiveIndex((prev) => (prev + 1) % slides.length);
     }, []);
+    useInterval(advance, 4000);
 
     return (
         <section className={`py-32 relative overflow-hidden ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'}`}>
@@ -152,6 +119,4 @@ const LifeAthletics = ({ isDark }) => {
             </div>
         </section>
     );
-};
-
-export default LifeAthletics;
+}

@@ -1,22 +1,19 @@
-import React from 'react';
-import useScrollReveal from '../../Hooks/useScrollReveal';
-import { Github, Linkedin, Mail, Instagram } from 'lucide-react'; // Added icons
+'use client';
 
-const Reveal = ({ children }) => {
-  const [ref, isVisible] = useScrollReveal();
-  return (
-    <div ref={ref} className={`transition-all duration-1000 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-      {children}
-    </div>
-  );
-};
+import { Github, Linkedin, Mail, Instagram } from 'lucide-react';
 
-const About = ({ resumeData, isDark }) => {
+import { PROFILE } from '@/entities/profile';
+import { useTheme } from '@/shared/lib/theme';
+import { Reveal } from '@/shared/ui/reveal';
+
+export function AboutSection() {
+  const { isDark } = useTheme();
+
   return (
     <section id="about" className={`px-6 py-32 max-w-4xl mx-auto font-cyber ${isDark ? 'bg-black' : 'bg-white'}`}>
-      <Reveal>
+      <Reveal preset="hero">
         <h2 className="text-xs tracking-[0.3em] uppercase opacity-50 mb-12 border-b border-current pb-4">
-          // Identity Core
+          {'// Identity Core'}
         </h2>
 
         <div className="grid md:grid-cols-[1fr_2fr] gap-12">
@@ -31,6 +28,7 @@ const About = ({ resumeData, isDark }) => {
                 }`}
             >
               {/* Placeholder/Profile Image */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/profile1.jpg"
                 alt="Aman Anubhav Profile"
@@ -44,27 +42,26 @@ const About = ({ resumeData, isDark }) => {
 
             {/* Social Links */}
             <div className='flex justify-center gap-6 pt-4'>
-              <a href={resumeData.links.linkedin} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Linkedin size={20} /></a>
-              <a href={resumeData.links.github} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Github size={20} /></a>
-              <a href={`mailto:${resumeData.links.email}`} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Mail size={20} /></a>
-              <a href={resumeData.links.instagram} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Instagram size={20} /></a>
+              <a href={PROFILE.links.linkedin} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Linkedin size={20} /></a>
+              <a href={PROFILE.links.github} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Github size={20} /></a>
+              <a href={`mailto:${PROFILE.links.email}`} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Mail size={20} /></a>
+              <a href={PROFILE.links.instagram} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Instagram size={20} /></a>
             </div>
           </div>
 
           {/* TEXT CONTENT COLUMN */}
           <div className={`space-y-8 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
             <h3 className={`text-2xl font-bold leading-tight ${isDark ? 'text-white' : 'text-black'}`}>
-              "I didn't inherit talent—<br />
-              <span className="opacity-50">I built it."</span>
+              &quot;I didn&apos;t inherit talent—<br />
+              <span className="opacity-50">I built it.&quot;</span>
             </h3>
 
             <p className="text-sm leading-relaxed opacity-70 font-sans">
-              {resumeData.about}
+              {PROFILE.about}
             </p>
 
             <p className="text-sm leading-relaxed opacity-60 font-sans border-l-2 border-green-600/50 pl-3">
-              {resumeData.philosophy}
-              {/* Add philosophy section */}
+              {PROFILE.philosophy}
             </p>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-current opacity-80">
@@ -90,6 +87,4 @@ const About = ({ resumeData, isDark }) => {
       </Reveal>
     </section>
   );
-};
-
-export default About;
+}
