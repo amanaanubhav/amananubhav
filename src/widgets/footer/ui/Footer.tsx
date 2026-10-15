@@ -1,34 +1,30 @@
-import React from 'react';
-import useScrollReveal from '../../Hooks/useScrollReveal';
-import Magnetic from '../UI/Magnetic';
-import { Github, Linkedin, Mail, Lock, Instagram } from 'lucide-react';
+'use client';
 
-const Reveal = ({ children }) => {
-  const [ref, isVisible] = useScrollReveal();
-  return (
-    <div ref={ref} style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.8s ease' }}>
-      {children}
-    </div>
-  );
-};
+import { Github, Instagram, Linkedin, Lock, Mail } from 'lucide-react';
+import { useTheme } from '@/shared/lib/theme';
+import { Magnetic } from '@/shared/ui/magnetic';
+import { openVault } from '@/features/secure-vault';
+import { FooterReveal } from './FooterReveal';
 
-const Footer = ({ isDark, openVault }) => {
-  const socialLinks = [
-    { icon: <Mail size={20} />, href: "mailto:amannbhv.cswork@gmail.com", label: "Email" },
-    { icon: <Linkedin size={20} />, href: "https://www.linkedin.com/in/amananubhav/", label: "LinkedIn" },
-    { icon: <Github size={20} />, href: "https://github.com/amanaanubhav", label: "GitHub" },
-    { icon: <Instagram size={20} />, href: "https://www.instagram.com/amansanubhav/", label: "Instagram" },
-  ];
+const socialLinks = [
+  { icon: <Mail size={20} />, href: "mailto:amannbhv.cswork@gmail.com", label: "Email" },
+  { icon: <Linkedin size={20} />, href: "https://www.linkedin.com/in/amananubhav/", label: "LinkedIn" },
+  { icon: <Github size={20} />, href: "https://github.com/amanaanubhav", label: "GitHub" },
+  { icon: <Instagram size={20} />, href: "https://www.instagram.com/amansanubhav/", label: "Instagram" },
+];
+
+export function Footer() {
+  const { isDark } = useTheme();
 
   return (
     <footer className={`min-h-screen flex flex-col justify-center items-center px-6 border-t relative overflow-hidden ${isDark ? 'border-white/10' : 'border-black/10'}`}>
       <div className={`absolute inset-0 pointer-events-none ${isDark ? 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900/20 via-black to-black' : 'bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-100/50 via-white to-white'}`}></div>
 
-      <Reveal>
+      <FooterReveal>
         <h2 className={`text-[15vw] font-black leading-none select-none tracking-tighter font-cyber transition-all duration-500 cursor-default mb-12 ${isDark ? 'text-zinc-900 hover:text-white hover:drop-shadow-[0_0_60px_rgba(255,255,255,0.8)]' : 'text-zinc-100 hover:text-zinc-500 hover:drop-shadow-[0_0_60px_rgba(0,0,0,0.5)]'}`}>
           ANUBHAV
         </h2>
-      </Reveal>
+      </FooterReveal>
 
       <div className="flex flex-col items-center gap-8 relative z-10">
         <button
@@ -55,9 +51,7 @@ const Footer = ({ isDark, openVault }) => {
         </div>
       </div>
 
-      <p className={`absolute bottom-10 text-xs font-mono ${isDark ? 'text-zinc-800' : 'text-zinc-300'}`}>&copy; {new Date().getFullYear()} AMAN ANUBHAV. ALL RIGHTS RESERVED.</p>
+      <p className={`absolute bottom-10 text-xs font-mono ${isDark ? 'text-zinc-800' : 'text-zinc-300'}`}>&copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> AMAN ANUBHAV. ALL RIGHTS RESERVED.</p>
     </footer>
   );
-};
-
-export default Footer;
+}

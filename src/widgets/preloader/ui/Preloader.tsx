@@ -1,13 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+'use client';
 
-const Preloader = ({ onComplete }) => {
+import { useEffect, useState } from 'react';
+import { animate, motion, useMotionValue, useTransform } from 'motion/react';
+
+export interface PreloaderProps {
+  onComplete: () => void;
+}
+
+export function Preloader({ onComplete }: PreloaderProps) {
   const count = useMotionValue(0);
-  const rounded = useTransform(count, (latest) => Math.round(latest));
+  const width = useTransform(count, (value) => `${value}%`);
   const [displayCount, setDisplayCount] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
 
   useEffect(() => {
+    let slideTimer: ReturnType<typeof setTimeout> | undefined;
+    let completeTimer: ReturnType<typeof setTimeout> | undefined;
+
     // Animate count from 0 to 100
     const controls = animate(count, 100, {
       duration: 1.5,
@@ -17,14 +26,18 @@ const Preloader = ({ onComplete }) => {
       },
       onComplete: () => {
         // Wait a small moment after hitting 100 before sliding out
-        setTimeout(() => {
+        slideTimer = setTimeout(() => {
           setIsFinished(true);
-          setTimeout(onComplete, 800); // Wait for slide animation to finish
+          completeTimer = setTimeout(onComplete, 800); // Wait for slide animation to finish
         }, 200);
-      }
+      },
     });
 
-    return controls.stop;
+    return () => {
+      controls.stop();
+      clearTimeout(slideTimer);
+      clearTimeout(completeTimer);
+    };
   }, [count, onComplete]);
 
   return (
@@ -43,11 +56,9 @@ const Preloader = ({ onComplete }) => {
       <div className="w-full h-[1px] bg-white/20 overflow-hidden">
         <motion.div
           className="h-full bg-white"
-          style={{ width: useTransform(count, value => `${value}%`) }}
+          style={{ width }}
         />
       </div>
     </div>
   );
-};
-
-export default Preloader;
+}
