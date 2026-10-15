@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 /**
  * Client env bridge: NEXT_PUBLIC_* names win, legacy Vite names are fallbacks so the
  * existing .env / .env.local files and Vercel project env keep working unchanged.
- * Undefined keys are omitted. OPENROUTER_API_KEY is server-only and is never mapped here.
+ * Undefined keys are omitted. OPENROUTER_API_KEY and GROQ_API_KEY are server-only and are never mapped here.
  */
 const CLIENT_ENV_FALLBACKS: Record<string, readonly string[]> = {
   NEXT_PUBLIC_FIREBASE_API_KEY: ['VITE_FIREBASE_API_KEY', 'VITE_FIREBASE_API'],
