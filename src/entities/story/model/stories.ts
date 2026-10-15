@@ -1,4 +1,6 @@
-export const ADVENTURES = [
+import type { Story } from './types';
+
+export const STORIES: readonly Story[] = [
   {
     id: "annapurna-circuit-solo",
     title: "Into the Wild: 250km Solo Across the Annapurna Circuit",
