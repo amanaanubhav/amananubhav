@@ -1,7 +1,19 @@
 "use client";
-import React from "react";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/cn";
+
+export interface SpotlightProps {
+    className?: string;
+    gradientFirst?: string;
+    gradientSecond?: string;
+    gradientThird?: string;
+    translateY?: number;
+    width?: number;
+    height?: number;
+    smallWidth?: number;
+    duration?: number;
+    xOffset?: number;
+}
 
 export const Spotlight = ({
     className,
@@ -14,7 +26,7 @@ export const Spotlight = ({
     smallWidth = 240,
     duration = 7,
     xOffset = 100,
-}) => {
+}: SpotlightProps) => {
     return (
         <motion.div
             initial={{

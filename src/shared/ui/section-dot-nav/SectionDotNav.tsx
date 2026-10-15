@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+'use client';
+import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 
-const VerticalNavbar = ({ sections }) => {
+export type SectionNavItem = { readonly id: string; readonly label: string };
+
+export interface SectionDotNavProps {
+    sections: readonly SectionNavItem[];
+}
+
+export const SectionDotNav = ({ sections }: SectionDotNavProps) => {
     const [activeSection, setActiveSection] = useState('');
 
     useEffect(() => {
@@ -30,7 +37,7 @@ const VerticalNavbar = ({ sections }) => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [sections, activeSection]);
 
-    const scrollToSection = (id) => {
+    const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth' });
@@ -60,7 +67,7 @@ const VerticalNavbar = ({ sections }) => {
                         `}>
                             {section.label}
                         </div>
-                        
+
                         {/* Dot */}
                         <motion.div
                             className={`
@@ -75,5 +82,3 @@ const VerticalNavbar = ({ sections }) => {
         </div>
     );
 };
-
-export default VerticalNavbar;
