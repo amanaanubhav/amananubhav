@@ -46,6 +46,9 @@ next-env.d.ts
 .mcp.json
 .playwright/
 
+# Media originals from Aman (photos with EXIF, raw GPX tracks): processed copies go to public/, originals never ship
+media-inbox/
+
 # Markdown stays local, except README files
 *.md
 !README.md

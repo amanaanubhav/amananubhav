@@ -35,6 +35,7 @@ function resolveClientEnv(): Record<string, string> {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   env: resolveClientEnv(),
+  images: { formats: ['image/avif', 'image/webp'] },
 };
 
 export default nextConfig;
