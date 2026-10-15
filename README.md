@@ -102,6 +102,7 @@ Prerequisites
 - A Firebase project with Firestore and Anonymous Auth enabled (visitor chat, secure vault, admin inbox).
 - An EmailJS account (chat notifications).
 - An OpenRouter API key (AI terminal; default model openai/gpt-oss-120b, change it with OPENROUTER_MODEL).
+- Optionally a Groq API key, used when OpenRouter fails (default model openai/gpt-oss-120b, change it with GROQ_MODEL).
 
 Installation
 
@@ -134,6 +135,8 @@ Create `.env.local` in the repo root (it is gitignored). Client variables must u
     NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=
     OPENROUTER_API_KEY=      # server-only, read by the /api/chat edge route
     OPENROUTER_MODEL=        # optional, any OpenRouter model id (default openai/gpt-oss-120b)
+    GROQ_API_KEY=            # optional, server-only fallback when OpenRouter fails
+    GROQ_MODEL=              # optional, any Groq model id (default openai/gpt-oss-120b)
 
 Legacy names keep working. `next.config.ts` maps the old Vite names onto the `NEXT_PUBLIC_*` names at build time when the new name is not set, so existing `.env` / `.env.local` files and Vercel project variables need no change:
 
@@ -144,7 +147,9 @@ Legacy names keep working. `next.config.ts` maps the old Vite names onto the `NE
 - `VITE_FIREBASE_APP_ID` or `VITE_FIREBASE_APP`
 - `VITE_EMAILJS_SERVICE_ID`, `VITE_EMAILJS_TEMPLATE_ID_TO_AMAN`, `VITE_EMAILJS_TEMPLATE_ID_TO_VISITOR`, `VITE_EMAILJS_PUBLIC_KEY`
 
-`OPENROUTER_API_KEY` is never exposed to the browser. Client values are inlined at build time, so rebuild after changing them.
+`OPENROUTER_API_KEY` and `GROQ_API_KEY` are never exposed to the browser. Client values are inlined at build time, so rebuild after changing them.
+
+The AI terminal asks OpenRouter first. If OpenRouter errors, sends no text within 10 seconds, or has no key, the same question goes to Groq.
 
 Run Development Server
 
@@ -155,5 +160,5 @@ Deployment (Vercel)
 `vercel.json` is `{"framework": "nextjs"}`, so Vercel uses its standard Next.js build (`next build`) with no custom output directory.
 
 1. Import the repository in Vercel (framework preset: Next.js).
-2. Add the environment variables above (either the `NEXT_PUBLIC_*` names or the legacy `VITE_*` names, plus `OPENROUTER_API_KEY` and optionally `OPENROUTER_MODEL`) for Production and Preview.
+2. Add the environment variables above (either the `NEXT_PUBLIC_*` names or the legacy `VITE_*` names, plus `OPENROUTER_API_KEY`, and optionally `GROQ_API_KEY`, `OPENROUTER_MODEL` and `GROQ_MODEL`) for Production and Preview.
 3. Deploy. `/api/chat` runs on the Edge runtime; `robots.txt` and `sitemap.xml` are generated from `app/robots.ts` and `app/sitemap.ts`.
