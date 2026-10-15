@@ -1,0 +1,52 @@
+{
+  "night": {
+    "ground": "#0E2231",
+    "surface": "#132B3D",
+    "surface-2": "#1A3549",
+    "ground-sky": "#0A1A27",
+    "line": "#2B4A61",
+    "line-strong": "#6F8DA3",
+    "ink": "#EAF0F2",
+    "ink-muted": "#A6BAC6",
+    "signal": "#FF9A5C",
+    "signal-line": "#FF9A5C",
+    "on-signal": "#0E2231",
+    "water": "#86C3E3",
+    "success": "#8ED8A8",
+    "warning": "#F2D27A",
+    "error": "#FF9AA8"
+  },
+  "day": {
+    "ground": "#EEF0EA",
+    "surface": "#F9FAF6",
+    "surface-2": "#E1E5DC",
+    "ground-sky": "#E6E9EE",
+    "line": "#C9CEC2",
+    "line-strong": "#788072",
+    "ink": "#1B1E1C",
+    "ink-muted": "#50564F",
+    "signal": "#A63B09",
+    "signal-line": "#CF4D0B",
+    "on-signal": "#FFFFFF",
+    "water": "#2C5F86",
+    "success": "#2E6B33",
+    "warning": "#7A5600",
+    "error": "#A8203F"
+  },
+  "contour": {
+    "night": [234, 240, 242, 0.18, 0.36],
+    "day": [27, 30, 28, 0.2, 0.4]
+  },
+  "effects": {
+    "night": {
+      "shadow-float": "0 24px 48px -16px rgb(4 12 19 / 0.60), 0 2px 6px rgb(4 12 19 / 0.35)",
+      "grain-opacity": "0.045",
+      "color-scheme": "dark"
+    },
+    "day": {
+      "shadow-float": "0 20px 40px -18px rgb(27 30 28 / 0.28), 0 2px 6px rgb(27 30 28 / 0.10)",
+      "grain-opacity": "0.06",
+      "color-scheme": "light"
+    }
+  }
+}
