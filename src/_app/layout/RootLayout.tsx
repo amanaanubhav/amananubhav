@@ -1,0 +1,42 @@
+import type { ReactNode } from 'react';
+import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
+import { SITE } from '@/shared/config';
+
+import { AppShell } from '../shell/AppShell';
+import { Providers } from '../shell/Providers';
+import '../styles/globals.css';
+import { fontVariables } from './fonts';
+import { PERSON_JSON_LD_HTML } from './person-json-ld';
+
+export function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en" className={fontVariables}>
+      <GoogleTagManager gtmId={SITE.gtmId} />
+      <body>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${SITE.gtmId}`}
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          />
+        </noscript>
+        {/* Structured Data (JSON-LD) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: PERSON_JSON_LD_HTML }}
+        />
+        <Providers>
+          <AppShell>{children}</AppShell>
+        </Providers>
+        <Analytics />
+        <SpeedInsights />
+      </body>
+      <GoogleAnalytics gaId={SITE.gaId} />
+    </html>
+  );
+}
