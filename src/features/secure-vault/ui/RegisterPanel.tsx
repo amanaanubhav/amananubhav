@@ -18,8 +18,9 @@ export interface RegisterPanelProps {
 }
 
 /**
- * Create an identity (§H.7). Required fields follow the model's own check (username, passphrase,
- * email, phone); the browser's native validation stays off so the model's message is the one shown.
+ * Create an identity (§H.7). Every field is required (the owner's rule; the model checks them all and
+ * names the missing ones); the browser's native validation stays off so the model's message is the one
+ * shown, and an empty field is marked invalid while that message is up.
  */
 export function RegisterPanel({
   titleId, regForm, setRegForm, loading, error, onRegister, onSwitchView,
@@ -29,6 +30,8 @@ export function RegisterPanel({
   const describedBy = error ? errorId : undefined;
   const set = (key: keyof RegisterForm) => (e: { target: { value: string } }) =>
     setRegForm({ ...regForm, [key]: e.target.value });
+  /** While the error is shown, flag the fields that are still empty. */
+  const invalid = (key: keyof RegisterForm) => (error && !regForm[key].trim() ? true : undefined);
 
   return (
     <VaultScrollPane>
@@ -49,20 +52,24 @@ export function RegisterPanel({
           <div className="grid gap-5 sm:grid-cols-2">
             <VaultField
               label="Full name"
-              hint="optional"
               name="name"
               autoComplete="name"
               data-vault-focus=""
+              aria-required="true"
+              aria-invalid={invalid('fullName')}
               value={regForm.fullName}
               onChange={set('fullName')}
+              describedBy={describedBy}
             />
             <VaultField
               label="Organisation"
-              hint="optional"
               name="organization"
               autoComplete="organization"
+              aria-required="true"
+              aria-invalid={invalid('org')}
               value={regForm.org}
               onChange={set('org')}
+              describedBy={describedBy}
             />
             <VaultField
               label="Email"
@@ -72,6 +79,7 @@ export function RegisterPanel({
               autoComplete="email"
               spellCheck={false}
               aria-required="true"
+              aria-invalid={invalid('email')}
               value={regForm.email}
               onChange={set('email')}
               describedBy={describedBy}
@@ -83,6 +91,7 @@ export function RegisterPanel({
               inputMode="tel"
               autoComplete="tel"
               aria-required="true"
+              aria-invalid={invalid('phone')}
               value={regForm.phone}
               onChange={set('phone')}
               describedBy={describedBy}
@@ -94,6 +103,7 @@ export function RegisterPanel({
               autoCapitalize="none"
               spellCheck={false}
               aria-required="true"
+              aria-invalid={invalid('username')}
               value={regForm.username}
               onChange={set('username')}
               describedBy={describedBy}
@@ -104,6 +114,7 @@ export function RegisterPanel({
               type="password"
               autoComplete="new-password"
               aria-required="true"
+              aria-invalid={invalid('password')}
               value={regForm.password}
               onChange={set('password')}
               describedBy={error ? `${warningId} ${errorId}` : warningId}

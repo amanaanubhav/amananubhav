@@ -13,6 +13,19 @@ import type {
 
 const errorMessage = (err: unknown): string => (err instanceof Error ? err.message : String(err));
 
+/** Every registration field is required, in the form's order (labels match RegisterPanel). */
+const REGISTER_FIELDS: readonly { key: keyof RegisterForm; label: string }[] = [
+  { key: 'fullName', label: 'Full name' },
+  { key: 'org', label: 'Organisation' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'username', label: 'Username' },
+  { key: 'password', label: 'Passphrase' },
+];
+
+/** A light shape check (something@domain.tld); the address is confirmed by the reply, not here. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export interface VaultSession {
   view: VaultView;
   loading: boolean;
@@ -74,8 +87,18 @@ export function useVaultSession(): VaultSession {
 
   const handleRegister = async (e: SyntheticEvent) => {
     e.preventDefault();
-    if (!regForm.username || !regForm.password || !regForm.email || !regForm.phone) {
-      setError('All fields (Username, Pass, Email, Phone) are required.');
+    // Every field is required (owner's rule): name the missing ones, then check the two formats.
+    const missing = REGISTER_FIELDS.filter(({ key }) => !regForm[key].trim()).map(({ label }) => label);
+    if (missing.length > 0) {
+      setError(`Please fill in every field. Missing: ${missing.join(', ')}.`);
+      return;
+    }
+    if (!EMAIL_PATTERN.test(regForm.email.trim())) {
+      setError('Enter a valid email address, for example name@example.com.');
+      return;
+    }
+    if (regForm.phone.replace(/\D/g, '').length < 7) {
+      setError('Enter a valid phone number, with the country code if you are outside India.');
       return;
     }
 
