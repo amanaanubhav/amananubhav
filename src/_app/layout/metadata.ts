@@ -24,12 +24,13 @@ export const rootMetadata: Metadata = {
     images: [SITE.ogImage],
   },
   icons: {
+    // G-11 trig-point mark (scripts/brand/build-brand.mjs). The ICO is sized (not `any`) so browsers that
+    // support SVG favicons pick the theme-aware SVG over it.
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', type: 'image/x-icon', sizes: '16x16 32x32 48x48' },
       { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
       { url: '/favicon-192x192.png', type: 'image/png', sizes: '192x192' },
-      { url: '/favicon.ico', type: 'image/x-icon' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
     ],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
   },

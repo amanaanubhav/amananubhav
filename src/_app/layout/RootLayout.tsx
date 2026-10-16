@@ -3,17 +3,25 @@ import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-import { SITE } from '@/shared/config';
+import { SITE, THEME_PALETTE } from '@/shared/config';
+import { MOTION_GATE_SCRIPT } from '@/shared/lib/motion-tier';
 
 import { AppShell } from '../shell/AppShell';
 import { Providers } from '../shell/Providers';
+import 'lenis/dist/lenis.css';
 import '../styles/globals.css';
 import { fontVariables } from './fonts';
 import { PERSON_JSON_LD_HTML } from './person-json-ld';
 
 export function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={fontVariables}>
+    // Night is the SSR theme; the pre-paint gate script may set data-motion/data-lite before
+    // hydration, so the attribute mismatch on <html> is expected (suppressHydrationWarning).
+    <html lang="en" data-theme="night" data-motion="on" className={fontVariables} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: MOTION_GATE_SCRIPT }} />
+        <meta name="theme-color" content={THEME_PALETTE.night.ground} />
+      </head>
       <GoogleTagManager gtmId={SITE.gtmId} />
       <body>
         {/* Google Tag Manager (noscript) */}

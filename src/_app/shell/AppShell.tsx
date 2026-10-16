@@ -1,28 +1,108 @@
 'use client';
 
-import { useCallback, useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useSyncExternalStore,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 
 import { closeTerminal, openTerminal, TerminalOverlay, useTerminalOpen } from '@/features/ai-terminal';
-import { StoryReaderHost } from '@/features/read-story';
+import { StoryReaderHost, useSelectedStory } from '@/features/read-story';
 import { closeVault, openVault, SecureVault, useVaultOpen } from '@/features/secure-vault';
 import { FloatingChat } from '@/features/visitor-chat';
+import { ROUTES, THEME_PALETTE } from '@/shared/config';
+import { markBootDone } from '@/shared/lib/boot';
+import { useChromeProximity } from '@/shared/lib/chrome';
+import { cn } from '@/shared/lib/cn';
+import { useBodyScrollLock } from '@/shared/lib/dom';
+import { ScrollTrigger } from '@/shared/lib/gsap';
+import { useMotionTier } from '@/shared/lib/motion-tier';
+import { scrollToTarget, useScrollLocked, useSmoothScrollRoot } from '@/shared/lib/smooth-scroll';
 import { useTheme } from '@/shared/lib/theme';
+import { StageCanvas } from '@/shared/ui/stage';
 import { Footer } from '@/widgets/footer';
 import { Navbar } from '@/widgets/navbar';
 import { Preloader } from '@/widgets/preloader';
 
+import { RouteScrollSync } from './RouteScrollSync';
+import { ThemeEdge } from './ThemeEdge';
+
+const noopSubscribe = () => () => {};
+const readSaveData = () =>
+  (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+const serverSaveData = () => false;
+
+/** Night/Day on `<html data-theme>` and the browser bar color (§C.1, §B.9). Layout effect, so a
+ * theme sweep's flushSync commit carries the new attribute into the new view. */
+function useThemeAttributeSync(isDark: boolean): void {
+  useLayoutEffect(() => {
+    const theme = isDark ? 'night' : 'day';
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_PALETTE[theme].ground);
+  }, [isDark]);
+}
+
 /**
- * Replaces legacy Layout.jsx + App.jsx state. DOM order and wrapper classes are unchanged:
- * Preloader?, story reader (outside .dark), then the themed wrapper with vault?, terminal,
- * navbar?, the single <main>, footer and floating chat?.
+ * The app shell (§C.9). DOM order and overlay gating are unchanged from the legacy layout:
+ * preloader?, story reader (outside the .dark wrapper), then the themed wrapper with the skip link,
+ * the stage canvas, vault?, terminal, navbar?, the single <main>, footer, chat? and the
+ * theme-sweep edge. The paper grain is body::before (z-grain), switched by `html[data-grain]`.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { isDark } = useTheme();
+  const pathname = usePathname();
+  const tier = useMotionTier();
   const [loading, setLoading] = useState(true);
-  const finishBoot = useCallback(() => setLoading(false), []);
   const isVaultOpen = useVaultOpen();
   const isTerminalOpen = useTerminalOpen();
+  const isReading = useSelectedStory() !== null;
+  const scrollLocked = useScrollLocked();
+  const saveData = useSyncExternalStore(noopSubscribe, readSaveData, serverSaveData);
+
+  const isAdminRoute = pathname === ROUTES.adminChat;
   const showChrome = !loading && !isVaultOpen && !isTerminalOpen;
+  const grainEnabled = tier > 0 && !isAdminRoute && !saveData;
+  const stagePaused = loading || isVaultOpen || isTerminalOpen || isReading || scrollLocked;
+
+  const finishBoot = useCallback(() => {
+    setLoading(false);
+    markBootDone();
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+  }, []);
+
+  useSmoothScrollRoot(tier > 0 && !isAdminRoute);
+  useBodyScrollLock(isVaultOpen || isTerminalOpen);
+  useBodyScrollLock(loading); // the preloader holds the page still
+  useThemeAttributeSync(isDark);
+  useChromeProximity();
+
+  useEffect(() => {
+    document.documentElement.dataset.tier = String(tier); // QA and debugging only; no CSS depends on it
+  }, [tier]);
+
+  // Paper grain (§B.6): drawn by `html[data-grain='on'] body::before` in globals.css, so it is never an LCP
+  // candidate (a full-viewport div was, §J.2).
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!grainEnabled) return;
+    root.dataset.grain = 'on';
+    return () => {
+      delete root.dataset.grain;
+    };
+  }, [grainEnabled]);
+
+  const skipToContent = useCallback((event: MouseEvent<HTMLAnchorElement>) => {
+    const main = document.getElementById('content');
+    if (!main) return;
+    event.preventDefault();
+    main.focus({ preventScroll: true });
+    scrollToTarget(main, { immediate: true });
+  }, []);
 
   return (
     <>
@@ -30,19 +110,44 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <StoryReaderHost />
 
-      <div
-        className={`font-sans min-h-screen transition-colors duration-700 selection:bg-gray-500/30 ${isDark ? 'dark bg-black text-zinc-400' : 'bg-white text-zinc-600'}`}
-      >
+      <div className={cn('min-h-screen', isDark && 'dark')}>
+        {/* Inert with the page it targets: while a story is open, #content cannot take focus. */}
+        <a href="#content" className="skip-link" onClick={skipToContent} inert={isReading}>
+          Skip to content
+        </a>
+
+        <StageCanvas paused={stagePaused} isDark={isDark} />
+
         {isVaultOpen && <SecureVault onClose={closeVault} />}
 
         <TerminalOverlay isOpen={isTerminalOpen} onClose={closeTerminal} />
 
         {showChrome && <Navbar />}
 
-        <main className="min-h-screen">{children}</main>
+        {/*
+          One z-content layer for the page and the footer, above the stage and grain. <main> opens no
+          stacking context of its own, so its fixed children (waypoint rail, mobile chip, progress) stack
+          by their own z against the footer (z-content inside this layer) instead of under it. Reader,
+          navbar, terminal and vault stay above the whole layer.
+          While a story is open the page behind it is inert; the navbar, terminal and vault stay live.
+        */}
+        <div className="relative z-content">
+          <main id="content" tabIndex={-1} inert={isReading} className="relative focus:outline-none">
+            {children}
+          </main>
 
-        <Footer />
-        {showChrome && <FloatingChat onOpenTerminal={openTerminal} onOpenVault={openVault} />}
+          <div className="contents" inert={isReading}>
+            <Footer />
+          </div>
+        </div>
+        {showChrome && (
+          <div className="contents" inert={isReading}>
+            <FloatingChat onOpenTerminal={openTerminal} onOpenVault={openVault} />
+          </div>
+        )}
+
+        <ThemeEdge />
+        <RouteScrollSync />
       </div>
     </>
   );
