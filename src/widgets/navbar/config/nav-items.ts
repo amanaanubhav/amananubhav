@@ -12,7 +12,8 @@ export interface NavItem {
 }
 
 /**
- * Main navigation (§H.1). Routes unchanged; labels per Q-92: "Professional" is now "Work", "Blogs" is "Field notes".
+ * Main navigation (§H.1). Routes unchanged; labels per Q-92: "Professional" is now "Work"; "Blogs" became "Field notes"
+ * and is now "Journal" (the owner's rename; the route stays /stories).
  * Below 640 px the icons are the §H.1 set kept from the previous site (Home, Briefcase, FolderGit2, BookOpen);
  * each link's accessible name is the page name.
  * The project archive and the achievements archive are reached from Work, so they mark Work as current.
@@ -26,7 +27,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     icon: FolderGit2,
     section: [ROUTES.projectArchive, ROUTES.achievements],
   },
-  { name: 'Field notes', link: ROUTES.stories, icon: BookOpen },
+  { name: 'Journal', link: ROUTES.stories, icon: BookOpen },
 ];
 
 /** `'page'` on the item's own route, `'true'` on a route of its section, otherwise undefined. */

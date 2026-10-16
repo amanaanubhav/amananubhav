@@ -23,7 +23,7 @@ export interface TerminalQuickLink {
 export const TERMINAL_QUICK_LINKS: readonly TerminalQuickLink[] = [
   { label: 'Work', href: '/#work' },
   { label: 'Projects', href: ROUTES.projectArchive },
-  { label: 'Treks', href: ROUTES.stories },
+  { label: 'Journal', href: ROUTES.stories },
   { label: 'Contact', href: '/#write' },
   { label: 'Résumé', href: SITE.resumeDriveUrl, external: true },
 ];
