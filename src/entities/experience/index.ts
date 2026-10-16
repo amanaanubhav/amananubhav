@@ -1,2 +1,2 @@
 export { EXPERIENCE } from './model/experience';
-export type { ExperienceEntry } from './model/types';
+export type { ExperienceEntry, ExperienceMode } from './model/types';

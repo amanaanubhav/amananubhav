@@ -1,4 +1,9 @@
 export { PROJECTS } from './model/projects';
-export type { Project } from './model/types';
-export { getProjectSortKey, formatProjectYearShort } from './lib/project-year';
+export type { Project, ProjectId, ProjectLink, ProjectType } from './model/types';
+export {
+  getProjectSortKey,
+  compareProjectYears,
+  formatProjectYearShort,
+  UNKNOWN_PROJECT_SORT_KEY,
+} from './lib/project-year';
 export { selectFeaturedProjects } from './lib/select-featured-projects';
