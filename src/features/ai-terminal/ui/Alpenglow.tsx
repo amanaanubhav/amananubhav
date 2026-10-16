@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
+import { MARK_VIEWBOX, TREKKER, TREKKER_SMALL, Trekker, ridgeMaskUrl } from '@/shared/ui/ridge-mark';
+
 import s from './TerminalOverlay.module.css';
 
 /*
  * Alpenglow, the response motion: light crosses a small ridge while Aman thinks, words develop out of a
- * soft blur while he writes, and the summit lights once when the reply is complete. CSS does the moving
+ * soft blur while he writes, and the trekker on the summit catches the light once when the reply is complete
+ * (the ridge and trekker are the site's signature mark, @/shared/ui/ridge-mark). CSS does the moving
  * (keyed on `data-ag` of the reply row); these components only decide what is in the DOM.
  */
 
@@ -27,11 +30,20 @@ const TYPE_MAX_MS = 3_000;
 const TYPE_PAUSE_AFTER = /[.,]/;
 const TYPE_PAUSE_COST = 7;
 
-/** The ridge mark (decorative). `lit` shows the summit point at rest. */
-export function Ridge({ lit, className }: { lit?: boolean; className?: string }) {
+/** The ridge as a mask for the light band, from the shared geometry (one source with the site's mark). */
+const RIDGE_STYLE = { '--ag-mask': ridgeMaskUrl() } as CSSProperties;
+
+/**
+ * The ridge mark (decorative): the light band crosses a ridge-shaped mask; the trekker on the summit is an
+ * SVG over it. `lit` shows him in the alpenglow at rest; `detailed` draws the full figure (marks 28 px tall
+ * and up, here the 72 px greeting), otherwise the simplified one.
+ */
+export function Ridge({ lit, detailed, className }: { lit?: boolean; detailed?: boolean; className?: string }) {
   return (
-    <span className={[s.ridge, lit ? s.lit : '', className ?? ''].join(' ')} aria-hidden="true">
-      <span className={s.ping} />
+    <span className={[s.ridge, lit ? s.lit : '', className ?? ''].join(' ')} style={RIDGE_STYLE} aria-hidden="true">
+      <svg viewBox={MARK_VIEWBOX} className={s.trekker} focusable="false">
+        <Trekker figure={detailed ? TREKKER : TREKKER_SMALL} />
+      </svg>
     </span>
   );
 }

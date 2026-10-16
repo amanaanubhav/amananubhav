@@ -369,7 +369,7 @@ export function TerminalOverlay({ isOpen, onClose }: TerminalOverlayProps) {
                   <div className={s.col}>
                     {isFresh ? (
                       <div className={s.hello}>
-                        <Ridge lit />
+                        <Ridge lit detailed />
                         <h3 className={s.helloTitle}>{TERMINAL_GREETING.title}</h3>
                         <p className={s.helloLine}>{TERMINAL_GREETING.line}</p>
                         <nav className={s.pills} aria-label="Go to">

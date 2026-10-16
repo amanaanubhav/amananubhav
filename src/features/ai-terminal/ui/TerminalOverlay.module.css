@@ -1,7 +1,7 @@
 /*
  * "Ask Aman", the AI terminal (§H.5 redesign): a split dashboard on desktop, a full-height sheet on phones,
  * and the Alpenglow response motion (light crossing a ridge while Aman thinks, words developing out of a
- * soft blur while he writes, the summit lighting once when the reply is complete).
+ * soft blur while he writes, the trekker on the summit catching the light once when the reply is complete).
  * Colours come only from the generated token roles (`--c-*` triplets), so a new palette flows in.
  * Everything that moves animates transform, opacity, filter or background-position only.
  */
@@ -17,7 +17,6 @@
   --t-ghost: rgb(var(--c-ink) / 0.07);
   --t-sheen: rgb(var(--c-ink) / 0.1);
   --t-scrim: rgb(var(--c-ground-sky) / 0.78);
-  --ag-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 16'%3E%3Cpath d='M1.5 14.2 6.5 10.6l3 1.6 5-5.2 3.2 1.7 5-6.2 4.2 4.8 3.2-1.9 4.8 5.6 3.4-1.5 5.7 4.5' fill='none' stroke='%23000' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E");
   position: fixed;
   inset: 0;
   display: grid;
@@ -292,7 +291,7 @@
 }
 
 .gutter {
-  padding-top: 7px;
+  padding-top: 2px; /* the 2:1 mark's centre on the first line's centre */
 }
 
 .prose {
@@ -517,7 +516,7 @@
 }
 
 .send > .ridge {
-  --rw: 26px;
+  --rw: 28px;
 }
 
 .hints {
@@ -622,7 +621,7 @@
   }
 
   .gutter {
-    padding-top: 9px;
+    padding-top: 4px;
   }
 
   .cliOut {
@@ -688,18 +687,19 @@
 }
 
 /* ── Alpenglow: the ridge mark ────────────────────────────────────────────────────────── */
-/* An altitude profile (a mask); a band of light (dull red core, violet edges) crosses it while busy. */
+/* The site's signature mark (@/shared/ui/ridge-mark), 2:1: an altitude profile (a mask, `--ag-mask` set
+   inline from the shared geometry) that a band of light (dull red core, violet edges) crosses while busy,
+   and a trekker on the summit (an SVG) who catches the light when the reply is complete. */
 .ridge {
-  --dot: calc(var(--rw, 48px) * 0.105);
   position: relative;
   display: block;
   flex: none;
   width: var(--rw, 48px);
-  height: calc(var(--rw, 48px) / 3);
+  height: calc(var(--rw, 48px) / 2);
 }
 
 .mark {
-  --rw: 30px;
+  --rw: 32px;
 }
 
 .ridge::before {
@@ -719,31 +719,20 @@
     100% 0 / 300% 100% no-repeat;
 }
 
-/* The summit point and its one-time ring: the completion cue. The peak sits at (22.7, 2.5) of 48 x 16. */
-.ridge::after,
-.ping {
-  content: '';
+/* The trekker on the summit: steel like the resting ridge; lit (signal) at rest on `lit` marks, and lit once,
+   with a brief glow, when a reply completes (the completion cue). */
+.trekker {
   position: absolute;
-  left: calc(var(--rw, 48px) * 0.473 - var(--dot) / 2);
-  top: calc(var(--rw, 48px) * 0.052 - var(--dot) / 2);
-  width: var(--dot);
-  height: var(--dot);
-  border-radius: 50%;
-  opacity: 0;
-  transform: scale(0.4);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: rgb(var(--c-line-strong));
 }
 
-.ridge::after {
-  background: rgb(var(--c-signal));
-}
-
-.ping {
-  border: 1px solid rgb(var(--c-signal));
-}
-
-.lit::after {
-  opacity: 1;
-  transform: none;
+.lit > .trekker,
+[data-ag='done'] .trekker {
+  color: rgb(var(--c-signal));
 }
 
 [data-ag='thinking'] .ridge,
@@ -759,12 +748,8 @@
   animation: ag-sweep 2.4s var(--ease-breath) infinite;
 }
 
-[data-ag='done'] .ridge::after {
-  animation: ag-summit 360ms var(--ease-settle) both;
-}
-
-[data-ag='done'] .ping {
-  animation: ag-ring 900ms var(--ease-settle) 80ms both;
+[data-ag='done'] .trekker {
+  animation: ag-summit 900ms var(--ease-settle) both;
 }
 
 /* "Thinking": the same light crosses the word 300 ms later, as if it left the ridge. Every frame sits
@@ -984,27 +969,18 @@
   }
 }
 
+/* Alpenglow on the trekker (filter only): from steel grey to the signal color, a soft glow that blooms and fades. */
 @keyframes ag-summit {
-  from {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes ag-ring {
   0% {
-    opacity: 0.7;
-    transform: scale(1);
+    filter: grayscale(1) brightness(0.8) drop-shadow(0 0 0 rgb(var(--c-signal) / 0));
+  }
+
+  40% {
+    filter: grayscale(0) brightness(1.08) drop-shadow(0 0 2.5px rgb(var(--c-signal) / 0.75));
   }
 
   100% {
-    opacity: 0;
-    transform: scale(3.2);
+    filter: grayscale(0) brightness(1) drop-shadow(0 0 0 rgb(var(--c-signal) / 0));
   }
 }
 
@@ -1037,7 +1013,7 @@
   .offline,
   .ridge,
   .ridge::before,
-  .ping,
+  .trekker,
   .label,
   .ghost i,
   .ghost i::after,
@@ -1056,11 +1032,6 @@
     background-position: 100% 0;
   }
 
-  [data-ag='done'] .ridge::after {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
 
   .label {
     background: none;
@@ -1085,7 +1056,7 @@
 :global(html[data-motion='off']) .offline,
 :global(html[data-motion='off']) .ridge,
 :global(html[data-motion='off']) .ridge::before,
-:global(html[data-motion='off']) .ping,
+:global(html[data-motion='off']) .trekker,
 :global(html[data-motion='off']) .label,
 :global(html[data-motion='off']) .ghost i,
 :global(html[data-motion='off']) .ghost i::after,
@@ -1104,11 +1075,6 @@
   background-position: 100% 0;
 }
 
-:global(html[data-motion='off']) [data-ag='done'] .ridge::after {
-  animation: none;
-  opacity: 1;
-  transform: none;
-}
 
 :global(html[data-motion='off']) .label {
   background: none;
@@ -1162,9 +1128,17 @@
   }
 
   .caret,
-  .block,
-  .ridge::after {
+  .block {
     background: Highlight;
+  }
+
+  .trekker {
+    color: CanvasText;
+  }
+
+  .lit > .trekker,
+  [data-ag='done'] .trekker {
+    color: Highlight;
   }
 
   .caret::before,
