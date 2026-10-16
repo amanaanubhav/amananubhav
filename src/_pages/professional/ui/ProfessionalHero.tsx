@@ -1,64 +1,103 @@
-'use client';
+import { Mail } from 'lucide-react';
+import { PROFILE } from '@/entities/profile';
+import { Button } from '@/shared/ui/button';
+import { ChapterHeader } from '@/shared/ui/chapter-header';
+import { Log } from '@/shared/ui/journal';
+import type { LogEntry } from '@/shared/ui/journal';
+import { ResumeLink } from '@/shared/ui/resume-link';
+import { StatusChip } from '@/shared/ui/status-chip';
+import { HERO_COPY, PROOF_POINTS } from '../config/copy';
+import { AgentLoop } from './blueprints';
+import { BlueprintFigure } from './BlueprintFigure';
+import { HeroPlateDraw } from './HeroPlateDraw';
+import { RichLine } from './RichLine';
+import { SecureContactButton } from './SecureContactButton';
 
-import { useTheme } from '@/shared/lib/theme';
-import { Reveal } from '@/shared/ui/reveal';
+const TITLE_ID = 'professional-title';
 
+/**
+ * §G.3 hero (no id): the h1 runs across the sheet; under it the log, the lead with its three actions, and the
+ * agent-loop blueprint (Plate 1, cols 9-12 from 1280 px; between 1024 and 1279 px, where cols 10-12 are too narrow to
+ * read, full width below the text, the §B.5 alternative); then the three proof points in a row (stacked below 1024 px).
+ * First viewport (QA round 1): the h1 is capped at 76 px and set at width 100, so the lead and the actions sit
+ * above the fold at 1440 × 900, 1280 × 800 and 390 × 844; the rest of the lead follows the actions.
+ * Server component: the vault button and the plate's draw are the only client islands.
+ */
 export function ProfessionalHero() {
-  const { isDark } = useTheme();
+  const availability = PROFILE.availability;
+  const log: LogEntry[] = [
+    { key: 'role', value: HERO_COPY.log.role, mono: false },
+    {
+      key: 'status',
+      value: availability?.openToRemote ? (
+        <StatusChip tone="success" href={HERO_COPY.log.statusHref}>
+          {HERO_COPY.log.status}
+        </StatusChip>
+      ) : undefined,
+      mono: false,
+    },
+    { key: 'time zone', value: availability?.utcLabel },
+    { key: 'education', value: HERO_COPY.log.education, mono: false },
+  ];
 
   return (
-    <section className="min-h-[calc(100vh-5rem)] flex flex-col justify-center px-6 md:px-12 relative overflow-hidden">
-      {/* Ambient Background glow centered */}
-      <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-[130px] opacity-[0.07] pointer-events-none ${isDark ? 'bg-zinc-400' : 'bg-zinc-600'}`}></div>
-
-      <div className="max-w-7xl mx-auto w-full z-10 grid lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-
-        {/* Left side: Heading */}
-        <div className="lg:col-span-6 space-y-6">
-          <Reveal preset="hero" delay={100}>
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-[1px] ${isDark ? 'bg-zinc-500' : 'bg-zinc-400'}`}></div>
-              <span className={`text-xs font-cyber tracking-[0.3em] uppercase ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                Career Overview
-              </span>
-            </div>
-          </Reveal>
-
-          <Reveal preset="hero" delay={200}>
-            <h1 className={`text-5xl md:text-7xl lg:text-[5.5rem] font-black tracking-tighter leading-[0.95] ${isDark ? 'text-white' : 'text-black'}`}>
-              PROFESSIONAL <br />
-              <span className={`text-transparent bg-clip-text bg-gradient-to-r ${isDark ? 'from-zinc-400 to-zinc-700' : 'from-zinc-500 to-zinc-300'}`}>
-                TRAJECTORY
-              </span>
-            </h1>
-          </Reveal>
-        </div>
-
-        {/* Right side: Summary and Content */}
-        <div className="lg:col-span-6 flex flex-col gap-8 lg:pl-8">
-          <Reveal preset="hero" delay={300}>
-            <p className={`text-lg md:text-xl font-sans leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
-              A curated overview of my engineering journey, technical expertise, and career milestones.
-              This space highlights how I transform complex theoretical concepts into practical solutions.
-              My core focus lies in Artificial Intelligence, advanced algorithms, and scalable system design.
-            </p>
-          </Reveal>
-
-          <Reveal preset="hero" delay={400}>
-            <div className={`p-6 md:p-8 border-l-2 backdrop-blur-sm shadow-sm ${isDark ? 'border-zinc-700 bg-zinc-900/40 shadow-black/20' : 'border-zinc-300 bg-zinc-100/50 shadow-black/5'}`}>
-              <strong className={`block mb-3 font-semibold tracking-wider uppercase text-xs ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
-                Professional Summary
-              </strong>
-              <p className={`text-sm md:text-base font-sans leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                I am an AI Researcher and Full Stack Engineer with a passion for building intelligent applications.
-                My experience ranges from designing sophisticated chatbots to developing accurate predictive models and scalable cloud infrastructure.
-                I thrive on leading technical projects and creating robust systems that deliver genuine impact.
-              </p>
-            </div>
-          </Reveal>
-        </div>
-
+    <section aria-labelledby={TITLE_ID} className="journal-grid pt-28 lg:pt-24">
+      <div className="col-[content-start/content-end] lg:col-[5/span_9] lg:pr-24">
+        <ChapterHeader
+          as="h1"
+          id={TITLE_ID}
+          reveal="none"
+          wdth={100}
+          className="max-md:text-h2 lg:text-[clamp(3rem,1.5rem+3.2vw,4.75rem)]"
+        >
+          {HERO_COPY.title}
+        </ChapterHeader>
       </div>
+
+      <div className="col-[content-start/content-end] mt-5 lg:col-[2/span_3] lg:row-start-2 lg:mt-10 lg:pt-1">
+        <Log items={log} label={HERO_COPY.logLabel} />
+      </div>
+
+      <div className="col-[content-start/content-end] mt-5 lg:col-[5/span_5] lg:row-start-2 lg:mt-10">
+        <p className="m-0 max-w-measure font-body text-lead text-ink [text-wrap:pretty]">{HERO_COPY.lead}</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <ResumeLink variant="primary" />
+          <Button variant="secondary" icon={Mail} href={`mailto:${PROFILE.links.email}`}>
+            {HERO_COPY.actions.email}
+          </Button>
+          <SecureContactButton label={HERO_COPY.actions.vault} />
+        </div>
+        <p className="m-0 mt-8 max-w-measure font-body text-body text-ink [text-wrap:pretty]">{HERO_COPY.more}</p>
+      </div>
+
+      {/* Plate 1 stops 96 px short of the window edge from 1024 px, clear of the waypoint rail (§J.3). */}
+      <div className="col-[content-start/content-end] mt-12 lg:col-[5/span_9] lg:row-start-3 lg:mt-16 lg:pr-24 xl:col-[10/span_4] xl:row-start-2 xl:mt-10 xl:pr-[calc(96px_-_var(--margin))]">
+        <BlueprintFigure
+          id="M-PRO-AGENT-01"
+          breakpoints="hero"
+          number={1}
+          captionText={HERO_COPY.plateCaption}
+          render={(variant) => (
+            <HeroPlateDraw>
+              <AgentLoop variant={variant} />
+            </HeroPlateDraw>
+          )}
+        />
+      </div>
+
+      <ul
+        aria-label={HERO_COPY.proofLabel}
+        className="col-[content-start/content-end] m-0 mt-16 grid list-none gap-10 p-0 lg:col-[5/span_9] lg:row-start-4 lg:mt-24 lg:grid-cols-3 lg:gap-6 lg:pr-24 xl:row-start-3"
+      >
+        {PROOF_POINTS.map((point) => (
+          <li key={point.id} className="border-t border-line-strong pt-4">
+            <p className="m-0 font-body text-body text-ink [text-wrap:pretty]">
+              <strong className="mb-2 block font-display text-title font-semibold text-ink">{point.title}</strong>
+              <RichLine parts={point.body} />
+            </p>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

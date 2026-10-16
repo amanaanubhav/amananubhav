@@ -1,68 +1,169 @@
-'use client';
+import type { ExperienceEntry } from '@/entities/experience';
+import type { Education } from '@/entities/profile';
+import type { MediaSlotId } from '@/shared/config';
+import { ChapterHeader } from '@/shared/ui/chapter-header';
+import { Log } from '@/shared/ui/journal';
+import type { LogEntry } from '@/shared/ui/journal';
+import { MediaSlot } from '@/shared/ui/media-slot';
+import { EXPERIENCE_COPY } from '../config/copy';
+import { educationDates, experienceDates } from '../lib/dates';
+import type { DatePart } from '../lib/dates';
+import { ExperienceTrack } from './ExperienceTrack';
+import { StackList } from './StackList';
 
-import { EXPERIENCE } from '@/entities/experience';
-import { useTheme } from '@/shared/lib/theme';
-import { Reveal } from '@/shared/ui/reveal';
+const TITLE_ID = 'experience-title';
 
-export function ExperienceSection() {
-  const { isDark } = useTheme();
-  // Brighter, sharper colors for "HD" feel
-  const lineColor = isDark ? 'bg-zinc-800' : 'bg-zinc-200';
-  const dotColor = isDark ? 'bg-zinc-950 border-zinc-400 group-hover:border-white group-hover:bg-white' : 'bg-white border-zinc-400 group-hover:border-black group-hover:bg-black';
+/**
+ * Optional plates (§G.3); they render nothing until supplied or permitted (§E.3). The lead plate sits at the top of
+ * the entry, over its heading (M-WORK-01 on Atlys); the others sit beside it (M-PROOF-GDG beside GDG).
+ */
+const ENTRY_LEAD_PLATE: Readonly<Record<string, MediaSlotId>> = {
+  atlys: 'M-WORK-01',
+};
+const ENTRY_PLATES: Readonly<Record<string, readonly MediaSlotId[]>> = {
+  atlys: ['M-PRO-ATLYS-01'],
+  'gdg-kiit': ['M-PROOF-GDG'],
+};
+
+interface TimelineRow {
+  key: string;
+  title: string;
+  org: string;
+  dates: readonly DatePart[];
+  mode?: string;
+  stack?: readonly string[];
+  detail?: string;
+  bullets?: readonly string[];
+  leadPlate?: MediaSlotId;
+  plates?: readonly MediaSlotId[];
+}
+
+function fromExperience(entry: ExperienceEntry, index: number): TimelineRow {
+  const key = entry.id ?? `experience-${index}`;
+  return {
+    key,
+    title: entry.role,
+    org: entry.org,
+    dates: experienceDates(entry.time, entry.start, entry.end),
+    mode: entry.mode,
+    stack: entry.stack,
+    detail: entry.detail,
+    bullets: entry.bullets,
+    leadPlate: ENTRY_LEAD_PLATE[key],
+    plates: ENTRY_PLATES[key],
+  };
+}
+
+function fromEducation(entry: Education, index: number): TimelineRow {
+  return {
+    key: `education-${index}`,
+    title: entry.degree,
+    org: entry.institution,
+    dates: educationDates(entry.year),
+    detail: entry.focus ? `Focus: ${entry.focus}.` : undefined,
+  };
+}
+
+function Dates({ parts }: { parts: readonly DatePart[] }) {
+  return (
+    <>
+      {parts.map((part, index) => (
+        <span key={`${part.text}-${index}`}>
+          {index > 0 ? ' to ' : null}
+          {part.dateTime ? <time dateTime={part.dateTime}>{part.text}</time> : part.text}
+        </span>
+      ))}
+    </>
+  );
+}
+
+function TimelineEntry({ row }: { row: TimelineRow }) {
+  const headingId = `entry-${row.key}`;
+  const log: LogEntry[] = [
+    { key: 'when', value: row.dates.length > 0 ? <Dates parts={row.dates} /> : undefined },
+    { key: 'mode', value: row.mode },
+    { key: 'stack', value: row.stack && row.stack.length > 0 ? <StackList items={row.stack} /> : undefined },
+  ];
+  const hasPlates = Boolean(row.plates && row.plates.length > 0);
 
   return (
-    <section id="experience" className={`px-6 py-40 antialiased ${isDark ? 'bg-black' : 'bg-white'}`}>
-      <div className="max-w-4xl mx-auto">
-        <Reveal preset="timeline">
-          <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase mb-16 border-b pb-4 ${isDark ? 'text-zinc-500 border-zinc-900' : 'text-zinc-400 border-zinc-200'}`}>
-            {'// Experience Log'}
-          </h2>
-        </Reveal>
-
-        <div className="relative ml-3 md:ml-0">
-          {/* Continuous Vertical Line - Custom positioned to start at the first dot */}
-          <div
-            className={`absolute left-0 top-[0.6rem] bottom-0 w-[1px] ${lineColor}`}
-            aria-hidden="true"
-          ></div>
-
-          <div className="space-y-12">
-            {EXPERIENCE.map((exp, i) => (
-              <Reveal key={i} preset="timeline" delay={i * 120}>
-                <div className="relative pl-8 md:pl-12 group">
-
-                  {/* Timeline Dot - Smaller (6px), Brighter Glow */}
-                  <div
-                    className={`absolute -left-[2.5px] top-[0.6rem] w-[6px] h-[6px] rounded-full border transition-all duration-300 z-10 group-hover:scale-125 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.9)] ${dotColor}`}
-                  ></div>
-
-                  {/* Content */}
-                  <div className="relative">
-                    <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-3 mb-2">
-                      <h3 className={`text-lg font-bold tracking-tight ${isDark ? 'text-zinc-50' : 'text-zinc-900'}`}>
-                        {exp.role}
-                      </h3>
-
-                      <span className={`hidden md:inline ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>@</span>
-
-                      <span className={`text-sm font-medium tracking-wide ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                        {exp.org}
-                      </span>
-
-                      <span className={`text-xs font-cyber md:ml-auto ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                        {exp.time}
-                      </span>
-                    </div>
-
-                    <p className={`text-sm leading-relaxed max-w-2xl font-sans ${isDark ? 'text-zinc-400 group-hover:text-zinc-300' : 'text-zinc-600 group-hover:text-zinc-800'} transition-colors duration-300`}>
-                      {exp.detail}
-                    </p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+    <li data-entry="">
+      <article
+        aria-labelledby={headingId}
+        className="grid pl-6 lg:grid-cols-12 lg:gap-x-[var(--gutter)] lg:pl-0"
+      >
+        <div className="lg:col-[4/span_5] lg:row-start-1">
+          {row.leadPlate ? (
+            <div className="mb-6 empty:hidden">
+              <MediaSlot id={row.leadPlate} />
+            </div>
+          ) : null}
+          <header>
+            <ChapterHeader as="h3" id={headingId}>
+              <span data-entry-mark="">{row.title}</span>
+            </ChapterHeader>
+            <p className="m-0 mt-1 font-body text-body font-medium text-ink-muted">{row.org}</p>
+          </header>
         </div>
+
+        <div className="mt-3 lg:col-[1/span_3] lg:row-[1/span_2] lg:mt-0 lg:pt-1.5 lg:text-right">
+          <Log items={log} />
+        </div>
+
+        <div className="mt-4 lg:col-[4/span_5] lg:row-start-2">
+          {row.detail ? (
+            <p className="m-0 max-w-measure font-body text-body text-ink [text-wrap:pretty]">{row.detail}</p>
+          ) : null}
+          {row.bullets && row.bullets.length > 0 ? (
+            <ul className="m-0 mt-4 flex max-w-measure list-disc flex-col gap-2 pl-5 font-body text-body text-ink marker:text-ink-muted">
+              {row.bullets.map((bullet) => (
+                <li key={bullet} className="[text-wrap:pretty]">
+                  {bullet}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+
+        {hasPlates ? (
+          <div className="mt-6 flex flex-col gap-6 empty:hidden lg:col-[10/span_3] lg:row-[1/span_2] lg:mt-0">
+            {row.plates?.map((id) => <MediaSlot key={id} id={id} />)}
+          </div>
+        ) : null}
+      </article>
+    </li>
+  );
+}
+
+/**
+ * §G.3 #experience: a logbook timeline, newest first, of EXPERIENCE then PROFILE.education ([S-PRO-EDU]).
+ * Server-rendered; the spine fill and the signal tick are the only client parts (ExperienceTrack).
+ */
+export function ExperienceSection({
+  experience,
+  education,
+}: {
+  experience: readonly ExperienceEntry[];
+  education: readonly Education[];
+}) {
+  const rows = [...experience.map(fromExperience), ...education.map(fromEducation)];
+
+  return (
+    <section id="experience" aria-labelledby={TITLE_ID} className="journal-grid mt-32 lg:mt-48">
+      <div className="col-[content-start/content-end] lg:col-[5/span_7]">
+        <ChapterHeader as="h2" id={TITLE_ID}>
+          {EXPERIENCE_COPY.title}
+        </ChapterHeader>
+      </div>
+
+      <div className="col-[content-start/content-end] mt-12 lg:mt-20">
+        <ExperienceTrack>
+          <ol aria-label={EXPERIENCE_COPY.listLabel} className="m-0 flex list-none flex-col gap-24 p-0 lg:gap-32">
+            {rows.map((row) => (
+              <TimelineEntry key={row.key} row={row} />
+            ))}
+          </ol>
+        </ExperienceTrack>
       </div>
     </section>
   );

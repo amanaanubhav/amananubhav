@@ -1,113 +1,159 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import { PROJECTS, selectFeaturedProjects, type Project } from '@/entities/project';
+import { ArrowRight } from 'lucide-react';
+import type { Project } from '@/entities/project';
 import { ROUTES } from '@/shared/config';
-import { useTheme } from '@/shared/lib/theme';
-import { Reveal } from '@/shared/ui/reveal';
-import { useTilt } from '../lib/use-tilt';
+import { Button } from '@/shared/ui/button';
+import { ChapterHeader } from '@/shared/ui/chapter-header';
+import { DrawOnView } from '@/shared/ui/draw';
+import { Log, Spread } from '@/shared/ui/journal';
+import type { LogEntry } from '@/shared/ui/journal';
+import { MediaSlot } from '@/shared/ui/media-slot';
+import { VisuallyHidden } from '@/shared/ui/visually-hidden';
+import { BLUEPRINT_NOTES, PROJECT_LOG_RESULT, PROJECTS_COPY, blueprintCaption } from '../config/copy';
+import { BLUEPRINTS, SELF_ANIMATED } from './blueprints';
+import { BlueprintFigure } from './BlueprintFigure';
+import { RichLine } from './RichLine';
+import { StackList } from './StackList';
 
-interface ProjectCardProps {
-  p: Project;
-  isDark: boolean;
-}
+const TITLE_ID = 'projects-title';
 
-function ProjectCard({ p, isDark }: ProjectCardProps) {
-  const tiltRef = useTilt<HTMLAnchorElement>();
+const LINK_CLASSES =
+  'inline-flex min-h-6 items-center rounded-control text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2';
 
+function ProjectLinks({ project }: { project: Project }) {
+  const links = project.links ?? [];
+  if (links.length === 0) return null;
   return (
-    <a
-      ref={tiltRef}
-      href={p.link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`group block h-full min-h-[360px] p-10 transition-all duration-500 relative overflow-hidden flex flex-col border border-transparent
-            ${isDark
-          ? 'bg-zinc-950/90 hover:border-zinc-600/50 shadow-2xl shadow-black/60'
-          : 'bg-white hover:border-zinc-400 shadow-xl'}`}
-      style={{
-        transformStyle: 'preserve-3d',
-        transition: 'transform 0.1s ease-out', // Fast response
-        willChange: 'transform',
-      }}
-    >
-      {/* Metallic Border Gradient (Pseudo) */}
-      <div className={`absolute inset-0 rounded-sm border opacity-20 pointer-events-none transition-opacity duration-500 group-hover:opacity-100
-                ${isDark ? 'border-zinc-500' : 'border-zinc-300'}`}></div>
-
-      {/* Subtle Gradient Shine */}
-      <div className={`absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`}></div>
-
-      <div className="flex justify-between items-start mb-10 relative z-10" style={{ transform: 'translateZ(20px)' }}>
-        <span className={`font-cyber text-xs tracking-[0.2em] uppercase transition-colors ${isDark ? 'text-zinc-500 group-hover:text-zinc-300' : 'text-zinc-400 group-hover:text-zinc-600'}`}>
-          {p.type} — {p.year}
-        </span>
-        <ArrowUpRight className={`w-6 h-6 transition-all transform group-hover:rotate-45 duration-500 ${isDark ? 'text-zinc-600 group-hover:text-white' : 'text-zinc-400 group-hover:text-black'}`} />
-      </div>
-
-      <h3 className={`text-3xl font-bold mb-4 transition-colors font-sans relative z-10 ${isDark ? 'text-zinc-100 group-hover:text-white' : 'text-zinc-800 group-hover:text-black'}`} style={{ transform: 'translateZ(30px)' }}>
-        {p.title}
-      </h3>
-
-      {/* One-line impact description */}
-      <p className={`text-base mb-10 leading-relaxed transition-colors font-sans relative z-10 flex-grow ${isDark ? 'text-zinc-400 group-hover:text-zinc-300' : 'text-zinc-600 group-hover:text-zinc-800'}`} style={{ transform: 'translateZ(20px)' }}>
-        {p.desc}
-      </p>
-
-      {/* Tech Tags - Limit to 3-5 */}
-      <div className="flex flex-wrap gap-2 mt-auto relative z-10" style={{ transform: 'translateZ(20px)' }}>
-        {p.tech.slice(0, 4).map((t) => (
-          <span key={t} className={`text-[10px] font-cyber uppercase tracking-wider px-3 py-1.5 border rounded-sm transition-colors
-                ${isDark
-              ? 'border-zinc-800 bg-zinc-900/50 text-zinc-500 group-hover:border-zinc-600 group-hover:text-zinc-300'
-              : 'border-zinc-200 bg-zinc-50 text-zinc-500 group-hover:border-zinc-300 group-hover:text-zinc-700'}`}>
-            {t}
-          </span>
-        ))}
-      </div>
-    </a>
+    <span className="flex flex-col gap-1">
+      {links.map((link) => (
+        <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className={LINK_CLASSES}>
+          {link.label}
+          <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+        </a>
+      ))}
+    </span>
   );
 }
 
-export function FeaturedProjectsSection() {
-  const { isDark } = useTheme();
-  const router = useRouter();
-  // FILTER: Strictly top 4 Featured Projects
-  const featuredProjects = selectFeaturedProjects(PROJECTS, 4);
+/**
+ * The project's G-05 blueprint inside its M-WORK-03 plate, in the layout that suits the plate's width; static ones
+ * draw once in view, DIVERT runs its own corridor. A diagram's disclaimer (BLUEPRINT_NOTES) is the plate caption's second sentence.
+ */
+function BlueprintPlate({ project }: { project: Project }) {
+  const Blueprint = BLUEPRINTS[project.id];
+  if (!Blueprint) return null;
+  const selfAnimated = SELF_ANIMATED.has(project.id);
+  return (
+    <BlueprintFigure
+      id="M-WORK-03"
+      layout="bleed"
+      breakpoints="bleed"
+      captionText={blueprintCaption(project.title, BLUEPRINT_NOTES[project.id])}
+      render={(variant) =>
+        selfAnimated ? (
+          <div className="absolute inset-0">
+            <Blueprint variant={variant} />
+          </div>
+        ) : (
+          <DrawOnView className="absolute inset-0">
+            <Blueprint variant={variant} />
+          </DrawOnView>
+        )
+      }
+    />
+  );
+}
+
+function ProjectSpread({ project }: { project: Project }) {
+  const headingId = `project-${project.id}`;
+  const resultShort = PROJECT_LOG_RESULT[project.id];
+  // `project` is not in the §G.3 list: the h3 sets the one-liner, so this row is where the name is visible.
+  const log: LogEntry[] = [
+    { key: 'project', value: project.title, mono: false },
+    { key: 'period', value: project.period },
+    { key: 'role', value: project.role, mono: false },
+    { key: 'team', value: project.team, mono: false },
+    { key: 'stack', value: project.tech.length > 0 ? <StackList items={project.tech} /> : undefined },
+    { key: 'links', value: project.links?.length ? <ProjectLinks project={project} /> : undefined, mono: false },
+    { key: 'result', value: resultShort ? <RichLine parts={resultShort} /> : undefined, mono: false },
+  ];
+
+  const screens = project.slotIds?.[0];
 
   return (
-    <section id="projects" className={`relative px-6 md:px-10 pt-32 pb-10 max-w-7xl mx-auto overflow-hidden ${isDark ? 'bg-black text-zinc-400' : 'bg-white text-zinc-600'}`}>
+    <Spread
+      as="article"
+      labelledBy={headingId}
+      // §G.3: each spread is about 90svh tall on desktop; content stays top-aligned (Spread's 1fr row takes the rest).
+      className="mt-24 lg:mt-32 lg:min-h-[90svh]"
+      plateSpan="bleed"
+      heading={
+        <ChapterHeader as="h3" size="h3" id={headingId} srPrefix={`${project.title}: `}>
+          {project.oneLiner ?? project.title}
+        </ChapterHeader>
+      }
+      log={<Log items={log} />}
+      plate={
+        // From 1024 px the plate column stops short of the window edge, where the waypoint rail and its active
+        // label live: 96 px (§J.3), and 128 px from 1280 px so the label clears the diagram's text too.
+        <div className="flex flex-col gap-6 px-4 md:px-8 lg:pl-0 lg:pr-24 xl:pr-32">
+          <BlueprintPlate project={project} />
+          {project.id === 'divert' ? (
+            <MediaSlot id="M-NOTEBOOK-02" layout="inset" sizes="280px" className="max-w-[280px]" />
+          ) : null}
+          {screens ? <MediaSlot id={screens} layout="inset" ratio="16:10" sizes="280px" className="max-w-[280px]" /> : null}
+        </div>
+      }
+    >
+      <div className="flex max-w-measure flex-col gap-4 font-body text-body text-ink">
+        {project.problem ? (
+          <p className="m-0 [text-wrap:pretty]">
+            <em className="mr-1 text-ink-muted">{PROJECTS_COPY.runIn.problem}</em>
+            {project.problem}
+          </p>
+        ) : null}
+        {project.approach ? (
+          <p className="m-0 [text-wrap:pretty]">
+            <em className="mr-1 text-ink-muted">{PROJECTS_COPY.runIn.approach}</em>
+            {project.approach}
+          </p>
+        ) : null}
+        {project.result ? (
+          <p className="m-0 [text-wrap:pretty]">
+            <em className="mr-1 text-ink-muted">{PROJECTS_COPY.runIn.result}</em>
+            {project.result}
+          </p>
+        ) : null}
+      </div>
+    </Spread>
+  );
+}
 
-      {/* Section Header */}
-      <div className="flex justify-between items-end mb-16">
-        <Reveal preset="tilt">
-          <h2 className={`text-xs font-cyber tracking-[0.3em] uppercase text-left ${isDark ? 'text-zinc-600' : 'text-zinc-400'}`}>
-            {'// FEATURED PROJECTS'}
-          </h2>
-        </Reveal>
-
-        <Reveal preset="tilt" delay={200}>
-          <button
-            onClick={() => router.push(ROUTES.projectArchive)}
-            className={`group flex items-center gap-2 px-4 py-2 border rounded-sm text-xs font-cyber tracking-widest uppercase transition-colors duration-300
-                        ${isDark ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900' : 'border-zinc-300 text-zinc-600 hover:text-black hover:bg-zinc-100'}`}
-          >
-            MORE PROJECTS
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </button>
-        </Reveal>
+/**
+ * §G.3 #projects: the featured six in `featuredOrder`, each a spread with its G-05 blueprint (M-WORK-03) and a
+ * compact screenshot plate (its `M-PROJ-*` slot; pending plates say what is to come). DIVERT's corridor plays once
+ * in view, then shows a Play button; the others draw once. Then the way into the full archive.
+ */
+export function FeaturedProjectsSection({ projects }: { projects: readonly Project[] }) {
+  return (
+    <section id="projects" aria-labelledby={TITLE_ID} className="mt-32 lg:mt-48">
+      <div className="journal-grid">
+        <div className="col-[content-start/content-end] lg:col-[5/span_5]">
+          <ChapterHeader as="h2" id={TITLE_ID}>
+            {PROJECTS_COPY.title}
+          </ChapterHeader>
+        </div>
       </div>
 
-      <br />
+      {projects.map((project) => (
+        <ProjectSpread key={project.id} project={project} />
+      ))}
 
-      {/* TIER 1: FEATURED PROJECTS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 mb-32">
-        {featuredProjects.map((p, i) => (
-          <Reveal key={i} preset="tilt" delay={i * 150}>
-            <ProjectCard p={p} isDark={isDark} />
-          </Reveal>
-        ))}
+      <div className="journal-grid mt-16 lg:mt-24">
+        <div className="col-[content-start/content-end] lg:col-[5/span_5]">
+          <Button variant="text" href={ROUTES.projectArchive} icon={ArrowRight} iconPosition="end" className="whitespace-normal text-left">
+            {PROJECTS_COPY.archiveLink}
+          </Button>
+        </div>
       </div>
     </section>
   );
