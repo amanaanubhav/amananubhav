@@ -1,10 +1,28 @@
 import { addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
-import { messagesCollection, threadDoc, type VisitorProfile } from '@/entities/chat-thread';
+import type { VisitorProfile } from '@/entities/chat-thread';
+import { messagesCollection, threadDoc } from '@/entities/chat-thread/index.firestore';
+import { ensureAnonymousSession, getDb } from '@/shared/api';
 
 import { notifyOwner } from './notify-owner';
 
-/** Creates / refreshes the thread document when the visitor starts a chat. */
+/*
+ * The chat's Firestore and EmailJS code. `useVisitorChat` loads this module with `import()` on first need (a stored
+ * session, Start chat, Send), so it stays out of every route's initial JS (§J.2).
+ */
+
+export { subscribeToMessages, subscribeToThread } from '@/entities/chat-thread/index.firestore';
+export { ensureAnonymousSession };
+
+/** False when Firebase is not configured (the hook's legacy `getDb()` guard). */
+export function hasChatDb(): boolean {
+  return getDb() !== null;
+}
+
+/**
+ * Creates / refreshes the thread document when the visitor starts a chat. Await `ensureAnonymousSession()` first:
+ * the write is then issued synchronously (applied to the local cache), so a listener attached right after sees it.
+ */
 export async function startThread(id: string, { name, email, phone }: VisitorProfile): Promise<void> {
   await setDoc(
     threadDoc(id),
@@ -25,6 +43,8 @@ export async function sendVisitorMessage(
   text: string,
   visitor: VisitorProfile,
 ): Promise<void> {
+  await ensureAnonymousSession();
+
   // 1. Save message to chat history
   await addDoc(messagesCollection(chatId), {
     text: text,
