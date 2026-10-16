@@ -24,10 +24,9 @@ export const rootMetadata: Metadata = {
     images: [SITE.ogImage],
   },
   icons: {
-    // G-11 trig-point mark (scripts/brand/build-brand.mjs). The ICO is sized (not `any`) so browsers that
-    // support SVG favicons pick the theme-aware SVG over it.
+    // Aman's summit portrait (scripts/brand/build-brand.mjs, npm run gen:brand). No SVG entry: a photo has
+    // no vector form, so browsers take the pre-sized, sharpened ICO and PNG frames.
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico', type: 'image/x-icon', sizes: '16x16 32x32 48x48' },
       { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
       { url: '/favicon-192x192.png', type: 'image/png', sizes: '192x192' },

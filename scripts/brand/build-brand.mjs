@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // npm run gen:brand — builds the brand files of DESIGN-SPEC §F G-11 to G-13 (dev-only; outputs are committed):
-//   G-11  public/favicon.svg (≤ 2 KB), public/favicon.ico (16/32/48, ≤ 15 KB), public/favicon-96x96.png,
-//         public/favicon-192x192.png, public/apple-touch-icon.png (180 px on solid Night ground)
+//   G-11  favicons from scripts/brand/assets/favicon-portrait.webp (Aman's summit portrait): public/favicon.ico
+//         (16/32/48, ≤ 15 KB), public/favicon-96x96.png, public/favicon-192x192.png, public/apple-touch-icon.png
+//         (180; PNGs ≤ 25 KB), and public/favicon.svg (≤ 10 KB, a 64 px raster wrapper kept for old links)
 //   G-12  public/og/aman-anubhav.png (1200 × 630, ≤ 150 KB) via next/og ImageResponse with the @fontsource
 //         Archivo and Literata files; falls back to a sharp SVG render with a logged warning
 //   G-13  public/textures/grain.png (256 × 256 greyscale, seeded, ≤ 6 KB)
@@ -14,15 +15,15 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 
 import { buildGrain } from './grain.mjs';
-import { faviconSvg, iconSvg } from './mark.mjs';
 import { OG_HEIGHT, OG_WIDTH, ogArtworkSvg, ogElement, ogFallbackSvg, ridgeLayout } from './og-card.mjs';
 import { PALETTE, PUBLIC_DIR, ROOT, encodeIco, importSource, report } from './shared.mjs';
 
 const require = createRequire(join(ROOT, 'package.json'));
 
 const BUDGET = {
-  faviconSvg: 2 * 1024,
+  faviconSvg: 10 * 1024,
   ico: 15 * 1024,
+  iconPng: 25 * 1024,
   og: 150 * 1024,
   grain: 6 * 1024,
 };
@@ -39,50 +40,51 @@ const ogOutDir = process.argv.find((arg) => arg.startsWith('--out='))?.slice('--
 
 const { mulberry32, hashSeed } = await importSource('src/shared/lib/random/random.ts');
 
-function rasterise(svg, size, { opaque = false } = {}) {
-  // density scales the SVG's own px size; render at the target size directly (the SVG declares it).
-  // Full-bleed icons drop the alpha channel: iOS composites a transparent apple-touch-icon on black.
-  let image = sharp(Buffer.from(svg)).resize(size, size);
-  if (opaque) image = image.removeAlpha();
-  return image.png({ compressionLevel: 9, adaptiveFiltering: true, palette: false }).toBuffer();
+// G-11 favicons are Aman's summit portrait (goggles and down jacket), the photo the site used as its icon
+// before the redesign. The source is the old 1080 px traced favicon.svg (commit 9e80842) rendered to a
+// 512 px WebP with no metadata; every icon is a square cover crop of it, so the framing matches the old one.
+const PORTRAIT = join(ROOT, 'scripts', 'brand', 'assets', 'favicon-portrait.webp');
+
+function portraitPng(size, { ico = false } = {}) {
+  // Lanczos down-scale, a light sharpen at tab sizes (where detail blurs first), opaque, then a
+  // 256-color palette PNG: the traced portrait is flat color, so quantising is visually lossless.
+  let image = sharp(PORTRAIT).resize(size, size, { fit: 'cover', position: 'centre', kernel: 'lanczos3' }).removeAlpha();
+  if (size <= 48) image = image.sharpen({ sigma: 0.6 });
+  // ICO frames stay 32-bit RGBA (the ICO directory declares 32 bpp and some decoders reject indexed PNGs).
+  if (ico) return image.ensureAlpha().png({ compressionLevel: 9, adaptiveFiltering: true, palette: false }).toBuffer();
+  return image.png({ palette: true, colours: 256, quality: 100, effort: 10, compressionLevel: 9, dither: 0.5 }).toBuffer();
+}
+
+async function portraitSvg() {
+  // /favicon.svg stays a valid URL (older links and crawlers) but is a tiny wrapper around a 64 px WebP.
+  // metadata.ts no longer lists it, so browsers pick the pre-sized ICO and PNG frames instead.
+  const webp = await sharp(PORTRAIT).resize(64, 64, { fit: 'cover', kernel: 'lanczos3' }).removeAlpha().webp({ quality: 80, effort: 6 }).toBuffer();
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64"><image width="64" height="64" href="data:image/webp;base64,${webp.toString('base64')}"/></svg>`;
 }
 
 async function buildIcons() {
-  console.log('G-11 brand mark and icons');
-  const n = PALETTE.night;
+  console.log('G-11 favicons (summit portrait)');
   const svgPath = join(PUBLIC_DIR, 'favicon.svg');
-  writeFileSync(svgPath, `${faviconSvg(PALETTE)}\n`);
+  writeFileSync(svgPath, `${await portraitSvg()}
+`);
   let ok = report(svgPath, BUDGET.faviconSvg);
 
-  // Tab-size frames get a slightly heavier stroke and dot so the mark survives pixel snapping.
-  const tab = {
-    16: { pad: 1.3, radius: 3, stroke: 2.3, dot: 2.1 },
-    32: { pad: 1.6, radius: 3.5, stroke: 1.95, dot: 1.9 },
-    48: { pad: 2, radius: 4, stroke: 1.75, dot: 1.8 },
-  };
   const icoImages = [];
-  for (const size of [16, 32, 48]) {
-    const png = await rasterise(iconSvg({ size, ground: n.ground, signal: n.signal, ...tab[size] }), size);
-    icoImages.push({ size, png });
-  }
+  for (const size of [16, 32, 48]) icoImages.push({ size, png: await portraitPng(size, { ico: true }) });
   const icoPath = join(PUBLIC_DIR, 'favicon.ico');
   writeFileSync(icoPath, encodeIco(icoImages));
   ok = report(icoPath, BUDGET.ico, '16, 32, 48 px') && ok;
 
-  // Larger icons sit on solid Night ground. 96 px keeps the tile's rounded corners (desktop shortcuts and
-  // tabs on high-density screens); 192 (Android) and 180 (iOS) are full-bleed: the platform masks them.
+  // Full-bleed and opaque: Android (192) and iOS (180) apply their own masks.
   const larger = [
-    { file: 'favicon-96x96.png', size: 96, pad: 2.6, radius: 4 },
-    { file: 'favicon-192x192.png', size: 192, pad: 5, radius: 0 },
-    { file: 'apple-touch-icon.png', size: 180, pad: 5, radius: 0 },
+    { file: 'favicon-96x96.png', size: 96 },
+    { file: 'favicon-192x192.png', size: 192 },
+    { file: 'apple-touch-icon.png', size: 180 },
   ];
   for (const icon of larger) {
-    const png = await rasterise(iconSvg({ size: icon.size, ground: n.ground, signal: n.signal, pad: icon.pad, radius: icon.radius }), icon.size, {
-      opaque: icon.radius === 0,
-    });
     const path = join(PUBLIC_DIR, icon.file);
-    writeFileSync(path, png);
-    ok = report(path, undefined, `${icon.size} × ${icon.size}`) && ok;
+    writeFileSync(path, await portraitPng(icon.size));
+    ok = report(path, BUDGET.iconPng, `${icon.size} × ${icon.size}`) && ok;
   }
   return ok;
 }

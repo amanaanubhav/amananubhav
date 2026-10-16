@@ -766,7 +766,7 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
   },
   'M-EXP-SUMMIT-01': {
     chapter: 'expeditions', kind: 'photo', status: 'placeholder', ratio: '4:5', minPx: PHOTO_P, optional: true,
-    subject: 'The full-resolution original of the goggles-and-down-jacket summit portrait (the site only ever had a 192 px crop of it, the old favicon, now replaced by the trig mark): who, where.',
+    subject: 'The full-resolution original of the goggles-and-down-jacket summit portrait (the site only has a small crop of it, which is the favicon again): who, where.',
     short: 'the summit portrait', alt: 'Aman on [summit], [altitude] m',
     usedIn: ['/stories#atlas', 'OG card v2'], priority: 2, confirm: ['Q-102'],
   },
@@ -936,7 +936,8 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
     path: 'src/shared/ui/trig-mark/TrigMark.tsx', generator: 'G-11',
     subject: 'Trig-point brand mark, hand-drawn SVG.',
     short: 'the trig-point mark', alt: '',
-    usedIn: ['favicons', 'navbar', 'footer'],
+    // The favicons are Aman's summit portrait again (scripts/brand, gen:brand); the mark stays in the navbar and footer.
+    usedIn: ['navbar', 'footer'],
   },
   'M-BRAND-OG': {
     chapter: 'brand', kind: 'svg', status: 'generated', ratio: '1.91:1',
