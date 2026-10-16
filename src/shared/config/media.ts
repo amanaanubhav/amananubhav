@@ -932,12 +932,13 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
   'M-NOTEBOOK-02': /*#__PURE__*/ notebook(['story reader plates', '/professional#projects (beside the DIVERT blueprint)']),
   'M-NOTEBOOK-03': /*#__PURE__*/ notebook(['story reader plates']),
   'M-BRAND-MARK': {
-    chapter: 'brand', kind: 'svg', status: 'generated', ratio: '1:1',
-    path: 'src/shared/ui/trig-mark/TrigMark.tsx', generator: 'G-11',
-    subject: 'Trig-point brand mark, hand-drawn SVG.',
-    short: 'the trig-point mark', alt: '',
-    // The favicons are Aman's summit portrait again (scripts/brand, gen:brand); the mark stays in the navbar and footer.
-    usedIn: ['navbar', 'footer'],
+    chapter: 'brand', kind: 'svg', status: 'generated', ratio: '2:1',
+    path: 'src/shared/ui/ridge-mark/RidgeMark.tsx', generator: 'G-11',
+    subject: 'Ridge signature mark: the Alpenglow altitude profile with a trekker on the summit, hand-drawn SVG.',
+    short: 'the ridge mark', alt: '',
+    // The favicons are Aman's summit portrait (scripts/brand, gen:brand), not the mark. The geometry lives in
+    // ridge-mark/geometry.ts and is shared with the AI terminal's Alpenglow cue and the OG card.
+    usedIn: ['navbar', 'footer', 'preloader', '404', 'AI terminal', 'OG card'],
   },
   'M-BRAND-OG': {
     chapter: 'brand', kind: 'svg', status: 'generated', ratio: '1.91:1',
