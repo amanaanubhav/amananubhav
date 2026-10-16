@@ -4,7 +4,7 @@ import { ROUTES } from '@/shared/config';
 import { Button } from '@/shared/ui/button';
 import { ChapterHeader } from '@/shared/ui/chapter-header';
 import { Log } from '@/shared/ui/journal';
-import { TrigMark } from '@/shared/ui/trig-mark';
+import { MARK_HEIGHT, RIDGE_OFFSET_Y, RIDGE_START, RidgeMark } from '@/shared/ui/ridge-mark';
 
 /**
  * Own title, and robots set explicitly: otherwise the 404 inherits the home title and rootMetadata's
@@ -15,13 +15,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** End point of the trail in the 400 × 300 drawing; the trig mark sits on it. */
-const END = { x: 318, y: 74 } as const;
-const MARK = 28;
+/** End point of the trail in the 400 × 300 drawing: the foot of the signature ridge, which stands on it. */
+const END = { x: 318, y: 82 } as const;
+/** The mark's height in drawing units (it is twice as wide). */
+const MARK = 40;
+const MARK_SCALE = MARK / MARK_HEIGHT;
+/** Where the mark's box goes so that its ridge starts exactly at the trail's end. */
+const MARK_AT = {
+  x: END.x - RIDGE_START.x * MARK_SCALE,
+  y: END.y - (RIDGE_START.y + RIDGE_OFFSET_Y) * MARK_SCALE,
+} as const;
 
 const TRAIL =
-  'M24 276C58 262 70 238 98 236S150 252 172 232 182 186 214 178 262 190 280 166 286 112 ' +
-  `${END.x} ${END.y + MARK * 0.3}`;
+  'M24 276C58 262 70 238 98 236S150 252 172 232 182 186 214 178 262 190 280 166 286 112 ' + `${END.x} ${END.y}`;
 
 const CONTOURS = [
   'M0 214C64 196 112 214 168 198S268 150 330 156 400 134 400 134',
@@ -30,8 +36,8 @@ const CONTOURS = [
 ] as const;
 
 /**
- * A dashed route in the signal line that ends at a trig point, over three faint hand-drawn contours
- * (§H.11). Decorative, no data; the page copy says everything.
+ * A dashed route in the signal line that ends at the foot of the signature ridge, with the trekker on its
+ * summit, over three faint hand-drawn contours (§H.11). Decorative, no data; the page copy says everything.
  */
 function TrailEndDrawing({ className }: { className?: string }) {
   return (
@@ -54,8 +60,8 @@ function TrailEndDrawing({ className }: { className?: string }) {
         }}
       />
       <circle cx={24} cy={276} r={4} className="fill-ground" style={{ stroke: 'rgb(var(--c-line-strong))', strokeWidth: 1.5 }} />
-      <g transform={`translate(${END.x - MARK / 2} ${END.y - MARK / 2})`} className="text-signal">
-        <TrigMark size={MARK} />
+      <g transform={`translate(${MARK_AT.x} ${MARK_AT.y})`} className="text-ink">
+        <RidgeMark size={MARK} lit />
       </g>
     </svg>
   );

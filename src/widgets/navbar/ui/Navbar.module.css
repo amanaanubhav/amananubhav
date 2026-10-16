@@ -11,7 +11,7 @@
   --nav-shade: rgb(var(--c-ground-sky) / 0.7); /* float shadow */
   --nav-caustic: rgb(var(--c-water) / 0.12); /* the violet light the glass bends along its lower edge */
   --nav-drop: 0.1; /* hover drop strength */
-  --nav-glint: rgb(255 255 255 / 0.42); /* the drop's specular glint */
+  --nav-glint: rgb(255 255 255 / 0.36); /* the drop's specular glint */
   /* Visible shapes sit this far inside each 40 px control: a 34 px bead with 7 px of glass above and below
      (48 px bar), 32 px with 6 px in the compact 44 px bar. */
   --bead-inset: 3px;
@@ -129,6 +129,16 @@
   .pill:hover::before {
     border-color: rgb(var(--c-ink) / 0.28);
   }
+}
+/* The keyboard equivalent of the static wash (the drop itself follows focus when it is on). */
+.glass:not([data-liquid]) .ctl:not([aria-current]):focus-visible::before,
+:global(html[data-motion='off']) .ctl:not([aria-current]):focus-visible::before {
+  background-color: rgb(var(--c-ink) / 0.08);
+}
+.pill:focus-visible::before {
+  border-color: rgb(var(--c-ink) / 0.28);
+}
+@media (hover: hover) and (pointer: fine) {
   /* The drop merges into the bead: the bead swells a little along the bar. */
   :global(html:not([data-motion='off'])) .glass[data-liquid] .ctl:hover > .bead {
     scale: 1.045 1;
@@ -181,19 +191,19 @@
 }
 .glint {
   position: absolute;
-  top: 1px;
+  top: 2px; /* a thin crescent hugging the drop's top, clear of the label's cap height */
   left: 0;
   width: 30px; /* GLINT_PX */
-  height: 9px;
+  height: 5px;
   border-radius: 50%;
   background: radial-gradient(closest-side, var(--nav-glint), transparent);
 }
 .caustic {
   position: absolute;
-  bottom: 1px;
+  bottom: 2px; /* a hairline of bent light along the foot, below the label's baseline */
   left: 0;
   width: 26px; /* CAUSTIC_PX */
-  height: 6px;
+  height: 3px;
   border-radius: 50%;
   background: radial-gradient(closest-side, rgb(var(--c-water) / 0.55), transparent);
 }

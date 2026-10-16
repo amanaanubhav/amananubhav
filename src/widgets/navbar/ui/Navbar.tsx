@@ -20,7 +20,7 @@ import { cn } from '@/shared/lib/cn';
 import { useReducedMotionPreference } from '@/shared/lib/motion-tier';
 import { scrollToTop } from '@/shared/lib/smooth-scroll';
 import { runThemeSweep, useTheme } from '@/shared/lib/theme';
-import { TrigMark } from '@/shared/ui/trig-mark';
+import { RidgeMark } from '@/shared/ui/ridge-mark';
 import { NAV_ITEMS, navItemCurrent } from '../config/nav-items';
 import { isKeyboardFocus } from '../lib/is-keyboard-focus';
 import { useHideOnScroll } from '../model/use-hide-on-scroll';
@@ -196,7 +196,7 @@ export function Navbar() {
           onClick={(event) => onLinkClick(event, ROUTES.home)}
           className={action('max-[399px]:hidden sm:ps-2.5', compact ? 'sm:pe-2.5' : 'sm:pe-3.5')}
         >
-          <TrigMark size={20} className="shrink-0 text-signal" />
+          <RidgeMark size={20} lit className="shrink-0 text-ink" />
           <span
             aria-hidden="true"
             data-collapsed={compact ? '' : undefined}

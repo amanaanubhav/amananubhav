@@ -11,7 +11,7 @@ import { useMotionAllowed } from '@/shared/lib/motion-tier';
 import { buttonClassName } from '@/shared/ui/button';
 import { JournalGrid } from '@/shared/ui/journal';
 import { StatusChip } from '@/shared/ui/status-chip';
-import { TrigMark } from '@/shared/ui/trig-mark';
+import { RidgeMark } from '@/shared/ui/ridge-mark';
 import { VisuallyHidden } from '@/shared/ui/visually-hidden';
 import { COMPACT_FOOTER_ROUTES, ELSEWHERE_LINKS, FOOTER_COPY, PAGE_LINKS } from '../config/footer';
 import { useFooterPointer, useFooterReveal } from '../lib/use-footer-motion';
@@ -51,7 +51,7 @@ function TopRow({ compact }: { compact: boolean }) {
   return (
     <div className="col-[content-start/content-end] flex flex-wrap items-center justify-between gap-x-6 gap-y-2 lg:col-[2/span_12]">
       <p className="m-0 inline-flex items-center gap-2.5 font-display text-ui font-semibold text-ink">
-        <TrigMark size={18} className="shrink-0 text-signal" />
+        <RidgeMark size={20} lit className="shrink-0 text-ink" />
         {PROFILE.displayName}
         <span className="font-body font-normal italic text-ink-muted">· the last page</span>
       </p>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { animate, motion, useMotionValue, useTransform, type MotionStyle } from 'motion/react';
 import { ANNAPURNA_ROUTE } from '@/entities/expedition';
 import { ElevationProfile } from '@/shared/ui/charts';
-import { TrigMark } from '@/shared/ui/trig-mark';
+import { RidgeMark } from '@/shared/ui/ridge-mark';
 import { VisuallyHidden } from '@/shared/ui/visually-hidden';
 import { headlampAt, PRELOADER_TARGET } from '../lib/route-line';
 
@@ -72,7 +72,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
 
       <div aria-hidden="true" className="flex items-start justify-between gap-4">
         <span className="inline-flex items-center gap-2 font-body text-ui italic text-ink-muted">
-          <TrigMark size={18} className="shrink-0 text-signal" />
+          <RidgeMark size={20} lit className="shrink-0 text-ink" />
           Base camp
         </span>
         <span className="font-data text-caption text-ink-muted tabular">
