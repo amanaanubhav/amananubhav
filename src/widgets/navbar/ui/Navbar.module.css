@@ -1,0 +1,284 @@
+/*
+ * Liquid-glass layers of the floating navbar (§H.1, redesigned per the owner's brief).
+ * Colors come only from the generated tokens (`--c-*` triplets, `--shadow-*`), so a new palette flows in.
+ * Each theme sets five variables; the fallbacks at the end replace the glass with an opaque fill.
+ */
+
+.glass {
+  --nav-tint: 0.88; /* surface opacity: ink-muted labels hold 4.5:1 even over a pure white backdrop */
+  --nav-rim: rgb(var(--c-ink) / 0.13); /* hairline edge */
+  --nav-spec: rgb(var(--c-ink) / 0.16); /* top specular line */
+  --nav-shade: rgb(var(--c-ground-sky) / 0.7); /* float shadow */
+  --nav-caustic: rgb(var(--c-water) / 0.12); /* the violet light the glass bends along its lower edge */
+  --nav-drop: 0.1; /* hover drop strength */
+  --nav-glint: rgb(255 255 255 / 0.42); /* the drop's specular glint */
+  /* Visible shapes sit this far inside each 40 px control: a 34 px bead with 7 px of glass above and below
+     (48 px bar), 32 px with 6 px in the compact 44 px bar. */
+  --bead-inset: 3px;
+  position: relative;
+  isolation: isolate;
+  background-color: rgb(var(--c-surface) / var(--nav-tint));
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid var(--nav-rim);
+  box-shadow:
+    inset 0 1px 0 0 var(--nav-spec),
+    0 14px 32px -16px var(--nav-shade),
+    0 2px 8px -4px var(--nav-shade);
+  transition:
+    height var(--dur-ui) var(--ease-settle),
+    padding var(--dur-ui) var(--ease-settle),
+    background-color var(--dur-ui) var(--ease-settle);
+}
+
+:global(:root[data-theme='day']) .glass {
+  --nav-tint: 0.84; /* and over a pure black one in Day */
+  --nav-rim: rgb(var(--c-ink) / 0.11);
+  --nav-spec: rgb(var(--c-surface) / 0.95);
+  --nav-shade: rgb(var(--c-ink) / 0.2);
+  --nav-caustic: rgb(var(--c-water) / 0.07);
+  --nav-drop: 0.075;
+  --nav-glint: rgb(255 255 255 / 0.95);
+}
+
+.glass[data-compact] {
+  --bead-inset: 4px;
+}
+
+/* A faint sheen across the upper half: the "wet" top of the glass. */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, var(--nav-spec) 0%, transparent 55%),
+    radial-gradient(70% 120% at 50% 130%, var(--nav-caustic), transparent 70%);
+  opacity: 0.45;
+}
+
+/* A refractive rim over the hairline: bright where light enters at the top, fading through the sides,
+   with a faint caustic tint along the bottom. Drawn as a 1 px ring with a mask so it never covers the labels. */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    var(--nav-spec) 0%,
+    transparent 45%,
+    transparent 70%,
+    rgb(var(--c-water) / 0.4) 100%
+  );
+  -webkit-mask:
+    linear-gradient(black 0 0) content-box,
+    linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(black 0 0) content-box exclude,
+    linear-gradient(black 0 0);
+}
+
+/* Each control is its own stacking context; ::before is its inset wash or pill, under the icon and label. */
+.ctl {
+  /* Labelled links override this to 0 so the label keeps 12 px either side inside the bead. */
+  --inset-x: var(--bead-inset);
+  isolation: isolate;
+}
+.ctl::before {
+  content: '';
+  position: absolute;
+  inset: var(--bead-inset) var(--inset-x);
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  transition:
+    background-color var(--dur-hover) var(--ease-settle),
+    border-color var(--dur-hover) var(--ease-settle);
+}
+
+/* Secure contact keeps its outlined pill, now inset like the bead. */
+.pill::before {
+  border: 1px solid rgb(var(--c-ink) / 0.16);
+  background-color: rgb(var(--c-ink) / 0.04);
+}
+
+/* The bead behind the current link: inset glass with a signal rim and a warm caustic at its foot. */
+.bead {
+  position: absolute;
+  inset: var(--bead-inset) var(--inset-x);
+  border-radius: 9999px;
+  background:
+    radial-gradient(90% 110% at 50% 125%, rgb(var(--c-signal) / 0.16), transparent 70%),
+    linear-gradient(180deg, rgb(var(--c-ink) / 0.12), rgb(var(--c-ink) / 0.05));
+  border: 1px solid rgb(var(--c-signal) / 0.55);
+  box-shadow: inset 0 1px 0 0 var(--nav-spec);
+}
+
+/* Hover without the drop (coarse pointers never get here; reduced motion, before hydration): a static inset wash. */
+@media (hover: hover) and (pointer: fine) {
+  .glass:not([data-liquid]) .ctl:not([aria-current]):hover::before,
+  :global(html[data-motion='off']) .ctl:not([aria-current]):hover::before {
+    background-color: rgb(var(--c-ink) / 0.08);
+  }
+  .pill:hover::before {
+    border-color: rgb(var(--c-ink) / 0.28);
+  }
+  /* The drop merges into the bead: the bead swells a little along the bar. */
+  :global(html:not([data-motion='off'])) .glass[data-liquid] .ctl:hover > .bead {
+    scale: 1.045 1;
+  }
+}
+:global(html:not([data-motion='off'])) .glass[data-liquid] .ctl:focus-visible > .bead {
+  scale: 1.045 1;
+}
+:global(html:not([data-motion='off'])) .glass[data-liquid] .bead {
+  transition: scale 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* The hover drop (LiquidHover.tsx). Layers sit at the glass's vertical centre, as tall as the bead. */
+.liquid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.glass:not([data-liquid]) .liquid,
+:global(html[data-motion='off']) .liquid {
+  display: none;
+}
+.drop {
+  position: absolute;
+  top: calc(50% - 20px + var(--bead-inset));
+  left: 0;
+  width: 0;
+  height: calc(40px - 2 * var(--bead-inset));
+}
+/* Opaque parts, one translucent group: the caps and strip read as a single seamless shape. */
+.tint {
+  position: absolute;
+  inset: 0;
+  opacity: var(--nav-drop);
+}
+.cap,
+.strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(180deg, rgb(var(--c-ink)) 35%, rgb(var(--c-water)) 125%);
+}
+.cap {
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.strip {
+  width: 100px; /* BODY_PX */
+}
+.glint {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  width: 30px; /* GLINT_PX */
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--nav-glint), transparent);
+}
+.caustic {
+  position: absolute;
+  bottom: 1px;
+  left: 0;
+  width: 26px; /* CAUSTIC_PX */
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--c-water) / 0.55), transparent);
+}
+
+/* Gentle press on the control itself, only when motion is allowed (OS setting and the footer switch). */
+@media (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-motion='off'])) .ctl {
+    transition-property: color, transform;
+  }
+  :global(html:not([data-motion='off'])) .ctl:active {
+    transform: scale(0.96);
+    transition-duration: var(--dur-micro);
+  }
+}
+
+/* Collapsing wordmark: the column eases between 0 and its own width. */
+.wordmark {
+  display: grid;
+  grid-template-columns: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-columns var(--dur-ui) var(--ease-settle),
+    opacity var(--dur-hover) var(--ease-settle),
+    margin var(--dur-ui) var(--ease-settle);
+}
+.wordmark[data-collapsed] {
+  grid-template-columns: 0fr;
+  opacity: 0;
+  margin-inline-start: -0.5rem; /* takes back the gap after the mark */
+}
+.wordmark > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Opaque fill where the glass would hurt legibility or is unsupported. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    --nav-tint: 1 !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    --nav-tint: 1 !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass::before,
+  .glass::after {
+    display: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .glass {
+    --nav-tint: 1 !important;
+  }
+}
+@media (forced-colors: active) {
+  .glass {
+    background: Canvas;
+    border: 1px solid CanvasText;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  .glass::before,
+  .glass::after {
+    display: none;
+  }
+  .bead {
+    background: Canvas;
+    border: 2px solid Highlight;
+  }
+  .liquid {
+    display: none;
+  }
+  .ctl::before {
+    background: none;
+    border: none;
+  }
+  .pill::before {
+    border: 1px solid ButtonBorder;
+  }
+  .ctl:not([aria-current]):hover::before {
+    border: 2px solid CanvasText;
+  }
+}
