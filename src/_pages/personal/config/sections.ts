@@ -1,10 +1,11 @@
 import type { SectionNavItem } from '@/shared/ui/section-dot-nav';
 
-/** Dot-nav anchors for the Life page, in render order. */
+/** Waypoint rail for the Life page (§G.2): a plain rail, no altitudes; labels from [S-UI-COPY]. Render order. */
 export const PERSONAL_SECTIONS = [
-  { id: 'about', label: 'Identity' },
-  { id: 'stem', label: 'Engineering' },
-  { id: 'athletics', label: 'Athletics' },
-  { id: 'business', label: 'Business' },
-  { id: 'gallery', label: 'Gallery' },
+  { id: 'about', label: 'Origin' },
+  { id: 'stem', label: 'Early builds' },
+  { id: 'athletics', label: 'Discipline' },
+  { id: 'sky', label: 'Night sky' },
+  { id: 'business', label: 'Ventures' },
+  { id: 'gallery', label: 'Field album' },
 ] as const satisfies readonly SectionNavItem[];

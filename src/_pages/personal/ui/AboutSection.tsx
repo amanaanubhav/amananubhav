@@ -1,90 +1,108 @@
-'use client';
-
-import { Github, Linkedin, Mail, Instagram } from 'lucide-react';
-
 import { PROFILE } from '@/entities/profile';
-import { useTheme } from '@/shared/lib/theme';
-import { Reveal } from '@/shared/ui/reveal';
+import { ChapterHeader } from '@/shared/ui/chapter-header';
+import { Log, Spread } from '@/shared/ui/journal';
+import type { LogEntry } from '@/shared/ui/journal';
+import { StarChart } from '@/shared/ui/map';
+import { MediaSlot } from '@/shared/ui/media-slot';
+import { VisuallyHidden } from '@/shared/ui/visually-hidden';
+import { ORIGIN, ORIGIN_OPTIONAL_SLOTS } from '../config/content';
+import { WINTER_SKY } from '../config/sky-charts.generated';
 
+const LINK =
+  'inline-flex min-h-6 items-center rounded-control text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2';
+
+/** The `elsewhere` log value: text links from `PROFILE.links` (no phone, ever). */
+function Elsewhere() {
+  const { linkedin, github, kaggle, instagram, email } = PROFILE.links;
+  const links = [
+    { label: 'LinkedIn', href: linkedin, external: true },
+    { label: 'GitHub', href: github, external: true },
+    { label: 'Kaggle', href: kaggle, external: true },
+    { label: 'Instagram', href: instagram, external: true },
+    { label: 'Email', href: `mailto:${email}`, external: false },
+  ];
+  return (
+    <span className="inline-flex flex-wrap gap-x-3 gap-y-1">
+      {links.map((link) => (
+        <a
+          key={link.label}
+          href={link.href}
+          className={LINK}
+          {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        >
+          {link.label}
+          {link.external ? <VisuallyHidden> (opens in a new tab)</VisuallyHidden> : null}
+        </a>
+      ))}
+    </span>
+  );
+}
+
+/**
+ * `#about`: Origin (§G.2). The page's h1 is this spread's heading. Log column of measured facts, three
+ * [S-CH1-ORIGIN] paragraphs, the portrait plate with the winter-sky inset over its lower-left corner.
+ */
 export function AboutSection() {
-  const { isDark } = useTheme();
+  const log: LogEntry[] = [
+    { key: 'born in', value: ORIGIN.bornIn, mono: false },
+    { key: 'latitude', value: ORIGIN.latitude },
+    { key: 'now', value: ORIGIN.now, mono: false },
+    { key: 'daily stack', value: PROFILE.dailyStack?.join(', ') },
+    { key: 'focus', value: PROFILE.focus?.join(', '), mono: false },
+    { key: 'elsewhere', value: <Elsewhere />, mono: false },
+    { key: 'featured in', value: ORIGIN.featuredIn, href: PROFILE.links.news, external: true, mono: false },
+  ];
 
   return (
-    <section id="about" className={`px-6 py-32 max-w-4xl mx-auto font-cyber ${isDark ? 'bg-black' : 'bg-white'}`}>
-      <Reveal preset="hero">
-        <h2 className="text-xs tracking-[0.3em] uppercase opacity-50 mb-12 border-b border-current pb-4">
-          {'// Identity Core'}
-        </h2>
-
-        <div className="grid md:grid-cols-[1fr_2fr] gap-12">
-
-          {/* PROFILE PICTURE COLUMN */}
-          <div className="space-y-4">
-            <div
-              className={`relative w-full aspect-square border rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-500 group
-                ${isDark
-                  ? 'border-zinc-800 bg-zinc-900/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,1)] hover:shadow-[0_20px_60px_-10px_rgba(255,255,255,0.2)] ring-1 ring-white/10'
-                  : 'border-zinc-200 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.7)] hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.9)]'
-                }`}
-            >
-              {/* Placeholder/Profile Image */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/profile1.jpg"
-                alt="Aman Anubhav Profile"
-                className="w-full h-full object-cover opacity-80"
+    <Spread
+      id="about"
+      labelledBy="about-title"
+      className="pt-28 lg:pt-40"
+      heading={
+        <ChapterHeader as="h1" id="about-title">
+          {ORIGIN.title}
+        </ChapterHeader>
+      }
+      log={<Log items={log} label="Origin log" />}
+      plate={
+        <div className="flex flex-col gap-16">
+          {/* The inset straddles the portrait's lower-left corner by 24 px; pb reserves its overhang and caption. */}
+          <div className="relative mx-auto w-full max-w-[420px] pb-28 lg:mx-0">
+            <MediaSlot id="M-ORIGIN-01" ratio="4:5" caption="none" sizes="(min-width: 1024px) 420px, 100vw" />
+            <div className="absolute left-3 top-[calc(100%-7rem-176px)] w-[200px] md:-left-6">
+              <MediaSlot
+                id="M-ORIGIN-03"
+                layout="inset"
+                captionText={ORIGIN.insetCaption}
+                fill={
+                  <div className="absolute inset-0 bg-sky">
+                    <StarChart
+                      data={WINTER_SKY}
+                      reveal="magnitude"
+                      title={ORIGIN.insetTitle}
+                      desc={ORIGIN.insetDesc}
+                      className="h-full w-full"
+                    />
+                  </div>
+                }
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              <div className="absolute bottom-4 left-4 text-white text-xl font-bold font-sans">
-                AMAN
-              </div>
-            </div>
-
-            {/* Social Links */}
-            <div className='flex justify-center gap-6 pt-4'>
-              <a href={PROFILE.links.linkedin} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Linkedin size={20} /></a>
-              <a href={PROFILE.links.github} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Github size={20} /></a>
-              <a href={`mailto:${PROFILE.links.email}`} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Mail size={20} /></a>
-              <a href={PROFILE.links.instagram} target="_blank" className={`transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-400 hover:text-black'}`}><Instagram size={20} /></a>
             </div>
           </div>
-
-          {/* TEXT CONTENT COLUMN */}
-          <div className={`space-y-8 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-            <h3 className={`text-2xl font-bold leading-tight ${isDark ? 'text-white' : 'text-black'}`}>
-              &quot;I didn&apos;t inherit talent—<br />
-              <span className="opacity-50">I built it.&quot;</span>
-            </h3>
-
-            <p className="text-sm leading-relaxed opacity-70 font-sans">
-              {PROFILE.about}
-            </p>
-
-            <p className="text-sm leading-relaxed opacity-60 font-sans border-l-2 border-green-600/50 pl-3">
-              {PROFILE.philosophy}
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-current opacity-80">
-              <div>
-                <h4 className="text-xs opacity-50 mb-2 uppercase tracking-widest">Primary Stack</h4>
-                <ul className="text-sm space-y-1">
-                  <li>Python</li>
-                  <li>SciKit Learn</li>
-                  <li>TensorFlow</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-xs opacity-50 mb-2 uppercase tracking-widest">Focus Areas</h4>
-                <ul className="text-sm space-y-1">
-                  <li>AI Agents</li>
-                  <li>MLOps</li>
-                  <li>Climate Tech</li>
-                </ul>
-              </div>
-            </div>
+          <div className="grid gap-8 empty:hidden sm:grid-cols-2">
+            {ORIGIN_OPTIONAL_SLOTS.map((id) => (
+              <MediaSlot key={id} id={id} />
+            ))}
           </div>
         </div>
-      </Reveal>
-    </section>
+      }
+    >
+      <div className="flex max-w-measure flex-col gap-4 font-body text-body text-ink [&>p]:[text-wrap:pretty]">
+        {ORIGIN.paragraphs.map((paragraph) => (
+          <p key={paragraph.slice(0, 24)} className="m-0">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </Spread>
   );
 }
