@@ -2,22 +2,34 @@
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { useTheme } from '@/shared/lib/theme';
+import { cn } from '@/shared/lib/cn';
 
 export interface BackButtonProps {
   className?: string;
 }
 
+/** "Back" (history back, as before), 44 px tall, a text button with the signal underline (§B.10). */
 export function BackButton({ className }: BackButtonProps) {
   const router = useRouter();
-  const { isDark } = useTheme();
   return (
     <button
+      type="button"
       onClick={() => router.back()}
-      className={`group flex items-center gap-2 mb-8 text-xs font-cyber tracking-widest uppercase transition-colors ${isDark ? 'text-zinc-500 hover:text-white' : 'text-zinc-500 hover:text-black'}${className ? ` ${className}` : ''}`}
+      className={`text-ui ${cn(
+        'group/back mb-8 inline-flex h-11 items-center gap-2 rounded-control pr-2 font-body font-medium text-ink',
+        'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal',
+        className,
+      )}`}
     >
-      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-      Return to Signal
+      <ArrowLeft
+        aria-hidden="true"
+        focusable="false"
+        className="size-[18px] shrink-0 transition-transform duration-hover ease-settle group-hover/back:-translate-x-0.5"
+        strokeWidth={1.75}
+      />
+      <span className="underline decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover group-hover/back:decoration-2">
+        Back
+      </span>
     </button>
   );
 }

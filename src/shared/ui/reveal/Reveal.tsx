@@ -1,64 +1,61 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { useScrollReveal } from '@/shared/lib/scroll-reveal';
+import { useMotionAllowed } from '@/shared/lib/motion-tier';
 
 /**
- * Presets map 1:1 to the legacy per-file Reveal copies (class strings kept literal for Tailwind):
- * - archive:  ProjectArchive
- * - section:  AchievementsArchive, Achievements, TechStack
- * - timeline: Experience
- * - hero:     About, ProfessionalHero
- * - tilt:     Projects
+ * Legacy preset names, kept so current pages compile. Every preset is now the same quiet 150 ms opacity fade
+ * (no translate, no tilt); the per-page motion lives in the page designs, not here.
  */
 export type RevealPreset = 'archive' | 'section' | 'timeline' | 'hero' | 'tilt';
 
 export interface RevealProps {
   children: ReactNode;
   preset: RevealPreset;
+  /** Stagger in ms; capped at 240 ms. */
   delay?: number;
   className?: string;
 }
 
-const PRESET_CLASSES: Record<RevealPreset, { base: string; visible: string; hidden: string }> = {
-  archive: {
-    base: 'transition-all duration-500 transform',
-    visible: 'opacity-100 translate-y-0',
-    hidden: 'opacity-0 translate-y-4',
-  },
-  section: {
-    base: 'transition-all duration-700 transform',
-    visible: 'opacity-100 translate-y-0',
-    hidden: 'opacity-0 translate-y-10',
-  },
-  timeline: {
-    base: 'transition-all duration-700 transform',
-    visible: 'opacity-100 translate-x-0',
-    hidden: 'opacity-0 -translate-x-10',
-  },
-  hero: {
-    base: 'transition-all duration-1000 transform',
-    visible: 'opacity-100 translate-y-0',
-    hidden: 'opacity-0 translate-y-10',
-  },
-  tilt: {
-    base: 'transition-all duration-1000 ease-out transform perspective-1000',
-    visible: 'opacity-100 translate-y-0 rotate-x-0',
-    hidden: 'opacity-0 translate-y-12 rotate-x-6',
-  },
-};
+const FADE_MS = 150;
+const MAX_DELAY_MS = 240;
 
+/**
+ * Visible by default (§C.4): the server HTML is the final state. After mount, and only when motion is allowed,
+ * an element that starts below the fold is faded out and fades back in (150 ms) when it scrolls into view.
+ * Elements already in view at mount are never hidden. No layout shift: opacity only.
+ */
 export function Reveal({ children, preset, delay, className }: RevealProps) {
-  const [ref, isVisible] = useScrollReveal<HTMLDivElement>();
-  const p = PRESET_CLASSES[preset];
-  const classes = `${p.base} ${isVisible ? p.visible : p.hidden}${className ? ` ${className}` : ''}`;
+  const ref = useRef<HTMLDivElement>(null);
+  const motionAllowed = useMotionAllowed();
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !motionAllowed || typeof IntersectionObserver === 'undefined') return;
+    if (el.getBoundingClientRect().top < window.innerHeight) return;
+
+    const wait = Math.min(Math.max(delay ?? 0, 0), MAX_DELAY_MS);
+    el.style.opacity = '0';
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        el.style.transition = `opacity ${FADE_MS}ms var(--ease-settle, ease-out) ${wait}ms`;
+        el.style.opacity = '1';
+      },
+      { rootMargin: '0px 0px -10% 0px' },
+    );
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      el.style.opacity = '';
+      el.style.transition = '';
+    };
+  }, [motionAllowed, delay]);
 
   return (
-    <div
-      ref={ref}
-      style={delay === undefined ? undefined : { transitionDelay: `${delay}ms` }}
-      className={classes}
-    >
+    <div ref={ref} data-reveal={preset} className={className}>
       {children}
     </div>
   );
