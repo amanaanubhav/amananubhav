@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
-import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/lib/cn';
+import styles from './Footer.module.css';
 
 type CopyState = 'idle' | 'copied' | 'failed';
 
@@ -41,11 +42,14 @@ export function CopyEmail({ email }: { email: string }) {
         ? `Couldn't copy. The address is ${email}.`
         : '';
 
+  const Icon = state === 'copied' ? Check : Copy;
+
   return (
     <>
-      <Button variant="text" icon={state === 'copied' ? Check : Copy} onClick={copy} className="font-body font-medium">
-        {label}
-      </Button>
+      <button type="button" onClick={copy} className={cn(styles.line, styles.textAction)}>
+        <Icon aria-hidden="true" focusable="false" className="size-4 shrink-0" strokeWidth={1.75} />
+        <span className={styles.lineText}>{label}</span>
+      </button>
       <span role="status" aria-live="polite" className="sr-only">
         {announcement}
       </span>

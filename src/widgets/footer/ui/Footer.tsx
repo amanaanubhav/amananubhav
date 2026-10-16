@@ -1,161 +1,246 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Lock, Mail } from 'lucide-react';
+import { Fragment, useRef, type CSSProperties } from 'react';
+import { ArrowUpRight, Lock, Mail } from 'lucide-react';
 import { PROFILE } from '@/entities/profile';
 import { openVault } from '@/features/secure-vault';
 import { cn } from '@/shared/lib/cn';
-import { Button } from '@/shared/ui/button';
-import { ChapterHeader } from '@/shared/ui/chapter-header';
-import { JournalGrid, Log, Spread, type LogEntry } from '@/shared/ui/journal';
+import { useMotionAllowed } from '@/shared/lib/motion-tier';
+import { buttonClassName } from '@/shared/ui/button';
+import { JournalGrid } from '@/shared/ui/journal';
 import { StatusChip } from '@/shared/ui/status-chip';
 import { TrigMark } from '@/shared/ui/trig-mark';
 import { VisuallyHidden } from '@/shared/ui/visually-hidden';
-import { COMPACT_FOOTER_ROUTES, ELSEWHERE_LINKS, FOOTER_COPY } from '../config/footer';
+import { COMPACT_FOOTER_ROUTES, ELSEWHERE_LINKS, FOOTER_COPY, PAGE_LINKS } from '../config/footer';
+import { useFooterPointer, useFooterReveal } from '../lib/use-footer-motion';
 import { CopyEmail } from './CopyEmail';
 import { ReduceMotionSwitch } from './ReduceMotionSwitch';
+import { RollText } from './RollText';
+import { Wordmark } from './Wordmark';
+import styles from './Footer.module.css';
 
 const EMAIL = PROFILE.links.email;
 const MAILTO = `mailto:${EMAIL}`;
 
-/** Text-link look of §B.10 on an inner span, so the underline survives the link's inline-flex box. */
-const LINK =
-  'group/link inline-flex min-h-6 items-center gap-1.5 rounded-control text-ink ' +
-  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal ' +
-  '[@media(pointer:coarse)]:min-h-11';
-const LINK_TEXT =
-  'underline decoration-signal decoration-1 underline-offset-[0.22em] ' +
-  'transition-[text-decoration-thickness] duration-hover ease-settle group-hover/link:decoration-2';
-
-function EmailValue() {
+/** Column label in the journal's log-key voice (Literata italic, muted). */
+function Key({ id, children }: { id?: string; children: string }) {
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-4 gap-y-1">
-      <a href={MAILTO} className={LINK}>
-        <span className={LINK_TEXT}>{EMAIL}</span>
-      </a>
-      <CopyEmail email={EMAIL} />
-    </span>
+    <h3 id={id} className="m-0 font-body text-caption font-normal italic text-ink-muted">
+      {children}
+    </h3>
   );
 }
 
-function ElsewhereValue() {
+/** Words of a closing line, each in its own mask so they can rise in on arrival (see useFooterReveal). */
+function RisingWords({ text, offset = 0 }: { text: string; offset?: number }) {
+  return text.split(' ').map((word, index, words) => (
+    <Fragment key={index}>
+      <span className={styles.mask}>
+        <span className={styles.rise} style={{ '--d': offset + index } as CSSProperties}>
+          {word}
+        </span>
+      </span>
+      {index < words.length - 1 ? ' ' : null}
+    </Fragment>
+  ));
+}
+
+function TopRow({ compact }: { compact: boolean }) {
   return (
-    <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0">
-      {ELSEWHERE_LINKS.map(({ label, href, icon: Icon }) => (
-        <li key={label}>
-          <a href={href} target="_blank" rel="noopener noreferrer" className={LINK}>
-            <Icon aria-hidden="true" focusable="false" className="size-4 shrink-0 text-ink-muted" strokeWidth={1.75} />
-            <span className={LINK_TEXT}>{label}</span>
-            <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
-          </a>
-        </li>
-      ))}
-    </ul>
+    <div className="col-[content-start/content-end] flex flex-wrap items-center justify-between gap-x-6 gap-y-2 lg:col-[2/span_12]">
+      <p className="m-0 inline-flex items-center gap-2.5 font-display text-ui font-semibold text-ink">
+        <TrigMark size={18} className="shrink-0 text-signal" />
+        {PROFILE.displayName}
+        <span className="font-body font-normal italic text-ink-muted">· the last page</span>
+      </p>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        {!compact && PROFILE.availability?.openToRemote ? (
+          <StatusChip tone="success">Open to remote roles</StatusChip>
+        ) : null}
+        <p className="m-0 font-data text-caption text-ink-muted">{PROFILE.availability?.utcLabel}</p>
+      </div>
+    </div>
   );
 }
 
-function footerLog(compact: boolean): LogEntry[] {
-  const availability = PROFILE.availability;
-  const entries: LogEntry[] = [];
-  if (!compact) {
-    entries.push({
-      key: 'status',
-      value: availability?.openToRemote ? <StatusChip tone="success">Open to remote roles</StatusChip> : undefined,
-      mono: false,
-    });
+function Closing({ compact }: { compact: boolean }) {
+  if (compact) {
+    // The page above already made the ask: the last page closes on the sign-off, not a second ask.
+    return (
+      <div className="col-[content-start/content-end] lg:col-[2/span_7] lg:self-end">
+        <p className={cn(styles.closing, 'm-0')}>
+          <RisingWords text={FOOTER_COPY.signOff} />
+        </p>
+      </div>
+    );
   }
-  entries.push({ key: 'email', value: <EmailValue /> });
-  if (!compact) entries.push({ key: 'time zone', value: availability?.utcLabel });
-  entries.push({ key: 'elsewhere', value: <ElsewhereValue />, mono: false });
-  return entries;
-}
 
-function FullSpread() {
   return (
-    <Spread
-      as="div"
-      logSticky={false}
-      plateSpan="none"
-      heading={
-        <ChapterHeader as="h2" reveal="none">
-          {FOOTER_COPY.heading}
-        </ChapterHeader>
-      }
-      log={<Log items={footerLog(false)} label="Contact log" />}
-    >
-      <p className="m-0 max-w-measure font-body text-body text-ink">
+    <div className="col-[content-start/content-end] lg:col-[2/span_7]">
+      <h2 className={cn(styles.closing, 'm-0')}>
+        <RisingWords text={FOOTER_COPY.heading} />
+      </h2>
+      <p className={cn(styles.rise, 'm-0 mt-6 max-w-[34rem] font-body text-body text-ink lg:mt-8')} style={{ '--d': 7 } as CSSProperties}>
         {FOOTER_COPY.bodyLead}{' '}
-        <a href={MAILTO} className="prose-link">
+        <a href={MAILTO} className={cn(styles.inlineTarget, 'prose-link')}>
           {EMAIL}
         </a>
         {FOOTER_COPY.bodyTail}
       </p>
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Button variant="primary" icon={Lock} onClick={openVault} data-return-focus="footer-vault">
-          Secure contact
-        </Button>
-        <Button variant="secondary" icon={Mail} href={MAILTO}>
-          Email me
-        </Button>
+      <div className={cn(styles.rise, 'mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap')} style={{ '--d': 8 } as CSSProperties}>
+        <span data-magnetic="" className={styles.magnetic}>
+          <span data-magnet="" className={styles.magnet}>
+            <button
+              type="button"
+              onClick={openVault}
+              data-return-focus="footer-vault"
+              className={buttonClassName({ variant: 'primary', size: 'lg', className: cn(styles.sheen, 'w-full px-6 sm:w-auto') })}
+            >
+              <Lock aria-hidden="true" focusable="false" className="size-[18px] shrink-0" strokeWidth={1.75} />
+              Secure contact
+            </button>
+          </span>
+        </span>
+        <span data-magnetic="" className={styles.magnetic}>
+          <span data-magnet="" className={styles.magnet}>
+            <a
+              href={MAILTO}
+              className={buttonClassName({ variant: 'secondary', size: 'lg', className: cn(styles.glass, 'w-full px-6 sm:w-auto') })}
+            >
+              <Mail aria-hidden="true" focusable="false" className="size-[18px] shrink-0" strokeWidth={1.75} />
+              Email me
+            </a>
+          </span>
+        </span>
       </div>
-    </Spread>
+    </div>
   );
 }
 
-function CompactRow() {
+function WriteColumn({ compact }: { compact: boolean }) {
   return (
-    <JournalGrid>
-      <div className="col-[content-start/content-end] flex flex-col gap-6 lg:col-[2/span_10] lg:flex-row lg:items-start lg:justify-between">
-        <Log items={footerLog(true)} label="Contact log" layout="strip" className="gap-x-8 gap-y-3" />
-        <Button
-          variant="text"
-          icon={Lock}
-          onClick={openVault}
-          data-return-focus="footer-vault"
-          className="self-start font-body font-medium"
-        >
-          Secure contact
-        </Button>
+    <section aria-labelledby="footer-write" className="flex flex-col gap-2">
+      <Key id="footer-write">write</Key>
+      <a href={MAILTO} className={cn(styles.line, styles.email)}>
+        <span className={styles.lineText}>{EMAIL}</span>
+      </a>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+        <CopyEmail email={EMAIL} />
+        {compact ? (
+          <button type="button" onClick={openVault} data-return-focus="footer-vault" className={cn(styles.line, styles.textAction)}>
+            <Lock aria-hidden="true" focusable="false" className="size-4 shrink-0" strokeWidth={1.75} />
+            <span className={styles.lineText}>Secure contact</span>
+          </button>
+        ) : null}
       </div>
-    </JournalGrid>
+    </section>
+  );
+}
+
+function PagesColumn({ pathname }: { pathname: string }) {
+  return (
+    <nav aria-labelledby="footer-pages" className="flex flex-col gap-2">
+      <Key id="footer-pages">pages</Key>
+      <ol className="m-0 grid list-none grid-cols-2 gap-x-6 p-0 sm:grid-cols-1">
+        {PAGE_LINKS.map(({ label, href }, index) => (
+          <li key={href}>
+            <Link href={href} aria-current={pathname === href ? 'page' : undefined} className={cn(styles.line, styles.page)}>
+              <span aria-hidden="true" className={styles.pageNo}>
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className={styles.lineText}>
+                <RollText>{label}</RollText>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+function ElsewhereColumn() {
+  return (
+    <section aria-labelledby="footer-elsewhere" className="flex flex-col gap-3">
+      <Key id="footer-elsewhere">elsewhere</Key>
+      <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-1">
+        {ELSEWHERE_LINKS.map(({ label, href, icon: Icon }) => (
+          <li key={label} data-magnetic="" className={styles.magnetic}>
+            <a data-magnet="" href={href} target="_blank" rel="noopener noreferrer" className={cn(styles.magnet, styles.tile)}>
+              <Icon aria-hidden="true" focusable="false" className={styles.tileIcon} strokeWidth={1.75} />
+              <span className={styles.tileLabel}>
+                <RollText>{label}</RollText>
+              </span>
+              <ArrowUpRight aria-hidden="true" focusable="false" className={styles.tileArrow} strokeWidth={1.75} />
+              <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function BottomBar({ compact }: { compact: boolean }) {
+  return (
+    <div className="col-[content-start/content-end] flex flex-col gap-4 border-0 border-t border-solid border-line pt-5 lg:col-[2/span_12]">
+      {/* lg:pe-36 keeps the copyright clear of the fixed "Say hello" launcher (bottom-right, about 130 x 48, 24 px in). */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-10 lg:pe-36">
+        {compact ? null : <p className="m-0 font-body text-lead italic text-ink">{FOOTER_COPY.signOff}</p>}
+        <div className={cn('flex flex-wrap items-center gap-x-8 gap-y-3', compact ? 'lg:ms-auto' : null)}>
+          <ReduceMotionSwitch />
+          <p className="m-0 font-body text-caption text-ink-muted">
+            © <span suppressHydrationWarning>{new Date().getFullYear()}</span> Aman Anubhav
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
 /**
- * The last page (§H.3). Full variant on every route except `/` and `/professional`, which already carry
- * the page's one full ask and get the compact contact row. No motion: the footer is simply there.
+ * The last page (§H.3, redesigned per the owner's brief): a full-viewport closing spread that brings back the
+ * previous footer's spirit (one huge stamp, one clear ask, a cursor that is rewarded) in the journal's palette
+ * and type. Full variant on every route except `/` and `/professional`, which already end on the full ask and
+ * close here on the sign-off instead. Motion: reveal on arrival, rolling letters and drawn underlines on links,
+ * magnetic buttons and tiles, and a lens over the stamp; all transform/opacity, fine pointers only for the
+ * pointer effects, and none of it under reduced motion (OS setting or the switch below).
  */
 export function Footer() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
   const compact = COMPACT_FOOTER_ROUTES.includes(pathname);
+  const motion = useMotionAllowed();
+  const rootRef = useRef<HTMLElement>(null);
+
+  useFooterPointer(rootRef, motion);
+  useFooterReveal(rootRef, motion, pathname);
 
   return (
-    <footer
-      className={cn(
-        'relative z-content bg-ground pb-28 lg:pb-12',
-        compact ? 'pt-16 lg:pt-24' : 'flex min-h-[70svh] flex-col justify-end pt-24 lg:pt-32',
-      )}
-    >
-      {compact ? <CompactRow /> : <FullSpread />}
+    // Above the page's waypoint rail / section chip (z-rail 40) so they slide under the last page instead of
+    // covering its controls (WCAG 2.4.11); below the chat launcher (z-chat 60) and the navbar.
+    <footer ref={rootRef} className={cn(styles.root, 'relative z-[41] bg-ground')}>
+      <div aria-hidden="true" className={styles.vignette} />
 
-      <JournalGrid className={compact ? 'mt-12' : 'mt-20 lg:mt-28'}>
-        <hr className="col-[full-start/full-end] m-0 border-0 border-t border-line" />
-        <p className="col-[content-start/content-end] m-0 mt-8 font-body text-lead italic text-ink lg:col-[2/span_10]">
-          {FOOTER_COPY.signOff}
-        </p>
-        <div className="col-[content-start/content-end] mt-6 flex flex-col gap-6 lg:col-[2/span_10] lg:flex-row lg:items-end lg:justify-between lg:gap-12">
-          <p className="m-0 max-w-measure font-body text-caption text-ink-muted">
-            {FOOTER_COPY.colophon.join(' ')}
-          </p>
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-4 lg:shrink-0 lg:flex-nowrap">
-            <ReduceMotionSwitch />
-            <p className="m-0 font-body text-caption text-ink-muted">
-              © <span suppressHydrationWarning>{new Date().getFullYear()}</span> Aman Anubhav
-            </p>
-            <TrigMark size={20} className="ms-auto shrink-0 text-signal lg:ms-0" />
+      <JournalGrid className="relative gap-y-12 lg:gap-y-10">
+        <TopRow compact={compact} />
+        <Closing compact={compact} />
+        <div className="col-[content-start/content-end] grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:col-[9/span_5] lg:self-end">
+          <div className="sm:col-span-2">
+            <WriteColumn compact={compact} />
           </div>
+          <PagesColumn pathname={pathname} />
+          <ElsewhereColumn />
         </div>
       </JournalGrid>
+
+      <div className="relative mt-auto">
+        <Wordmark text={FOOTER_COPY.wordmark} />
+        <JournalGrid>
+          <BottomBar compact={compact} />
+        </JournalGrid>
+      </div>
     </footer>
   );
 }

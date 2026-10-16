@@ -44,8 +44,9 @@ export function ReduceMotionSwitch() {
         >
           <span
             className={cn(
-              'absolute left-[3px] top-[3px] size-4 rounded-control transition-[transform,background-color] duration-ui ease-settle',
-              on ? 'translate-x-4 bg-signal' : 'translate-x-0 bg-ink-muted',
+              'absolute top-[3px] size-4 rounded-control transition-colors duration-ui ease-settle',
+              // Position by offset, not transform: the switch is the motion control, so it never moves.
+              on ? 'left-[19px] bg-signal' : 'left-[3px] bg-ink-muted',
               'forced-colors:bg-[ButtonText]',
             )}
           />
