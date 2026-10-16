@@ -66,7 +66,7 @@ export function useTerminalSession(isOpen: boolean) {
         setLogs((prev) =>
           replaceLastLog(prev, () => ({
             src: 'AI',
-            msg: `[!] Connection Lost. Switching to Local Database...\n\n${reply}`,
+            msg: `Connection lost. Answering from my offline notes.\n\n${reply}`,
           })),
         );
       }, 600);

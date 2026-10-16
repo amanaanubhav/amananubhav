@@ -6,8 +6,8 @@ export interface TerminalLogEntry {
 }
 
 export const INITIAL_TERMINAL_LOGS: readonly TerminalLogEntry[] = [
-  { src: 'SYS', msg: "If System Offline? : Try 'help','about','clear'" },
-  { src: 'AI', msg: "Terminal Ready. Accessing Aman Anubhav's digital consciousness. How can I assist?" },
+  { src: 'SYS', msg: "Live model with an offline cache. Try 'help', 'projects', 'treks' or 'remote'." },
+  { src: 'AI', msg: "Hi, I'm Aman. Ask me about my work, my treks, or how I work remotely." },
 ];
 
 /** Returns a copy of logs with the last entry replaced by `update(last)`. */
