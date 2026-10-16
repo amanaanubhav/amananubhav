@@ -1,12 +1,13 @@
+/** Site-wide SEO values ([S-SEO]). Per-route titles and descriptions live in each page's config/metadata.ts. */
 export const SITE = {
   url: 'https://amananubhav.com',
   name: 'Aman Anubhav',
-  title: 'Aman Anubhav | AI Researcher & Creative Developer',
+  title: 'Aman Anubhav | AI Engineer and Solo Himalayan Trekker',
   description:
-    'Portfolio of Aman Anubhav, an AI Researcher specializing in Liquid Neural Networks, Climate Tech (PAVANA, OceanBot), and Creative Web Development.',
+    "I'm Aman Anubhav, an AI engineer building AI agents at Atlys and a solo high-altitude trekker. My work, my expeditions, and how to hire me remotely.",
   ogDescription:
-    'Portfolio of Aman Anubhav - AI Researcher & Creative Developer specializing in Liquid Neural Networks, Climate Tech, and Intelligent Systems.',
-  ogImage: 'https://amananubhav.com/profile1.jpg',
+    'AI engineer building AI agents at Atlys, solo trekker over Thorong La (5,416 m), open to remote roles.',
+  ogImage: 'https://amananubhav.com/og/aman-anubhav.png',
   gaId: 'G-5QXFLQJ7NH',
   gtmId: 'GTM-KQ9JGXKP',
   resumeDriveUrl:
@@ -14,28 +15,32 @@ export const SITE = {
   keywords: [
     'Aman Anubhav',
     'Aman Kumar Anubhav',
-    'AI Researcher',
-    'Liquid Neural Networks',
-    'Climate Tech',
-    'PAVANA',
+    'AI Engineer',
+    'AI agents',
+    'LLM engineer',
+    'RAG',
+    'remote AI engineer',
+    'Atlys',
+    'Brndo',
+    'The Trav Story',
+    'DeuxStem',
+    'DIVERT',
+    'Accolades',
     'OceanBot',
-    'Full Stack Developer',
-    'React',
+    'YVOO',
+    'KANAD',
+    'FastAPI',
     'Next.js',
-    'TensorFlow',
-    'PyTorch',
-    'Reinforcement Learning',
-    'Creative Developer',
-    'WebGL',
-    'Marine AI',
-    'FinTech AI',
-    'Google Cloud',
-    'MLOps',
+    'LangChain',
+    'PostGIS',
     'KIIT University',
-    'Deuxstem',
-    'Google Developers Group',
-    'GDG',
+    'Google Developer Group',
+    'Annapurna Circuit solo',
+    'Thorong La',
+    'Himalayan trekking',
   ],
+  /** Content last updated (sitemap `lastModified`). */
+  updated: '2026-10-15',
 } as const satisfies {
   url: string;
   name: string;
@@ -47,4 +52,5 @@ export const SITE = {
   gtmId: string;
   resumeDriveUrl: string;
   keywords: readonly string[];
+  updated: string;
 };
