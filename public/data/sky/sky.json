@@ -1,0 +1,14 @@
+{
+  "stars": 2851,
+  "segments": 743,
+  "constellations": 89,
+  "magLimit": 5.5,
+  "epoch": "J2000",
+  "starLayout": ["raRad", "decRad", "mag", "bv"],
+  "segmentLayout": ["raRad1", "decRad1", "raRad2", "decRad2"],
+  "order": "brightest first",
+  "encoding": "float32 little-endian",
+  "source": "d3-celestial 0.7.35 (stars.6.json, constellations.lines.json)",
+  "license": "BSD-3-Clause",
+  "attribution": "Stars and constellation lines from d3-celestial (Olaf Frohn, BSD-3-Clause), derived from the Hipparcos catalogue"
+}
