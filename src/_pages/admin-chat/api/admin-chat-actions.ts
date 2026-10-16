@@ -7,7 +7,8 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 
-import { messagesCollection, threadDoc, type ChatThread } from '@/entities/chat-thread';
+import type { ChatThread } from '@/entities/chat-thread';
+import { messagesCollection, threadDoc } from '@/entities/chat-thread/index.firestore';
 import { getDb, isEmailConfigured, sendEmail } from '@/shared/api';
 
 function requireDb(): Firestore {

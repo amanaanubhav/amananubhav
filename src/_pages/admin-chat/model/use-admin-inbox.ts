@@ -2,22 +2,35 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 
-import {
-  subscribeToMessages,
-  subscribeToThreads,
-  type ChatMessage,
-  type ChatThread,
-} from '@/entities/chat-thread';
-import { getDb } from '@/shared/api';
+import type { ChatMessage, ChatThread } from '@/entities/chat-thread';
 import { isAdminPasscode } from '@/shared/config';
+import { lazyModule } from '@/shared/lib/lazy';
 
-import {
-  clearThreadMessages,
-  deleteThread,
-  markThreadRead,
-  sendAdminReply,
-  setThreadBlocked,
-} from '../api/admin-chat-actions';
+/**
+ * Firestore + EmailJS for the inbox, fetched with `import()` once the gate is passed (§J.2). Every action needs a
+ * selected thread, which only arrives through the loaded listener, so the actions read it synchronously.
+ */
+const inboxApi = lazyModule(() => import('../api/admin-inbox-api'));
+type InboxApi = NonNullable<ReturnType<typeof inboxApi.get>>;
+
+/** Runs `attach` once the api is loaded and the anonymous session is ready; the returned cleanup cancels it. */
+function subscribeWhenReady(attach: (api: InboxApi) => () => void): () => void {
+  let cancelled = false;
+  let detach = () => {};
+  inboxApi
+    .load()
+    .then(async (api) => {
+      await api.ensureAnonymousSession();
+      if (!cancelled && api.hasInboxDb()) detach = attach(api);
+    })
+    .catch((error: unknown) => {
+      console.error('Error loading inbox:', error);
+    });
+  return () => {
+    cancelled = true;
+    detach();
+  };
+}
 
 type PreventableEvent = { preventDefault(): void };
 
@@ -68,48 +81,51 @@ export function useAdminInbox(): AdminInbox {
 
   // Fetch all active conversations
   useEffect(() => {
-    if (!isAuthenticated || !getDb()) return;
-    const unsubscribe = subscribeToThreads(setChats);
-    return () => unsubscribe();
+    if (!isAuthenticated) return;
+    return subscribeWhenReady((api) => api.subscribeToThreads(setChats));
   }, [isAuthenticated]);
 
   // Fetch messages for active chat
   useEffect(() => {
-    if (!activeChat || !getDb()) return;
+    if (!activeChat) return;
 
-    const unsubscribe = subscribeToMessages(activeChat.id, setMessages);
+    return subscribeWhenReady((api) => {
+      const unsubscribe = api.subscribeToMessages(activeChat.id, setMessages);
 
-    // Mark as read (mock implementation)
-    if ((activeChat.unreadCount ?? 0) > 0) {
-      void markThreadRead(activeChat.id);
-    }
+      // Mark as read (mock implementation)
+      if ((activeChat.unreadCount ?? 0) > 0) {
+        void api.markThreadRead(activeChat.id);
+      }
 
-    return () => unsubscribe();
+      return unsubscribe;
+    });
   }, [activeChat]);
 
   const sendMessage = async (e: PreventableEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeChat || !getDb()) return;
+    const api = inboxApi.get();
+    if (!newMessage.trim() || !activeChat || !api?.hasInboxDb()) return;
 
     const text = newMessage;
     setNewMessage('');
 
     try {
-      await sendAdminReply(activeChat, text);
+      await api.sendAdminReply(activeChat, text);
     } catch (error) {
       console.error('Error sending message:', error);
     }
   };
 
   const clearChat = async () => {
-    if (!activeChat || !getDb()) return;
+    const api = inboxApi.get();
+    if (!activeChat || !api?.hasInboxDb()) return;
     if (
       window.confirm(
         `Are you sure you want to clear this chat? This will erase all messages but keep the user.`,
       )
     ) {
       try {
-        await clearThreadMessages(activeChat.id);
+        await api.clearThreadMessages(activeChat.id);
       } catch (error) {
         console.error('Error clearing chat:', error);
       }
@@ -117,14 +133,15 @@ export function useAdminInbox(): AdminInbox {
   };
 
   const deleteUser = async () => {
-    if (!activeChat || !getDb()) return;
+    const api = inboxApi.get();
+    if (!activeChat || !api?.hasInboxDb()) return;
     if (
       window.confirm(
         `Are you sure you want to permanently delete user ${activeChat.visitorName || activeChat.id}? This will erase all data and reset their chat.`,
       )
     ) {
       try {
-        await deleteThread(activeChat.id);
+        await api.deleteThread(activeChat.id);
         setActiveChat(null);
       } catch (error) {
         console.error('Error deleting user:', error);
@@ -133,14 +150,15 @@ export function useAdminInbox(): AdminInbox {
   };
 
   const toggleBlock = async () => {
-    if (!activeChat || !getDb()) return;
+    const api = inboxApi.get();
+    if (!activeChat || !api?.hasInboxDb()) return;
     const newStatus = !activeChat.isBlocked;
 
     // Optimistically update the activeChat state so the UI button toggles instantly
     setActiveChat((prev) => (prev ? { ...prev, isBlocked: newStatus } : prev));
 
     try {
-      await setThreadBlocked(activeChat.id, newStatus);
+      await api.setThreadBlocked(activeChat.id, newStatus);
     } catch (error) {
       console.error('Error toggling block status:', error);
       // Revert on error
