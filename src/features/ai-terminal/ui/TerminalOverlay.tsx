@@ -1,36 +1,46 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type KeyboardEvent,
+} from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Send, Wifi, WifiOff, X } from 'lucide-react';
+import { ArrowUp, Info, WifiOff, X } from 'lucide-react';
 
 import { MOTION } from '@/shared/config';
 import { useEscapeKey, useFocusTrap, useMediaQuery } from '@/shared/lib/dom';
 import { useMotionAllowed } from '@/shared/lib/motion-tier';
-import { IconButton } from '@/shared/ui/button';
-import { StatusChip } from '@/shared/ui/status-chip';
 
-import type { TerminalLogEntry, TerminalLogSource } from '../model/terminal-log';
+import {
+  OFFLINE_NOTICE,
+  RATE_LIMITED_NOTICE,
+  TERMINAL_GREETING,
+  TERMINAL_INPUT_MAX_CHARS,
+  type TerminalLogEntry,
+} from '../model/terminal-log';
 import { useTerminalSession } from '../model/use-terminal-session';
+import { LiveReply, Paragraphs, Ridge, ThinkingBlock, TypedReply } from './Alpenglow';
+import { TERMINAL_CHIP_COMMANDS, TERMINAL_PROMPTS, TERMINAL_QUICK_LINKS } from './terminal-copy';
+import { QuickLink, TerminalRail } from './TerminalRail';
+import s from './TerminalOverlay.module.css';
 
 export interface TerminalOverlayProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const SOURCE_LABEL: Record<TerminalLogSource, string> = { USR: 'you', AI: 'aman', SYS: 'system' };
-
-const MESSAGE_TONE: Record<TerminalLogSource, string> = {
-  USR: 'text-[15px] text-ink-muted',
-  AI: 'text-[15px] text-ink',
-  SYS: 'text-caption text-ink-muted',
-};
-
-const SUGGESTIONS = ['projects', 'treks', 'remote', 'contact'] as const;
-
-/** Wait after the last log change before announcing: the offline fallback rewrites the reply 600 ms
- * after `isProcessing` turns false, and only the final text should be read out. */
+/** Wait after the last log change before announcing, so a streamed reply is read out once, as final text.
+ * (Offline replies land together with `isProcessing: false`; the settle is harmless for them.) */
 const ANNOUNCE_SETTLE_MS = 650;
+
+/** Notices the session prefixes to a reply (`${notice}\n\n${reply}`); the UI shows them as a notice pill. */
+const REPLY_NOTICES = [OFFLINE_NOTICE, RATE_LIMITED_NOTICE];
 
 interface Announcement {
   id: number;
@@ -40,19 +50,17 @@ interface Announcement {
 /** One polite announcement per finished reply, never token by token (§H.5, §J.1). */
 function useReplyAnnouncement(logs: readonly TerminalLogEntry[], isProcessing: boolean): Announcement | null {
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
-  const awaitingReply = useRef(false);
+  // The entry already read out (or present on mount, like the greeting). Keyed on the entry itself rather
+  // than on an isProcessing edge, because local commands (history, exit) finish within one render.
+  const announcedEntry = useRef<TerminalLogEntry | undefined>(logs[logs.length - 1]);
 
   useEffect(() => {
-    if (isProcessing) {
-      awaitingReply.current = true;
-      return;
-    }
-    if (!awaitingReply.current) return;
+    if (isProcessing) return;
     const last = logs[logs.length - 1];
-    if (!last || last.src !== 'AI' || last.msg.trim() === '') return;
+    if (!last || last === announcedEntry.current || last.src !== 'AI' || last.msg.trim() === '') return;
     const text = last.msg;
     const timer = window.setTimeout(() => {
-      awaitingReply.current = false;
+      announcedEntry.current = last;
       setAnnouncement((prev) => ({ id: (prev?.id ?? 0) + 1, text }));
     }, ANNOUNCE_SETTLE_MS);
     return () => window.clearTimeout(timer);
@@ -94,37 +102,61 @@ function useKeyboardSafeViewport(active: boolean): ViewportBox | null {
   return height > 0 ? { height, top } : null;
 }
 
-function ThinkingLine({ animate }: { animate: boolean }) {
+/**
+ * The log length when the dialog last opened (or the log was cleared): entries at or after it were added
+ * while the visitor watched, so only they play entrance and reply motion. Reopening never replays the log.
+ */
+function useOpenMark(isOpen: boolean, length: number): number {
+  const [mark, setMark] = useState({ open: isOpen, from: length });
+  if (mark.open !== isOpen || length < mark.from) {
+    setMark({ open: isOpen, from: length });
+    return length;
+  }
+  return mark.from;
+}
+
+type Span = readonly [number, number];
+
+/**
+ * Index ranges of the log written in offline (CLI) mode. Each entry keeps the mode it was added in: a
+ * stretch starts at the reply being answered when the terminal goes offline and ends when it is back.
+ */
+function useCliSpans(length: number, isOffline: boolean): readonly Span[] {
+  const [state, setState] = useState<{ on: boolean; len: number; spans: readonly Span[] }>({
+    on: isOffline,
+    len: length,
+    spans: isOffline ? [[0, Infinity]] : [],
+  });
+  if (state.on === isOffline && state.len === length) return state.spans;
+  let spans = state.spans;
+  if (length < state.len) spans = state.on ? [[0, Infinity]] : []; // `clear`
+  if (isOffline && !state.on) spans = [...spans, [Math.max(0, length - 1), Infinity]];
+  if (!isOffline && state.on) spans = spans.map(([from, to]): Span => [from, to === Infinity ? length : to]);
+  setState({ on: isOffline, len: length, spans });
+  return spans;
+}
+
+function splitNotice(msg: string): { notice?: string; body: string } {
+  for (const notice of REPLY_NOTICES) {
+    if (msg.startsWith(`${notice}\n\n`)) return { notice, body: msg.slice(notice.length + 2) };
+  }
+  return { body: msg };
+}
+
+function Notice({ text }: { text: string }) {
+  const offline = text === OFFLINE_NOTICE;
+  const Icon = offline ? WifiOff : Info;
   return (
-    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3">
-      <span className="pt-0.5 font-body text-caption italic text-ink-muted">aman</span>
-      <p className="font-data text-caption text-ink-muted">
-        Thinking
-        {animate ? (
-          <span aria-hidden="true">
-            {[0, 1, 2].map((i) => (
-              <motion.span
-                key={i}
-                className="inline-block"
-                initial={{ opacity: 0.25 }}
-                animate={{ opacity: [0.25, 1, 0.25] }}
-                transition={{ duration: 0.9, repeat: Infinity, ease: MOTION.bezier.breath, delay: i * 0.15 }}
-              >
-                .
-              </motion.span>
-            ))}
-          </span>
-        ) : (
-          '...'
-        )}
-      </p>
-    </div>
+    <p className={s.notice} data-tone={offline ? undefined : 'ok'}>
+      <Icon aria-hidden="true" focusable="false" strokeWidth={1.75} />
+      {text}
+    </p>
   );
 }
 
 /**
- * The AI terminal (§H.5): a modal dialog over everything but the vault. Always mounted so the log
- * survives close and navigation; only the dialog itself enters and leaves.
+ * The AI terminal, "Ask Aman" (§H.5): a modal dialog over everything but the vault. Always mounted so the
+ * log survives close and navigation; only the dialog itself enters and leaves.
  */
 export function TerminalOverlay({ isOpen, onClose }: TerminalOverlayProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -145,6 +177,10 @@ export function TerminalOverlay({ isOpen, onClose }: TerminalOverlayProps) {
   const isCompact = useMediaQuery('(max-width: 639px)');
   const viewport = useKeyboardSafeViewport(isOpen && isCompact);
   const announcement = useReplyAnnouncement(logs, isProcessing);
+  const openFrom = useOpenMark(isOpen, logs.length);
+  const cliSpans = useCliSpans(logs.length, isOffline);
+  /** How far back ArrowUp has stepped through the visitor's questions (-1: not browsing). */
+  const [recall, setRecall] = useState(-1);
 
   const setInputNode = useCallback(
     (node: HTMLInputElement | null) => {
@@ -154,149 +190,279 @@ export function TerminalOverlay({ isOpen, onClose }: TerminalOverlayProps) {
     [inputRef],
   );
 
-  const fillSuggestion = (word: string) => {
-    setInput(word);
+  const fillSuggestion = (text: string) => {
+    setInput(text);
+    setRecall(-1);
     inputRef.current?.focus();
   };
 
+  /** ↑ / ↓ step through earlier questions when the caret is at the start (or already browsing). */
+  const onInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.shiftKey || event.altKey || event.metaKey || event.ctrlKey || event.nativeEvent.isComposing) return;
+    if (event.key !== 'ArrowUp' && (event.key !== 'ArrowDown' || recall < 0)) return;
+    const el = event.currentTarget;
+    const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+    if (event.key === 'ArrowUp' && input !== '' && recall < 0 && !atStart) return;
+    const asked = logs.filter((entry) => entry.src === 'USR').map((entry) => entry.msg);
+    const next = recall + (event.key === 'ArrowUp' ? 1 : -1);
+    if (next >= asked.length) return;
+    event.preventDefault();
+    setRecall(next);
+    setInput(next < 0 ? '' : (asked[asked.length - 1 - next] ?? ''));
+  };
+
   const fade = { duration: 0.15 };
-  const panelMotion = motionOk
-    ? {
-        initial: { opacity: 0, y: 24 },
-        animate: { opacity: 1, y: 0, transition: MOTION.spring },
-        exit: { opacity: 0, y: 12, transition: { duration: MOTION.dur.overlayOut, ease: MOTION.bezier.depart } },
-      }
-    : { initial: { opacity: 0 }, animate: { opacity: 1, transition: fade }, exit: { opacity: 0, transition: fade } };
+  const depart = { duration: MOTION.dur.overlayOut, ease: MOTION.bezier.depart };
+  const panelMotion = !motionOk
+    ? { initial: { opacity: 0 }, animate: { opacity: 1, transition: fade }, exit: { opacity: 0, transition: fade } }
+    : isCompact
+      ? {
+          initial: { opacity: 0, y: 24 },
+          animate: { opacity: 1, y: 0, transition: MOTION.spring },
+          exit: { opacity: 0, y: 12, transition: depart },
+        }
+      : {
+          initial: { opacity: 0, y: 16, scale: 0.97 },
+          animate: { opacity: 1, y: 0, scale: 1, transition: MOTION.spring },
+          exit: { opacity: 0, y: 8, scale: 0.98, transition: depart },
+        };
   const backdropMotion = motionOk
     ? {
         initial: { opacity: 0 },
         animate: { opacity: 1, transition: { duration: MOTION.dur.ui, ease: MOTION.bezier.settle } },
-        exit: { opacity: 0, transition: { duration: MOTION.dur.overlayOut, ease: MOTION.bezier.depart } },
+        exit: { opacity: 0, transition: depart },
       }
     : { initial: { opacity: 0 }, animate: { opacity: 1, transition: fade }, exit: { opacity: 0, transition: fade } };
 
-  const visibleLogs = logs.filter((line) => !(line.src === 'AI' && line.msg === ''));
+  const lastIndex = logs.length - 1;
+  const lastLog = logs[lastIndex];
   // Thinking shows until the reply's first text arrives, including the offline fallback's delay after
   // `isProcessing` has already turned false; a streamed reply replaces it as soon as text appears.
-  const lastLog = logs[logs.length - 1];
   const awaitingReply = lastLog?.src === 'AI' && lastLog.msg === '' && (isProcessing || isOffline);
+  const busy = isProcessing || awaitingReply;
+  const isFresh = !logs.some((entry) => entry.src === 'USR');
+  const isCli = (i: number) => cliSpans.some(([from, to]) => i >= from && i < to);
+
+  const renderEntry = (entry: TerminalLogEntry, i: number) => {
+    const isNew = i >= openFrom ? '' : undefined;
+    const cli = isCli(i);
+
+    if (entry.src === 'SYS') return <Notice key={i} text={entry.msg} />;
+
+    if (entry.src === 'USR') {
+      return cli ? (
+        <p key={i} className={s.cliYou} data-new={isNew}>
+          <b aria-hidden="true">&gt;</b>
+          <span className="sr-only">You: </span>
+          {entry.msg}
+        </p>
+      ) : (
+        <p key={i} className={s.you} data-new={isNew}>
+          <span className="sr-only">You: </span>
+          {entry.msg}
+        </p>
+      );
+    }
+
+    const latest = i === lastIndex && isNew !== undefined;
+    if (entry.msg === '') {
+      if (!(i === lastIndex && awaitingReply)) return null;
+      return cli ? (
+        <div key={i} className={s.cliRow} data-new={isNew} data-ag="offline-wait" aria-busy="true">
+          <p className={s.cliOut} data-wait="">
+            searching notes
+            <span className={s.block} aria-hidden="true" />
+          </p>
+        </div>
+      ) : (
+        <article key={i} className={s.ai} data-new={isNew} data-ag="thinking" aria-busy="true">
+          <div className={s.gutter}>
+            <Ridge />
+          </div>
+          <ThinkingBlock motionOk={motionOk} />
+        </article>
+      );
+    }
+
+    const { notice, body } = splitNotice(entry.msg);
+    const streaming = latest && isProcessing;
+    return (
+      <Fragment key={i}>
+        {notice && <Notice text={notice} />}
+        {cli ? (
+          <div className={s.cliRow} data-new={isNew}>
+            <span className="sr-only">Aman: </span>
+            <TypedReply text={body} animate={latest && motionOk} />
+          </div>
+        ) : (
+          <article
+            className={s.ai}
+            data-new={isNew}
+            data-ag={latest ? (streaming ? 'streaming' : 'done') : undefined}
+            aria-busy={streaming || undefined}
+          >
+            <div className={s.gutter}>
+              <Ridge />
+            </div>
+            <div className={s.prose}>
+              <span className="sr-only">Aman: </span>
+              {latest ? <LiveReply text={body} streaming={streaming} /> : <Paragraphs text={body} />}
+            </div>
+          </article>
+        )}
+      </Fragment>
+    );
+  };
+
+  const sendDisabled = busy || input.trim() === '';
 
   return (
     <AnimatePresence>
       {isOpen && (
         <div
           key="terminal"
-          className="fixed inset-0 z-terminal flex items-stretch justify-center sm:items-center sm:p-6"
+          className={`${s.overlay} z-terminal`}
           style={viewport ? { top: viewport.top, height: viewport.height, bottom: 'auto' } : undefined}
         >
-          <motion.div aria-hidden="true" className="absolute inset-0 bg-ground/80" onClick={onClose} {...backdropMotion} />
+          <motion.div aria-hidden="true" className={s.scrim} onClick={onClose} {...backdropMotion} />
 
           <motion.div
             ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className={
-              'relative flex h-full w-full flex-col overflow-hidden bg-surface text-ink ' +
-              'pt-[env(safe-area-inset-top)] sm:pt-0 ' +
-              'sm:h-[72vh] sm:max-h-[calc(100dvh-48px)] sm:min-h-[min(420px,calc(100dvh-48px))] sm:max-w-[880px] ' +
-              'sm:rounded-panel sm:border sm:border-line sm:shadow-float'
-            }
+            className={s.panel}
             {...panelMotion}
           >
-            <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line pl-4 pr-1 sm:gap-4 sm:pl-5 sm:pr-1.5">
-              <h2 id={titleId} className="truncate font-data text-caption font-medium text-ink">
-                aman@anubhav: ~
+            <header className={s.head}>
+              <Ridge lit className={s.mark} />
+              <h2 id={titleId} className={s.title}>
+                Ask Aman
               </h2>
-              <StatusChip tone={isOffline ? 'warning' : 'success'} icon={isOffline ? WifiOff : Wifi}>
-                {isOffline ? 'Offline cache' : 'Live model'}
-              </StatusChip>
-              <IconButton label="Close terminal" icon={X} size={40} onClick={onClose} className="ml-auto" />
+              <span role="status" className="contents">
+                {isOffline && (
+                  <span className={s.offline}>
+                    <span>
+                      Offline<span className={s.long}>, answering from saved notes</span>
+                    </span>
+                  </span>
+                )}
+              </span>
+              <button type="button" className={s.close} aria-label="Close" title="Close" onClick={onClose}>
+                <X aria-hidden="true" focusable="false" className="size-5" strokeWidth={1.75} />
+              </button>
             </header>
 
-            <div
-              role="log"
-              aria-live="off"
-              aria-label="Conversation"
-              data-lenis-prevent=""
-              tabIndex={0}
-              className="scroll-pane min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-5 focus-visible:outline-offset-[-2px] sm:px-6"
-            >
-              {visibleLogs.map((line, i) => (
-                <div key={i} className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3">
-                  <span className="select-none pt-0.5 font-body text-caption italic text-ink-muted">
-                    {SOURCE_LABEL[line.src]}
-                  </span>
-                  <p className={`whitespace-pre-wrap break-words font-data leading-relaxed ${MESSAGE_TONE[line.src]}`}>
-                    {line.msg}
-                  </p>
+            <div className={s.body}>
+              <TerminalRail onFill={fillSuggestion} onNavigate={onClose} />
+
+              <div className={s.main}>
+                <div
+                  role="log"
+                  aria-live="off"
+                  aria-label="Conversation"
+                  aria-busy={busy}
+                  data-lenis-prevent=""
+                  tabIndex={0}
+                  className={`scroll-pane ${s.log}`}
+                >
+                  <div className={s.col}>
+                    {isFresh ? (
+                      <div className={s.hello}>
+                        <Ridge lit />
+                        <h3 className={s.helloTitle}>{TERMINAL_GREETING.title}</h3>
+                        <p className={s.helloLine}>{TERMINAL_GREETING.line}</p>
+                        <nav className={s.pills} aria-label="Go to">
+                          {TERMINAL_QUICK_LINKS.map((link) => (
+                            <QuickLink key={link.label} link={link} className={s.pill} onNavigate={onClose} />
+                          ))}
+                        </nav>
+                      </div>
+                    ) : (
+                      logs.map(renderEntry)
+                    )}
+                    <div ref={endRef} />
+                  </div>
                 </div>
-              ))}
-              {awaitingReply && <ThinkingLine animate={motionOk} />}
-              <div ref={endRef} />
-            </div>
 
-            <div aria-live="polite" className="sr-only">
-              {announcement && <p key={announcement.id}>{announcement.text}</p>}
-            </div>
+                <div aria-live="polite" className="sr-only">
+                  {announcement && <p key={announcement.id}>{announcement.text}</p>}
+                </div>
 
-            <div className="shrink-0 border-t border-line px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pb-4">
-              <div role="group" aria-label="Suggestions" className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-1">
-                <span className="font-body text-caption italic text-ink-muted" aria-hidden="true">
-                  Try
-                </span>
-                {SUGGESTIONS.map((word) => (
-                  <button
-                    key={word}
-                    type="button"
-                    onClick={() => fillSuggestion(word)}
-                    className={
-                      'min-h-6 rounded-control font-data text-caption text-ink underline decoration-signal decoration-1 ' +
-                      'underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2 ' +
-                      '[@media(pointer:coarse)]:min-h-11'
-                    }
-                  >
-                    {word}
-                  </button>
-                ))}
+                <div className={s.dock}>
+                  <div className={s.dockIn}>
+                    <div className={s.chips} role="group" aria-label="Suggestions">
+                      {TERMINAL_PROMPTS.map((prompt) => (
+                        <button key={prompt.full} type="button" className={s.chip} onClick={() => fillSuggestion(prompt.full)}>
+                          {prompt.short}
+                        </button>
+                      ))}
+                      {TERMINAL_CHIP_COMMANDS.map((cmd) => (
+                        <button key={cmd} type="button" className={s.chip} data-mono="" onClick={() => fillSuggestion(cmd)}>
+                          {cmd}
+                        </button>
+                      ))}
+                    </div>
+
+                    <form
+                      onSubmit={(event) => {
+                        setRecall(-1);
+                        void handleCommand(event);
+                      }}
+                      className={s.composer}
+                    >
+                      {isOffline && (
+                        <span className={s.ps} aria-hidden="true">
+                          &gt;
+                        </span>
+                      )}
+                      <label htmlFor={inputId} className="sr-only">
+                        Message Aman
+                      </label>
+                      <input
+                        ref={setInputNode}
+                        id={inputId}
+                        type="text"
+                        value={input}
+                        onChange={(event) => {
+                          setInput(event.target.value);
+                          setRecall(-1);
+                        }}
+                        onKeyDown={onInputKeyDown}
+                        placeholder={isOffline ? 'Offline. Type help or a topic' : 'Ask about my work, treks or the night sky'}
+                        maxLength={TERMINAL_INPUT_MAX_CHARS}
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        enterKeyHint="send"
+                        className={s.input}
+                        data-cli={isOffline ? '' : undefined}
+                      />
+                      <button
+                        type="submit"
+                        className={s.send}
+                        aria-disabled={sendDisabled}
+                        aria-label={busy ? 'Writing a reply' : 'Send'}
+                        data-ag={busy ? 'thinking' : undefined}
+                      >
+                        {busy ? <Ridge /> : <ArrowUp aria-hidden="true" focusable="false" strokeWidth={2} />}
+                      </button>
+                    </form>
+
+                    <p className={s.hints}>
+                      <span className={s.hint}>
+                        <kbd className={s.kbd}>Enter</kbd> send
+                      </span>
+                      <span className={s.hint}>
+                        <kbd className={s.kbd}>↑</kbd> last question
+                      </span>
+                      <span className={s.hint}>
+                        <kbd className={s.kbd}>Esc</kbd> close
+                      </span>
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              <form
-                onSubmit={(event) => {
-                  void handleCommand(event);
-                }}
-                className="mt-2 flex items-center gap-2"
-              >
-                <label htmlFor={inputId} className="sr-only">
-                  Message the terminal
-                </label>
-                <div className="relative min-w-0 flex-1">
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-data text-[15px] text-signal"
-                  >
-                    &gt;
-                  </span>
-                  <input
-                    ref={setInputNode}
-                    id={inputId}
-                    type="text"
-                    value={input}
-                    onChange={(event) => setInput(event.target.value)}
-                    placeholder={isOffline ? "Offline. Try 'help'" : 'Ask about my projects, treks or how I work'}
-                    autoComplete="off"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    enterKeyHint="send"
-                    className={
-                      'h-11 w-full rounded-control border border-line-strong bg-surface-2 pl-8 pr-3 font-data text-[16px] ' +
-                      'text-ink caret-signal placeholder:text-ink-muted transition-colors duration-hover ' +
-                      'hover:border-ink-muted focus:border-signal focus-visible:outline-offset-0 sm:text-[15px]'
-                    }
-                  />
-                </div>
-                <IconButton type="submit" label="Send" icon={Send} variant="outline" disabled={isProcessing} />
-              </form>
             </div>
           </motion.div>
         </div>

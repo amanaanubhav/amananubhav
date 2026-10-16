@@ -1,0 +1,1174 @@
+/*
+ * "Ask Aman", the AI terminal (§H.5 redesign): a split dashboard on desktop, a full-height sheet on phones,
+ * and the Alpenglow response motion (light crossing a ridge while Aman thinks, words developing out of a
+ * soft blur while he writes, the summit lighting once when the reply is complete).
+ * Colours come only from the generated token roles (`--c-*` triplets), so a new palette flows in.
+ * Everything that moves animates transform, opacity, filter or background-position only.
+ */
+
+.overlay {
+  --t-rim: rgb(var(--c-ink) / 0.1);
+  --t-spec: rgb(var(--c-ink) / 0.07);
+  --t-rail: rgb(var(--c-ground) / 0.55);
+  --t-hover: rgb(var(--c-ink) / 0.06);
+  --t-you: rgb(var(--c-water) / 0.13);
+  --t-you-rim: rgb(var(--c-water) / 0.22);
+  --t-field: rgb(var(--c-surface-2));
+  --t-ghost: rgb(var(--c-ink) / 0.07);
+  --t-sheen: rgb(var(--c-ink) / 0.1);
+  --t-scrim: rgb(var(--c-ground-sky) / 0.78);
+  --ag-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 16'%3E%3Cpath d='M1.5 14.2 6.5 10.6l3 1.6 5-5.2 3.2 1.7 5-6.2 4.2 4.8 3.2-1.9 4.8 5.6 3.4-1.5 5.7 4.5' fill='none' stroke='%23000' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E");
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding: 32px;
+}
+
+:global(:root[data-theme='day']) .overlay {
+  --t-spec: rgb(var(--c-surface) / 0.95);
+  --t-rail: rgb(var(--c-ground) / 0.6);
+  --t-hover: rgb(var(--c-ink) / 0.05);
+  --t-you: rgb(var(--c-water) / 0.09);
+  --t-you-rim: rgb(var(--c-water) / 0.2);
+  --t-field: rgb(var(--c-surface));
+  --t-sheen: rgb(var(--c-surface) / 0.75);
+  --t-scrim: rgb(var(--c-ground) / 0.72);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--t-scrim);
+}
+
+.panel {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(1120px, 100%);
+  height: min(780px, 100%);
+  overflow: hidden;
+  background: rgb(var(--c-surface));
+  color: rgb(var(--c-ink));
+  border: 1px solid var(--t-rim);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 var(--t-spec), var(--shadow-float);
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────────────────── */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 12px 0 20px;
+  border-bottom: 1px solid rgb(var(--c-line));
+}
+
+.title {
+  margin: 0;
+  font: 600 17px/1 var(--font-display), 'Arial Narrow', sans-serif;
+  font-variation-settings: 'wdth' 106;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.offline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--c-line));
+  font: 500 14px/1 var(--font-display), sans-serif;
+  color: rgb(var(--c-ink-muted));
+  white-space: nowrap;
+  animation: fade-in var(--dur-ui) var(--ease-settle) both;
+}
+
+.offline::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(var(--c-warning));
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(var(--c-ink));
+  cursor: pointer;
+  transition: background-color var(--dur-hover) var(--ease-settle);
+}
+
+.close:hover {
+  background: var(--t-hover);
+}
+
+/* ── Body: rail + main ────────────────────────────────────────────────────────────────── */
+.body {
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-height: 0;
+  padding: 24px 16px 20px;
+  overflow-y: auto;
+  background: var(--t-rail);
+  border-right: 1px solid rgb(var(--c-line));
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--c-line-strong)) transparent;
+}
+
+.railHead {
+  margin: 0 0 8px 8px;
+  font: 600 14px/1.2 var(--font-display), sans-serif;
+  letter-spacing: 0.005em;
+  color: rgb(var(--c-ink-muted));
+}
+
+.list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prompt,
+.goto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  font: 500 15px/1.35 var(--font-display), sans-serif;
+  color: rgb(var(--c-ink));
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--dur-hover) var(--ease-settle);
+}
+
+.goto {
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 6px 10px;
+  line-height: 1;
+}
+
+.prompt:hover,
+.goto:hover {
+  background: var(--t-hover);
+}
+
+.prompt:focus-visible,
+.goto:focus-visible,
+.cmd:focus-visible,
+.chip:focus-visible,
+.pill:focus-visible {
+  outline-offset: 2px;
+}
+
+.prompt svg,
+.goto svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--c-ink-muted));
+}
+
+.cmds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.cmd {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--c-line));
+  background: transparent;
+  font: 400 14px/1 var(--font-data), ui-monospace, monospace;
+  color: rgb(var(--c-ink));
+  cursor: pointer;
+  transition: border-color var(--dur-hover) var(--ease-settle), background-color var(--dur-hover) var(--ease-settle);
+}
+
+.cmd:hover {
+  border-color: rgb(var(--c-line-strong));
+  background: var(--t-hover);
+}
+
+.gotoNav {
+  margin-top: auto;
+}
+
+.main {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+.log {
+  min-height: 0;
+  padding: 32px 32px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--c-line-strong)) transparent;
+}
+
+.log:focus-visible {
+  outline-offset: -2px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-height: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* ── Messages ─────────────────────────────────────────────────────────────────────────── */
+.you {
+  align-self: flex-end;
+  max-width: min(80%, 520px);
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--t-you);
+  box-shadow: inset 0 0 0 1px var(--t-you-rim);
+  font: 400 16px/1.5 var(--font-display), sans-serif;
+  color: rgb(var(--c-ink));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  transform-origin: 100% 100%;
+}
+
+.you[data-new] {
+  animation: you-in var(--dur-ui) var(--ease-settle) both;
+}
+
+.ai {
+  --rw: 48px;
+  display: grid;
+  grid-template-columns: var(--rw) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.ai[data-new],
+.cliRow[data-new],
+.cliYou[data-new] {
+  animation: ai-in var(--dur-ui) var(--ease-settle) both;
+}
+
+.gutter {
+  padding-top: 7px;
+}
+
+.prose {
+  max-width: 64ch;
+  font: 400 17px/1.7 var(--font-text), Georgia, serif;
+  color: rgb(var(--c-ink));
+  text-wrap: pretty;
+}
+
+.prose p {
+  margin: 0 0 0.8em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.notice {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: rgb(var(--c-surface-2));
+  font: 400 14px/1.4 var(--font-display), sans-serif;
+  color: rgb(var(--c-ink-muted));
+}
+
+.notice svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--c-warning));
+}
+
+.notice[data-tone='ok'] svg {
+  color: rgb(var(--c-ink-muted));
+}
+
+/* Offline CLI mode: the machine speaks mono */
+.cliRow {
+  display: grid;
+  gap: 10px;
+}
+
+.cliYou {
+  margin: 0;
+  font: 500 15px/1.5 var(--font-data), ui-monospace, monospace;
+  color: rgb(var(--c-ink));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cliYou b {
+  margin-right: 10px;
+  font-weight: 500;
+  color: rgb(var(--c-signal));
+}
+
+.cliOut {
+  margin: 0;
+  padding-left: 22px;
+  font: 400 15px/1.65 var(--font-data), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums slashed-zero;
+  color: rgb(var(--c-ink));
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cliOut[data-wait] {
+  color: rgb(var(--c-ink-muted));
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────────────────── */
+.hello {
+  margin: auto 0;
+  padding: 48px 0 24px;
+}
+
+.hello > .ridge {
+  --rw: 72px;
+  margin-bottom: 28px;
+}
+
+.helloTitle {
+  margin: 0 0 12px;
+  font: 650 40px/1.05 var(--font-display), 'Arial Narrow', sans-serif;
+  font-variation-settings: 'wdth' 112;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.helloLine {
+  max-width: 46ch;
+  margin: 0;
+  font: 400 18px/1.6 var(--font-text), Georgia, serif;
+  color: rgb(var(--c-ink-muted));
+}
+
+.pills {
+  display: none;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--c-line));
+  font: 500 15px/1 var(--font-display), sans-serif;
+  color: rgb(var(--c-ink));
+  text-decoration: none;
+}
+
+.pill svg {
+  width: 14px;
+  height: 14px;
+  color: rgb(var(--c-ink-muted));
+}
+
+/* ── Composer dock ────────────────────────────────────────────────────────────────────── */
+.dock {
+  padding: 12px 32px 20px;
+}
+
+.dockIn {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.chips {
+  display: none;
+}
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  margin: 0;
+  padding: 6px 6px 6px 18px;
+  border-radius: 18px;
+  background: var(--t-field);
+  border: 1px solid rgb(var(--c-line-strong));
+  transition: border-color var(--dur-hover) var(--ease-settle);
+}
+
+.composer:focus-within {
+  border-color: rgb(var(--c-signal));
+  outline: 2px solid rgb(var(--c-signal) / 0.35);
+  outline-offset: 2px;
+}
+
+.ps {
+  font: 500 16px/1 var(--font-data), ui-monospace, monospace;
+  color: rgb(var(--c-signal));
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  outline: none;
+  font: 400 16px/1.4 var(--font-display), sans-serif;
+  color: rgb(var(--c-ink));
+  caret-color: rgb(var(--c-signal));
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.input::placeholder {
+  color: rgb(var(--c-ink-muted));
+  opacity: 1;
+}
+
+.input[data-cli] {
+  font: 400 15px/1.4 var(--font-data), ui-monospace, monospace;
+}
+
+/* Signal fill with the on-signal icon: the fill holds 3:1+ against the field in both themes. */
+.send {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: rgb(var(--c-signal));
+  color: rgb(var(--c-on-signal));
+  cursor: pointer;
+  transition: background-color var(--dur-hover) var(--ease-settle), color var(--dur-hover) var(--ease-settle);
+}
+
+.send:focus-visible {
+  outline-offset: 2px;
+}
+
+.send svg {
+  width: 20px;
+  height: 20px;
+}
+
+.send[aria-disabled='true'] {
+  background: transparent;
+  color: rgb(var(--c-ink-muted));
+  box-shadow: inset 0 0 0 1px rgb(var(--c-line-strong));
+  cursor: default;
+}
+
+.send > .ridge {
+  --rw: 26px;
+}
+
+.hints {
+  display: none;
+  justify-content: flex-end;
+  gap: 18px;
+  margin: 10px 4px 0;
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 14px/1 var(--font-display), sans-serif;
+  color: rgb(var(--c-ink-muted));
+}
+
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid rgb(var(--c-line));
+  border-bottom-width: 2px;
+  background: rgb(var(--c-surface-2));
+  font: 400 14px/1 var(--font-data), ui-monospace, monospace;
+  color: rgb(var(--c-ink));
+}
+
+@media (min-width: 640px) and (pointer: fine) {
+  .hints {
+    display: flex;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+  .body {
+    grid-template-columns: 232px minmax(0, 1fr);
+  }
+}
+
+@media (pointer: coarse) {
+  .close {
+    width: 44px;
+    height: 44px;
+  }
+
+  .cmd {
+    height: 40px;
+  }
+}
+
+/* ── Phone: a full-height sheet ───────────────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .overlay {
+    padding: 0;
+  }
+
+  .panel {
+    width: 100%;
+    height: 100%;
+    padding-top: env(safe-area-inset-top);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .head {
+    height: 56px;
+    padding: 0 6px 0 16px;
+  }
+
+  .long {
+    display: none;
+  }
+
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rail {
+    display: none;
+  }
+
+  .log {
+    padding: 24px 16px 12px;
+  }
+
+  .col {
+    gap: 24px;
+  }
+
+  .you {
+    max-width: 88%;
+  }
+
+  .ai {
+    --rw: 36px;
+    gap: 12px;
+  }
+
+  .gutter {
+    padding-top: 9px;
+  }
+
+  .cliOut {
+    padding-left: 0;
+    font-size: 14px;
+  }
+
+  .hello {
+    padding-top: 24px;
+  }
+
+  .helloTitle {
+    font-size: 32px;
+  }
+
+  .helloLine {
+    font-size: 17px;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 28px;
+  }
+
+  .dock {
+    padding: 8px 12px max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid rgb(var(--c-line));
+  }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+    margin: 0 -12px 10px;
+    padding: 2px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .chip {
+    flex: none;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--c-line));
+    background: transparent;
+    font: 500 15px/1 var(--font-display), sans-serif;
+    color: rgb(var(--c-ink));
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .chip[data-mono] {
+    font: 400 14px/1 var(--font-data), ui-monospace, monospace;
+  }
+
+  .composer {
+    min-height: 52px;
+    padding-left: 16px;
+    border-radius: 16px;
+  }
+}
+
+/* ── Alpenglow: the ridge mark ────────────────────────────────────────────────────────── */
+/* An altitude profile (a mask); a band of light (dull red core, violet edges) crosses it while busy. */
+.ridge {
+  --dot: calc(var(--rw, 48px) * 0.105);
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--rw, 48px);
+  height: calc(var(--rw, 48px) / 3);
+}
+
+.mark {
+  --rw: 30px;
+}
+
+.ridge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  -webkit-mask: var(--ag-mask) center / 100% 100% no-repeat;
+  mask: var(--ag-mask) center / 100% 100% no-repeat;
+  background: linear-gradient(
+      90deg,
+      rgb(var(--c-line-strong)) 0 32%,
+      rgb(var(--c-water)) 41%,
+      rgb(var(--c-signal)) 47% 53%,
+      rgb(var(--c-water)) 59%,
+      rgb(var(--c-line-strong)) 68% 100%
+    )
+    100% 0 / 300% 100% no-repeat;
+}
+
+/* The summit point and its one-time ring: the completion cue. The peak sits at (22.7, 2.5) of 48 x 16. */
+.ridge::after,
+.ping {
+  content: '';
+  position: absolute;
+  left: calc(var(--rw, 48px) * 0.473 - var(--dot) / 2);
+  top: calc(var(--rw, 48px) * 0.052 - var(--dot) / 2);
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+.ridge::after {
+  background: rgb(var(--c-signal));
+}
+
+.ping {
+  border: 1px solid rgb(var(--c-signal));
+}
+
+.lit::after {
+  opacity: 1;
+  transform: none;
+}
+
+[data-ag='thinking'] .ridge,
+[data-ag='streaming'] .ridge {
+  animation: ag-in var(--dur-ui) var(--ease-settle) 150ms both;
+}
+
+[data-ag='thinking'] .ridge::before {
+  animation: ag-sweep 1.8s var(--ease-breath) infinite;
+}
+
+[data-ag='streaming'] .ridge::before {
+  animation: ag-sweep 2.4s var(--ease-breath) infinite;
+}
+
+[data-ag='done'] .ridge::after {
+  animation: ag-summit 360ms var(--ease-settle) both;
+}
+
+[data-ag='done'] .ping {
+  animation: ag-ring 900ms var(--ease-settle) 80ms both;
+}
+
+/* "Thinking": the same light crosses the word 300 ms later, as if it left the ridge. Every frame sits
+   between ink-muted and ink, so the label holds 4.5:1 throughout. */
+.thinking {
+  display: grid;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.label {
+  justify-self: start;
+  margin: 0;
+  font: italic 400 15px/1.4 var(--font-text), Georgia, serif;
+  letter-spacing: 0.01em;
+  color: rgb(var(--c-ink-muted));
+  animation: ag-in var(--dur-ui) var(--ease-settle) 150ms both;
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .label {
+    background: linear-gradient(
+        90deg,
+        rgb(var(--c-ink-muted)) 0 38%,
+        rgb(var(--c-ink)) 50%,
+        rgb(var(--c-ink-muted)) 62% 100%
+      )
+      100% 0 / 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation:
+      ag-in var(--dur-ui) var(--ease-settle) 150ms both,
+      ag-sweep 1.8s var(--ease-breath) 300ms infinite;
+  }
+}
+
+/* Placeholder lines where the reply will land, with a slow sheen. */
+.ghost {
+  display: grid;
+  gap: 12px;
+}
+
+.ghost i {
+  position: relative;
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--t-ghost);
+  transform-origin: 0 50%;
+  animation: ghost-in 600ms var(--ease-settle) 150ms both;
+}
+
+.ghost i:nth-child(1) {
+  width: 94%;
+}
+
+.ghost i:nth-child(2) {
+  width: 82%;
+  animation-delay: 220ms;
+}
+
+.ghost i:nth-child(3) {
+  width: 58%;
+  animation-delay: 290ms;
+}
+
+.ghost i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, var(--t-sheen), transparent);
+  transform: translateX(-100%);
+  animation: sheen 1.8s var(--ease-breath) infinite;
+}
+
+.ghost i:nth-child(2)::after {
+  animation-delay: 120ms;
+}
+
+.ghost i:nth-child(3)::after {
+  animation-delay: 240ms;
+}
+
+/* Streaming: each new word develops (blur, rise, fade); shown words never animate again. */
+.tok {
+  display: inline-block;
+  max-width: 100%;
+  animation: ag-tok 420ms var(--ease-settle) backwards;
+  animation-delay: calc(var(--i, 0) * 22ms);
+}
+
+/* The write head: a 2 px red-to-violet caret with a small lantern. A fresh caret mounts per chunk, so
+   its 500 ms delay means it breathes only when no text has arrived for half a second. */
+.caret {
+  position: relative;
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.17em;
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgb(var(--c-signal)), rgb(var(--c-water)));
+  animation: ag-breathe 1.2s var(--ease-breath) 500ms infinite alternate;
+}
+
+.caret::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgb(var(--c-signal) / 0.26), rgb(var(--c-water) / 0.1) 55%, transparent);
+  animation: ag-lantern 2.4s var(--ease-breath) 500ms infinite alternate both;
+}
+
+.caret[data-leaving] {
+  animation: ag-caret-out var(--dur-overlay-out, 300ms) var(--ease-depart) forwards;
+}
+
+.caret[data-leaving]::before {
+  animation: none;
+  opacity: 0;
+}
+
+/* Offline: a block caret that blinks (0.94 Hz) while the notes are searched and stays solid while typing. */
+.block {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.2em;
+  background: rgb(var(--c-signal));
+}
+
+[data-ag='offline-wait'] .block {
+  animation: ag-blink 1.06s steps(1, end) infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes you-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes ai-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes ag-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes ag-sweep {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: 0% 0;
+  }
+}
+
+@keyframes ag-tok {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translateY(0.28em);
+  }
+}
+
+@keyframes ag-lantern {
+  from {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes ag-breathe {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.35;
+  }
+}
+
+@keyframes ag-caret-out {
+  to {
+    opacity: 0;
+    transform: scaleY(0.3);
+  }
+}
+
+@keyframes ag-summit {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ag-ring {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+@keyframes ag-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes ghost-in {
+  from {
+    opacity: 0;
+    transform: scaleX(0.6);
+  }
+}
+
+@keyframes sheen {
+  to {
+    transform: translateX(240%);
+  }
+}
+
+/* ── Reduced motion (the OS setting, or the footer switch via html[data-motion='off']) ──────
+   A still mark: the light parks on the summit, the label is plain text, words appear without effects. */
+@media (prefers-reduced-motion: reduce) {
+  .you[data-new],
+  .ai[data-new],
+  .cliRow[data-new],
+  .cliYou[data-new],
+  .offline,
+  .ridge,
+  .ridge::before,
+  .ping,
+  .label,
+  .ghost i,
+  .ghost i::after,
+  .tok,
+  .caret,
+  .caret::before,
+  .block {
+    animation: none !important;
+  }
+
+  [data-ag] .ridge::before {
+    background-position: 50% 0;
+  }
+
+  [data-ag='done'] .ridge::before {
+    background-position: 100% 0;
+  }
+
+  [data-ag='done'] .ridge::after {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .label {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  .ghost i::after,
+  .caret::before,
+  .caret[data-leaving] {
+    display: none;
+  }
+
+  .caret {
+    opacity: 0.7;
+  }
+}
+
+:global(html[data-motion='off']) .you[data-new],
+:global(html[data-motion='off']) .ai[data-new],
+:global(html[data-motion='off']) .cliRow[data-new],
+:global(html[data-motion='off']) .cliYou[data-new],
+:global(html[data-motion='off']) .offline,
+:global(html[data-motion='off']) .ridge,
+:global(html[data-motion='off']) .ridge::before,
+:global(html[data-motion='off']) .ping,
+:global(html[data-motion='off']) .label,
+:global(html[data-motion='off']) .ghost i,
+:global(html[data-motion='off']) .ghost i::after,
+:global(html[data-motion='off']) .tok,
+:global(html[data-motion='off']) .caret,
+:global(html[data-motion='off']) .caret::before,
+:global(html[data-motion='off']) .block {
+  animation: none !important;
+}
+
+:global(html[data-motion='off']) [data-ag] .ridge::before {
+  background-position: 50% 0;
+}
+
+:global(html[data-motion='off']) [data-ag='done'] .ridge::before {
+  background-position: 100% 0;
+}
+
+:global(html[data-motion='off']) [data-ag='done'] .ridge::after {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+:global(html[data-motion='off']) .label {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+:global(html[data-motion='off']) .ghost i::after,
+:global(html[data-motion='off']) .caret::before,
+:global(html[data-motion='off']) .caret[data-leaving] {
+  display: none;
+}
+
+:global(html[data-motion='off']) .caret {
+  opacity: 0.7;
+}
+
+@media (prefers-contrast: more) {
+  .overlay {
+    --t-ghost: rgb(var(--c-ink) / 0.12);
+    --t-hover: rgb(var(--c-ink) / 0.12);
+  }
+
+  .label {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: rgb(var(--c-ink));
+  }
+}
+
+@media (forced-colors: active) {
+  .panel,
+  .you,
+  .notice,
+  .composer {
+    border: 1px solid CanvasText;
+  }
+
+  .send {
+    background: ButtonText;
+    color: ButtonFace;
+  }
+
+  .label {
+    background: none;
+    -webkit-text-fill-color: CanvasText;
+  }
+
+  .ridge::before {
+    background: CanvasText;
+    animation: none;
+  }
+
+  .caret,
+  .block,
+  .ridge::after {
+    background: Highlight;
+  }
+
+  .caret::before,
+  .ghost i::after {
+    display: none;
+  }
+}
