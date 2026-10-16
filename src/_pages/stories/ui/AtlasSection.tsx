@@ -68,7 +68,7 @@ function PinKey() {
       <span className="inline-flex items-center gap-2">
         <TrailMark lane="planned" /> planned
       </span>
-      <span className="hidden md:inline">Select a pin for its field note.</span>
+      <span className="hidden md:inline">Select a pin for its journal entry.</span>
     </p>
   );
 }

@@ -184,7 +184,7 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
             <div className="journal-grid h-14">
               <div className={cn(FULL, 'flex min-w-0 items-center gap-4')}>
                 <Button variant="secondary" icon={ArrowLeft} onClick={onClose} className="shrink-0 px-4">
-                  Back to field notes
+                  Back to the journal
                 </Button>
                 {expedition && hasProfile ? (
                   <div
@@ -334,7 +334,7 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
             <div className="mt-16 flex flex-col items-start gap-6 border-t border-line pt-6">
               <Log layout="strip" items={[{ key: 'filed', value: story.date }]} />
               <Button variant="secondary" icon={ArrowLeft} onClick={onClose}>
-                Back to field notes
+                Back to the journal
               </Button>
             </div>
           </div>

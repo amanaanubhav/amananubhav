@@ -105,7 +105,7 @@ export const DISCIPLINE_INTRO = {
   ],
   logLabel: 'Training log',
   soonLabel: 'Learning soon',
-  trekLinkLabel: 'Field notes',
+  trekLinkLabel: 'Journal',
   stripLabel: 'Mountain plates',
 } as const;
 

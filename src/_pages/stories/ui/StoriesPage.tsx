@@ -18,7 +18,7 @@ const COVERS: Readonly<Record<string, ReactNode>> = Object.fromEntries(
 const [ANNAPURNA, KUN_TSO, CHANDRASHILA, DODITAL] = TREKS;
 
 /**
- * Field notes, `/stories` (§G.4): the atlas, every trek with its profile, the pack, then the long reads.
+ * Journal, `/stories` (§G.4): the atlas, every trek with its profile, the pack, then the long reads.
  * No WebGL in phase 1. Server component; client islands are the rail, the atlas pins, the reader
  * buttons and the stacked cards with their index.
  */

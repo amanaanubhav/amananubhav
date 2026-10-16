@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { ROUTES, SITE } from '@/shared/config';
 
-const title = 'Field Notes: Solo Treks and Build Logs | Aman Anubhav';
+const title = 'Journal: Solo Treks and Build Logs | Aman Anubhav';
 const description =
   '250 km solo on the Annapurna Circuit, Kun Tso at 5,000 m in winter, Chandrashila alone, and the GitHub Action that archives my LeetCode work.';
 

@@ -28,7 +28,7 @@ const ROW_BUTTON =
   'group-hover:underline focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal';
 
 /**
- * The field-notes index (§G.4): the logbook as a `<table>` (date, title, category, place) with the search
+ * The journal index (§G.4): the logbook as a `<table>` (date, title, category, place) with the search
  * and the category filters (text buttons with `aria-pressed`). Each row opens the story in the reader.
  * Filter state lives in the showcase, so it survives collapse and expand.
  */
@@ -45,7 +45,7 @@ export function ArchiveDrawer({ ref, id, filters, onCollapse }: ArchiveDrawerPro
     totalCount,
   } = filters;
   const headingId = `${id}-title`;
-  const countText = `${filteredStories.length} of ${totalCount} field notes`;
+  const countText = `${filteredStories.length} of ${totalCount} journal entries`;
 
   const openFromRow = (event: MouseEvent<HTMLTableRowElement>, index: number) => {
     // The title button handles its own clicks (and the keyboard); the rest of the row is a mouse target.
@@ -111,7 +111,7 @@ export function ArchiveDrawer({ ref, id, filters, onCollapse }: ArchiveDrawerPro
 
           <table className="mt-8 w-full border-collapse text-left">
             <caption className="sr-only">
-              {`Field notes, ${sortOrder === 'newest' ? 'newest' : 'oldest'} first. Select a title to read it.`}
+              {`Journal entries, ${sortOrder === 'newest' ? 'newest' : 'oldest'} first. Select a title to read it.`}
             </caption>
             <thead>
               <tr className="border-b border-line-strong">
@@ -163,7 +163,7 @@ export function ArchiveDrawer({ ref, id, filters, onCollapse }: ArchiveDrawerPro
           {filteredStories.length === 0 ? (
             <div className="mt-8 flex flex-col items-start gap-3">
               <p className="m-0 font-body text-body text-ink">
-                {searchQuery ? `No field notes match "${searchQuery}".` : 'No field notes in this category yet.'}
+                {searchQuery ? `No journal entries match "${searchQuery}".` : 'No journal entries in this category yet.'}
               </p>
               <Button
                 variant="text"

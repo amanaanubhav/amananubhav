@@ -17,7 +17,7 @@ interface MechanicalCardProps {
 }
 
 /**
- * One field note as a journal page on the stack (§G.4): `surface`, `rounded-panel`, `shadow-float`; a log
+ * One journal entry as a page on the stack (§G.4): `surface`, `rounded-panel`, `shadow-float`; a log
  * (date, category, place); the title and subtitle; the 3:2 cover. The cover sits in the exact shared-element
  * structure the story reader uses (`storyLayoutIds`: container > image > cover, plus the title), so opening
  * a card morphs into the reader (§K.8). The title's button is the card's one control; its hit area covers
@@ -50,7 +50,7 @@ export function MechanicalCard({ story, index, cover }: MechanicalCardProps) {
         <div data-fn-dim="" className="flex min-w-0 flex-col md:order-1">
           <Log
             layout="strip"
-            label="Field note log"
+            label="Journal entry log"
             items={[
               { key: 'date', value: dateTime ? <time dateTime={dateTime}>{story.date}</time> : story.date },
               { key: 'category', value: story.category, mono: false },
@@ -82,7 +82,7 @@ export function MechanicalCard({ story, index, cover }: MechanicalCardProps) {
             aria-hidden="true"
             className="m-0 mt-auto hidden items-center gap-2 pt-6 font-display text-ui font-semibold text-ink md:flex"
           >
-            Read the field note
+            Read the journal entry
             <ArrowUpRight className="size-[18px] transition-transform duration-hover ease-settle group-hover:-translate-y-0.5 group-hover:translate-x-0.5" strokeWidth={1.75} />
           </p>
         </div>

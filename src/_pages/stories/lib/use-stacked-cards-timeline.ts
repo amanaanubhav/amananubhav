@@ -10,7 +10,7 @@ const STEP = 0.8;
 const REVEAL = 1;
 
 /**
- * The stacked field-note cards (legacy Adventures.jsx timeline). Pins `triggerRef`, reveals each
+ * The stacked journal-entry cards (legacy Adventures.jsx timeline). Pins `triggerRef`, reveals each
  * `.blog-card` inside `scopeRef` after the first in sequence, then the CTA. Pin, scrub and end are
  * unchanged; only the visual targets changed (§G.4):
  *

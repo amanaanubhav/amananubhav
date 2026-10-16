@@ -51,8 +51,8 @@ ${STAGED} .fn-sub{display:none}
 }`;
 
 /**
- * `#adventures` (§G.4): the stacked field-note cards (pin, scrub and end unchanged), then the inline
- * field-notes index. Covers arrive as server-rendered nodes keyed by story id.
+ * `#adventures` (§G.4): the stacked journal-entry cards (pin, scrub and end unchanged), then the inline
+ * journal index. Covers arrive as server-rendered nodes keyed by story id.
  */
 export function StoriesShowcase({ covers }: { covers: Readonly<Record<string, ReactNode>> }) {
   useScrollToTopOnMount();
@@ -134,7 +134,7 @@ export function StoriesShowcase({ covers }: { covers: Readonly<Record<string, Re
         </div>
       </div>
 
-      {/* Inline field-notes index */}
+      {/* Inline journal index */}
       <AnimatePresence>
         {showArchive && (
           <ArchiveDrawer ref={archiveRef} id={DRAWER_ID} filters={filters} onCollapse={handleCollapse} />

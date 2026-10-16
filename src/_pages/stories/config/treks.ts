@@ -34,7 +34,7 @@ export interface TrekCopy {
   readonly rowSlots: readonly MediaSlotId[];
   /** Slots that draw their registry callouts once the photo is supplied. */
   readonly calloutSlots?: readonly MediaSlotId[];
-  /** Shown in place of "Read the field note" while the trek's story is unpublished. */
+  /** Shown in place of "Read the journal entry" while the trek's story is unpublished. */
   readonly noteComing?: string;
 }
 
@@ -68,7 +68,7 @@ export const TREKS: readonly TrekCopy[] = [
     lead: 'My most recent trek, done alone. I started at Deoriatal, crossed the high meadows of Rohini Bugyal, came down to Chopta and climbed to the summit of Chandrashila.',
     leadSlots: ['M-EXP-CHA-01'],
     rowSlots: ['M-EXP-CHA-02', 'M-EXP-CHA-03'],
-    noteComing: 'Field note coming.',
+    noteComing: 'Entry coming.',
   },
   {
     id: 'dodital',
@@ -76,7 +76,7 @@ export const TREKS: readonly TrekCopy[] = [
     copyId: 'S-EXP-DODITAL',
     headline: 'Next on the map.',
     // The "before the trip" line; no dates and no departure copy while the trip is upcoming (Q-48).
-    lead: "Next I'm heading to Dodital, a lake in the forests above Uttarkashi, and on to Darwa Top. Field notes when I'm back.",
+    lead: "Next I'm heading to Dodital, a lake in the forests above Uttarkashi, and on to Darwa Top. Journal entries when I'm back.",
     leadSlots: ['M-EXP-DOD-01'],
     rowSlots: ['M-EXP-DOD-02', 'M-EXP-DOD-03'],
   },
@@ -107,11 +107,11 @@ export const PACK_COPY = {
 
 /** `#adventures`: the static header of the stacked cards ([S-HOME-CHAPTERS] note). */
 export const FIELD_NOTES_COPY = {
-  headline: 'Field notes',
+  headline: 'Journal',
   line: 'Trip reports, build logs and the occasional how-to.',
-  open: 'All field notes',
+  open: 'All journal entries',
   close: 'Close the list',
-  indexHeading: 'All field notes',
-  searchLabel: 'Search field notes',
+  indexHeading: 'All journal entries',
+  searchLabel: 'Search journal entries',
   searchPlaceholder: 'Search by title or subtitle',
 } as const;

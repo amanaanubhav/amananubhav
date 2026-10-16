@@ -17,7 +17,7 @@ const ROW_COLUMNS: Readonly<Record<number, string>> = { 3: 'xl:grid-cols-3', 4: 
 
 /**
  * One trek spread (§G.4): thin-air h2 from the high point, the field log, the story beat's first
- * paragraph, "Read the field note" when the story is published, the compact elevation profile, the
+ * paragraph, "Read the journal entry" when the story is published, the compact elevation profile, the
  * lead plates beside the text, then the trek's other plates and clips in a row.
  */
 export function TrekSpread({ trek }: { trek: TrekCopy }) {

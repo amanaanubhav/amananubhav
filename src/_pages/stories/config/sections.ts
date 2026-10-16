@@ -31,5 +31,5 @@ export const STORIES_SECTIONS: readonly SectionNavItem[] = [
   trekItem('himachal', 'Himachal trails', 'yulla-kanda'),
   trekItem('dodital', 'Next: Dodital', 'dodital', 'planned'),
   { id: 'pack', label: 'The pack' },
-  { id: 'adventures', label: 'Field notes' },
+  { id: 'adventures', label: 'Journal' },
 ];

@@ -122,7 +122,7 @@ export function AtlasPins({ pins }: { pins: readonly AtlasPinData[] }) {
                 </p>
                 <p className="m-0 mt-3">
                   <JumpLink targetId={pin.sectionId} className={LINK_CLASSES} onJump={() => setOpenId(null)}>
-                    Go to field note
+                    Go to journal entry
                   </JumpLink>
                 </p>
               </div>

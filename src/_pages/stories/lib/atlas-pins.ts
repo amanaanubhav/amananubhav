@@ -4,7 +4,7 @@ import { atlasPoint } from '../config/atlas.generated';
 /** Serializable pin data handed to the client pin layer. */
 export interface AtlasPinData {
   readonly expeditionId: ExpeditionId;
-  /** The section the caption card's "Go to field note" scrolls to. */
+  /** The section the caption card's "Go to journal entry" scrolls to. */
   readonly sectionId: string;
   readonly label: string;
   readonly highPointName: string;
