@@ -1,19 +1,38 @@
 'use client';
 
-import type { JSX, Ref } from 'react';
-import { Calendar, ChevronUp, Search } from 'lucide-react';
+import type { MouseEvent, Ref } from 'react';
+import { ArrowDownUp, ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { openStory } from '@/features/read-story';
+import { ScrollTrigger } from '@/shared/lib/gsap';
+import { SearchField } from '@/shared/ui/archive';
+import { Button } from '@/shared/ui/button';
+import { FIELD_NOTES_COPY } from '../config/treks';
 import type { StoryFilters } from '../model/use-story-filters';
+import { storyDateTime } from '../lib/story-date';
 
 interface ArchiveDrawerProps {
   ref?: Ref<HTMLDivElement>;
+  id: string;
   filters: StoryFilters;
   onCollapse: () => void;
 }
 
-// --- INLINE ARCHIVE DRAWER ---
-export function ArchiveDrawer({ ref, filters, onCollapse }: ArchiveDrawerProps): JSX.Element {
+const FILTER_CLASSES =
+  'inline-flex min-h-11 items-center whitespace-nowrap rounded-control border-b-2 border-transparent px-0.5 font-body text-ui ' +
+  'text-ink-muted transition-colors duration-hover hover:text-ink aria-pressed:border-signal aria-pressed:text-ink ' +
+  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal';
+
+const ROW_BUTTON =
+  'rounded-control text-left font-display font-semibold text-ink decoration-signal decoration-1 underline-offset-[0.22em] ' +
+  'group-hover:underline focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal';
+
+/**
+ * The field-notes index (§G.4): the logbook as a `<table>` (date, title, category, place) with the search
+ * and the category filters (text buttons with `aria-pressed`). Each row opens the story in the reader.
+ * Filter state lives in the showcase, so it survives collapse and expand.
+ */
+export function ArchiveDrawer({ ref, id, filters, onCollapse }: ArchiveDrawerProps) {
   const {
     searchQuery,
     setSearchQuery,
@@ -25,98 +44,145 @@ export function ArchiveDrawer({ ref, filters, onCollapse }: ArchiveDrawerProps):
     filteredStories,
     totalCount,
   } = filters;
+  const headingId = `${id}-title`;
+  const countText = `${filteredStories.length} of ${totalCount} field notes`;
+
+  const openFromRow = (event: MouseEvent<HTMLTableRowElement>, index: number) => {
+    // The title button handles its own clicks (and the keyboard); the rest of the row is a mouse target.
+    if ((event.target as HTMLElement).closest('button, a')) return;
+    const story = filteredStories[index];
+    if (story) openStory(story);
+  };
 
   return (
     <motion.div
       ref={ref}
+      id={id}
+      role="region"
+      aria-labelledby={headingId}
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
-      className="w-full relative z-30 border-t"
-      style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-subtle)' }}
+      onAnimationComplete={() => ScrollTrigger.refresh()}
+      className="relative z-content w-full overflow-hidden border-t border-line bg-surface"
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-24">
-
-        {/* Controls Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-          <div>
-            <h3 className="text-4xl font-black tracking-tight mb-2" style={{ color: 'var(--text-primary)' }}>FULL_DATABASE</h3>
-            <p className="text-sm font-mono opacity-60" style={{ color: 'var(--text-secondary)' }}>
-              {totalCount} ENTRIES FOUND
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" style={{ color: 'var(--text-secondary)' }} />
-              <input
-                type="text" placeholder="QUERY..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 text-sm font-mono bg-transparent border rounded-none outline-none focus:border-opacity-100 transition-all w-full sm:w-64"
-                style={{ color: 'var(--text-primary)', borderColor: 'var(--border-subtle)' }}
-              />
+      <div className="journal-grid py-24 max-lg:pb-32">
+        <div className="col-[content-start/content-end] lg:col-[2/span_11]">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h3 id={headingId} className="m-0 font-display text-h3 font-[650] text-ink [--wdth:104]">
+                {FIELD_NOTES_COPY.indexHeading}
+              </h3>
+              <p aria-live="polite" className="m-0 mt-2 font-data text-caption text-ink-muted tabular">
+                {countText}
+              </p>
             </div>
-            <button
-              onClick={toggleSortOrder}
-              className="px-4 py-2 border text-xs font-cyber uppercase tracking-wider hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
-              style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
-            >
-              Sort: {sortOrder}
-            </button>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <SearchField
+                value={searchQuery}
+                onChange={setSearchQuery}
+                label={FIELD_NOTES_COPY.searchLabel}
+                placeholder={FIELD_NOTES_COPY.searchPlaceholder}
+                className="w-full sm:w-64"
+              />
+              <Button variant="secondary" icon={ArrowDownUp} onClick={toggleSortOrder}>
+                {sortOrder === 'newest' ? 'Newest first' : 'Oldest first'}
+              </Button>
+            </div>
+          </div>
+
+          <div
+            role="group"
+            aria-label="Filter by category"
+            className="mt-10 flex flex-wrap gap-x-6 gap-y-1 border-b border-line"
+          >
+            {categories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                aria-pressed={selectedCategory === category}
+                onClick={() => setSelectedCategory(category)}
+                className={FILTER_CLASSES}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          <table className="mt-8 w-full border-collapse text-left">
+            <caption className="sr-only">
+              {`Field notes, ${sortOrder === 'newest' ? 'newest' : 'oldest'} first. Select a title to read it.`}
+            </caption>
+            <thead>
+              <tr className="border-b border-line-strong">
+                <th scope="col" className="py-3 pr-4 font-body text-caption font-normal italic text-ink-muted">
+                  Date
+                </th>
+                <th scope="col" className="py-3 pr-4 font-body text-caption font-normal italic text-ink-muted">
+                  Title
+                </th>
+                <th scope="col" className="hidden py-3 pr-4 font-body text-caption font-normal italic text-ink-muted sm:table-cell">
+                  Category
+                </th>
+                <th scope="col" className="hidden py-3 font-body text-caption font-normal italic text-ink-muted md:table-cell">
+                  Place
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStories.map((story, index) => {
+                const dateTime = storyDateTime(story.date);
+                return (
+                  <tr
+                    key={story.id}
+                    onClick={(event) => openFromRow(event, index)}
+                    className="group cursor-pointer border-b border-line align-baseline transition-colors duration-hover hover:bg-surface-2 has-[:focus-visible]:bg-surface-2"
+                  >
+                    <td className="whitespace-nowrap py-4 pr-4 font-data text-caption text-ink tabular">
+                      {dateTime ? <time dateTime={dateTime}>{story.date}</time> : story.date}
+                    </td>
+                    <td className="py-4 pr-4">
+                      <button
+                        type="button"
+                        aria-haspopup="dialog"
+                        onClick={() => openStory(story)}
+                        className={`text-ui ${ROW_BUTTON}`}
+                      >
+                        {story.title}
+                      </button>
+                      <span className="mt-1 block font-body text-caption text-ink-muted sm:hidden">{story.category}</span>
+                    </td>
+                    <td className="hidden py-4 pr-4 font-body text-caption text-ink-muted sm:table-cell">{story.category}</td>
+                    <td className="hidden py-4 font-body text-caption text-ink-muted md:table-cell">{story.place ?? ''}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {filteredStories.length === 0 ? (
+            <div className="mt-8 flex flex-col items-start gap-3">
+              <p className="m-0 font-body text-body text-ink">
+                {searchQuery ? `No field notes match "${searchQuery}".` : 'No field notes in this category yet.'}
+              </p>
+              <Button
+                variant="text"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('All');
+                }}
+              >
+                Clear the search and filters
+              </Button>
+            </div>
+          ) : null}
+
+          <div className="mt-16 flex justify-center">
+            <Button variant="text" icon={ChevronUp} onClick={onCollapse} aria-controls={id} aria-expanded>
+              {FIELD_NOTES_COPY.close}
+            </Button>
           </div>
         </div>
-
-        {/* Category Tabs */}
-        <div className="flex gap-6 mb-12 overflow-x-auto no-scrollbar pb-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          {categories.map((cat) => (
-            <button
-              key={cat} onClick={() => setSelectedCategory(cat)}
-              className={`text-xs font-bold uppercase tracking-widest pb-3 border-b-2 transition-colors whitespace-nowrap ${selectedCategory === cat ? 'border-green-500 opacity-100' : 'border-transparent opacity-40 hover:opacity-80'}`}
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-          {filteredStories.map((story) => (
-            <motion.div
-              key={story.id}
-              className="group cursor-pointer flex flex-col gap-4"
-              onClick={() => openStory(story)}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <div className="aspect-[3/2] overflow-hidden rounded-sm relative bg-black/5">
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={story.coverImage} alt={story.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-[10px] font-cyber tracking-widest uppercase opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                  <span>{story.category}</span>
-                  <span className="flex items-center gap-1"><Calendar size={10} /> {story.date}</span>
-                </div>
-                <h3 className="text-xl font-bold leading-tight group-hover:underline decoration-1 underline-offset-4" style={{ color: 'var(--text-primary)' }}>
-                  {story.title}
-                </h3>
-                <p className="text-sm line-clamp-2 opacity-80" style={{ color: 'var(--text-secondary)' }}>{story.subtitle}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="mt-20 flex justify-center">
-          <button onClick={onCollapse} className="flex items-center gap-2 text-xs font-cyber uppercase opacity-50 hover:opacity-100 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
-            <ChevronUp size={14} /> Collapse Archive
-          </button>
-        </div>
-
       </div>
     </motion.div>
   );
