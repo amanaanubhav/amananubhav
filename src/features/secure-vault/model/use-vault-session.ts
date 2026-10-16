@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, type Dispatch, type SetStateAction, type SyntheticEvent } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction, type SyntheticEvent } from 'react';
 
 import { isAdminPasscode } from '@/shared/config';
 
-import { createVaultUser, findUsersByUsername } from '../api/vault-firestore';
+import { createVaultUser, findUsersByUsername, startVaultSession } from '../api/vault-firestore';
 import { ADMIN_CHANNEL_SALT, ADMIN_CHANNEL_SECRET, ADMIN_USERNAME } from '../config/vault';
 import { computeHash, deriveKey } from '../lib/webcrypto';
 import type {
@@ -59,6 +59,11 @@ export function useVaultSession(): VaultSession {
   });
   const [loginForm, setLoginForm] = useState<LoginForm>({ username: '', password: '' });
   const [activeTab, setActiveTab] = useState<VaultTab>('ledger');
+
+  // Opening the vault is a first use of Firebase: start the anonymous session now if the shell has not yet.
+  useEffect(() => {
+    void startVaultSession();
+  }, []);
 
   const switchView = (newView: VaultView) => {
     setError('');
