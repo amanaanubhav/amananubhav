@@ -22,19 +22,20 @@ const STATUS_GROUNDS = ['ground', 'surface', 'surface-2'];
 
 /**
  * The §B.1 table: foreground role, grounds it is checked on, minimum ratio, and the ratios the spec prints
- * (same order as the grounds) for each theme.
+ * (same order as the grounds) for each theme. Night follows the owner's graphite / oxblood / dusty-violet brief,
+ * which supersedes the Cyanotype Night column of the DESIGN-SPEC §B.1 table; its ratios live here until the spec is updated.
  */
 const CHECKS = [
-  { role: 'ink', on: GROUNDS, min: 4.5, spec: { night: [14.12, 12.66, 11.06, 15.33], day: [14.64, 16.04, 13.16, 13.81] } },
-  { role: 'ink-muted', on: GROUNDS, min: 4.5, spec: { night: [8.1, 7.26, 6.34, 8.79], day: [6.57, 7.19, 5.9, 6.2] } },
-  { role: 'signal', on: GROUNDS, min: 4.5, spec: { night: [7.76, 6.96, 6.08, 8.43], day: [5.63, 6.16, 5.06, 5.31] } },
-  { role: 'line-strong', on: GROUNDS, min: 3, spec: { night: [4.66, 4.18, 3.65, 5.05], day: [3.57, 3.91, 3.21, 3.36] } },
-  { role: 'signal-line', on: GROUNDS, min: 3, spec: { night: [7.76, 6.96, 6.08, 8.43], day: [3.87, 4.24, 3.48, 3.66] } },
-  { role: 'water', on: STATUS_GROUNDS, min: 4.5, spec: { night: [8.46, 7.59, 6.63], day: [5.92, 6.49, 5.32] } },
-  { role: 'success', on: STATUS_GROUNDS, min: 4.5, spec: { night: [9.71, 8.7, 7.6], day: [5.6, 6.13, 5.03] } },
-  { role: 'warning', on: STATUS_GROUNDS, min: 4.5, spec: { night: [11.05, 9.91, 8.65], day: [5.79, 6.34, 5.21] } },
-  { role: 'error', on: STATUS_GROUNDS, min: 4.5, spec: { night: [8.08, 7.25, 6.33], day: [6.21, 6.81, 5.59] } },
-  { role: 'on-signal', on: ['signal'], min: 4.5, spec: { night: [7.76], day: [6.46] } },
+  { role: 'ink', on: GROUNDS, min: 4.5, spec: { night: [13.85, 12.96, 11.83, 14.62], day: [14.64, 16.04, 13.16, 13.81] } },
+  { role: 'ink-muted', on: GROUNDS, min: 4.5, spec: { night: [7.71, 7.21, 6.59, 8.13], day: [6.57, 7.19, 5.9, 6.2] } },
+  { role: 'signal', on: GROUNDS, min: 4.5, spec: { night: [5.91, 5.53, 5.05, 6.24], day: [5.63, 6.16, 5.06, 5.31] } },
+  { role: 'line-strong', on: GROUNDS, min: 3, spec: { night: [4.02, 3.77, 3.44, 4.25], day: [3.57, 3.91, 3.21, 3.36] } },
+  { role: 'signal-line', on: GROUNDS, min: 3, spec: { night: [3.98, 3.73, 3.4, 4.2], day: [3.87, 4.24, 3.48, 3.66] } },
+  { role: 'water', on: STATUS_GROUNDS, min: 4.5, spec: { night: [6.29, 5.88, 5.37], day: [5.92, 6.49, 5.32] } },
+  { role: 'success', on: STATUS_GROUNDS, min: 4.5, spec: { night: [8.4, 7.86, 7.18], day: [5.6, 6.13, 5.03] } },
+  { role: 'warning', on: STATUS_GROUNDS, min: 4.5, spec: { night: [9.14, 8.56, 7.81], day: [5.79, 6.34, 5.21] } },
+  { role: 'error', on: STATUS_GROUNDS, min: 4.5, spec: { night: [8.55, 8.01, 7.31], day: [6.21, 6.81, 5.59] } },
+  { role: 'on-signal', on: ['signal'], min: 4.5, spec: { night: [5.91], day: [6.46] } },
 ];
 
 const failures = [];

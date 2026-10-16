@@ -144,7 +144,7 @@ ${ROLES.map((role) => `  | '${role}'`).join('\n')};
 
 export type ThemeTokens = Readonly<Record<ThemeRole, \`#\${string}\`>>;
 
-/** Hexes of §B.1, per theme. Night (Cyanotype) is the default; Day (Survey sheet) is the full second theme. */
+/** Hexes of §B.1, per theme. Night (graphite, owner's brief) is the default; Day (Survey sheet) is the full second theme. */
 export const THEME_PALETTE: Readonly<Record<ThemeName, ThemeTokens>> = {
   night: {
 ${tokens('night')}

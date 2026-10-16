@@ -11,11 +11,15 @@
 
 /*
  * Metric-matched fallback faces for the swap period (fonts.ts turns off next/font's single generated face for
- * these two). Widths are fitted to the log strips and labels, so a late Literata or Plex Mono swap does not
+ * all three). Widths are fitted to the log strips and labels, so a late Literata or Plex Mono swap does not
  * re-wrap them (§J.2 CLS). Vertical overrides keep each family's ascent and descent.
+ * Archivo: Arial at 98.7%, the metrics next/font/google used to compute (the local loader's 102.8% re-wraps headings).
  * Literata: Times New Roman roman at 117.01% and italic at 111.13% (fitted to Literata's widths).
  * IBM Plex Mono: a 0.6 em monospace (Courier New and its metric clones), the same advance as Plex Mono.
  */
+@font-face { font-family: 'Archivo Fallback';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
+  size-adjust: 98.7%; ascent-override: 88.96%; descent-override: 21.28%; line-gap-override: 0%; }
 @font-face { font-family: 'Literata Fallback'; font-style: normal;
   src: local('Times New Roman'), local('TimesNewRomanPSMT'), local('Liberation Serif'), local('Tinos');
   size-adjust: 117.01%; ascent-override: 100.59%; descent-override: 26.32%; line-gap-override: 0%; }
@@ -32,14 +36,14 @@
   /* Legacy aliases (B.2.3): keep un-migrated components readable until wave 1 rewrites them.
      Remove once `grep -rn "bg-primary\|text-primary\|card-bg\|border-subtle\|accent-metallic" src` is empty. */
   --bg-primary: var(--ground);
-  --bg-primary-rgb: 14, 34, 49;            /* night; day block below */
+  --bg-primary-rgb: 18, 19, 22;            /* night; day block below */
   --bg-secondary: var(--surface);
   --surface-card: var(--surface);
   --text-primary: var(--ink);
   --text-secondary: var(--ink-muted);
   --text-muted: var(--ink-muted);
   --card-bg: var(--surface);
-  --card-bg-rgb: 19, 43, 61;
+  --card-bg-rgb: 25, 26, 30;
   --border-subtle: var(--line);
   --accent-metallic: var(--line-strong);
   --accent-glow: transparent;

@@ -26,24 +26,24 @@ export type ThemeRole =
 
 export type ThemeTokens = Readonly<Record<ThemeRole, `#${string}`>>;
 
-/** Hexes of §B.1, per theme. Night (Cyanotype) is the default; Day (Survey sheet) is the full second theme. */
+/** Hexes of §B.1, per theme. Night (graphite, owner's brief) is the default; Day (Survey sheet) is the full second theme. */
 export const THEME_PALETTE: Readonly<Record<ThemeName, ThemeTokens>> = {
   night: {
-    ground: '#0E2231',
-    surface: '#132B3D',
-    'surface-2': '#1A3549',
-    'ground-sky': '#0A1A27',
-    line: '#2B4A61',
-    'line-strong': '#6F8DA3',
-    ink: '#EAF0F2',
-    'ink-muted': '#A6BAC6',
-    signal: '#FF9A5C',
-    'signal-line': '#FF9A5C',
-    'on-signal': '#0E2231',
-    water: '#86C3E3',
-    success: '#8ED8A8',
-    warning: '#F2D27A',
-    error: '#FF9AA8',
+    ground: '#121316',
+    surface: '#191A1E',
+    'surface-2': '#212227',
+    'ground-sky': '#0C0B10',
+    line: '#2E2F36',
+    'line-strong': '#71757E',
+    ink: '#DEDEE2',
+    'ink-muted': '#A3A7B0',
+    signal: '#CB7C75',
+    'signal-line': '#B3595C',
+    'on-signal': '#121316',
+    water: '#9D8FBE',
+    success: '#8FB89B',
+    warning: '#CDB37C',
+    error: '#EC9A9C',
   },
   day: {
     ground: '#EEF0EA',
@@ -66,7 +66,7 @@ export const THEME_PALETTE: Readonly<Record<ThemeName, ThemeTokens>> = {
 
 /** Alphas of the contour inks (--ink-contour, --ink-contour-index) over the ground, per theme. */
 export const CONTOUR_ALPHA: Readonly<Record<ThemeName, { minor: number; index: number }>> = {
-  night: { minor: 0.18, index: 0.36 },
+  night: { minor: 0.16, index: 0.32 },
   day: { minor: 0.2, index: 0.4 },
 };
 

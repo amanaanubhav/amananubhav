@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // npm run gen:photos — DESIGN-SPEC §F G-14 and §C.7: pre-rendered duotones for the album files with a
 // color cast or heavy noise (G2, G8, G13). Each original becomes two toned WebPs in public/media/album/:
-//   <name>-duo-night.webp  maps shadows → highlights as Night ground #0E2231 → Night ink #EAF0F2
+//   <name>-duo-night.webp  maps shadows → highlights as Night ground → Night ink (read from scripts/palette/palette.json)
 //   <name>-duo-day.webp    maps shadows → highlights as Day ink #1B1E1C → Day ground #EEF0EA
 // MediaSlot renders both and CSS hides the other theme's (paths live in src/shared/config/media.ts).
 // The originals are never modified. Same size as the original, metadata stripped (sharp's default).

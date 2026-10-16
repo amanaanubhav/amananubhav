@@ -1,9 +1,9 @@
-// QA previews (--preview=<dir>): standalone SVGs of the generated data with fixed preview colours, so a
-// sheet can be eyeballed or rasterised without the app. Never written into src/ or public/.
-const PAPER = '#0e2231';
-const INK = '#e8e2d4';
-const SIGNAL = '#ff9a5c';
-const WATER = '#7fb6d9';
+// QA previews (--preview=<dir>): standalone SVGs of the generated data with fixed preview colours (the Night
+// graphite of scripts/palette/palette.json), so a sheet can be eyeballed or rasterised without the app. Never written into src/ or public/.
+const PAPER = '#121316';
+const INK = '#dedee2';
+const SIGNAL = '#b3595c';
+const WATER = '#9d8fbe';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
