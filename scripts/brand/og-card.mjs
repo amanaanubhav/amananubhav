@@ -1,8 +1,9 @@
 // G-12: the OG card, 1200 × 630. The ridge is the Annapurna Circuit's altitude profile (ANNAPURNA_ROUTE,
 // commonly cited altitudes; x by great-circle distance between the drawing coordinates), drawn as the
 // route in signal over seeded contour lines in ink at 18%. A lit tent marks base camp at the trailhead,
-// where the route leaves from (the site's home chapter is "Base camp").
-import { markFragment } from './mark.mjs';
+// where the route leaves from (the site's home chapter is "Base camp"); the trekker of the signature ridge
+// mark (G-11) stands on the highest pass, so the card's ridge and figure are the mark drawn to scale.
+import { trekkerOnSummit } from './mark.mjs';
 
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
@@ -127,8 +128,7 @@ export function ogArtworkSvg({ layout, palette, rand, contourRgba }) {
     .map((p) => `<circle cx="${r1(p.x)}" cy="${r1(p.y)}" r="3" fill="${n.ground}" stroke="${n.signal}" stroke-width="2"/>`)
     .join('');
 
-  // The lit tent at the trailhead: a low ridge tent (wider than tall, so it never reads as the trig
-  // mark), ink outline with a pole tip, a signal door for the lamp inside, standing on a short ground line.
+  // The lit tent at the trailhead: a low ridge tent (wider than tall), ink outline with a pole tip, a signal door for the lamp inside, standing on a short ground line.
   const tw = 48;
   const th = 25;
   const tx = start.x + tw / 2 - 2;
@@ -141,9 +141,8 @@ export function ogArtworkSvg({ layout, palette, rand, contourRgba }) {
     '</g>',
   ].join('');
 
-  // The summit: the trig mark (G-11) standing on the pass.
-  const markSide = 22;
-  const summitMark = markFragment({ x: summit.x - markSide / 2, y: summit.y - markSide - 8, side: markSide, color: n.signal });
+  // The summit: the signature mark's trekker (G-11) standing on the pass, in the signal color (alpenglow).
+  const summitMark = trekkerOnSummit({ x: summit.x, y: summit.y, height: 44, color: n.signal });
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${OG_WIDTH}" height="${OG_HEIGHT}" viewBox="0 0 ${OG_WIDTH} ${OG_HEIGHT}">`,
@@ -159,7 +158,7 @@ export function ogArtworkSvg({ layout, palette, rand, contourRgba }) {
 /** Where the summit label sits (shared by the next/og layout and the sharp fallback). */
 export function summitLabelBox(layout) {
   const width = 300;
-  return { right: OG_WIDTH - Math.min(OG_WIDTH - 24, layout.summit.x + width / 2), top: layout.summit.y - 76, width };
+  return { right: OG_WIDTH - Math.min(OG_WIDTH - 24, layout.summit.x + width / 2), top: layout.summit.y - 92, width };
 }
 
 export const OG_TEXT = {
