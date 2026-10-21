@@ -19,8 +19,11 @@ function isPerspective(camera: Camera): camera is PerspectiveCamera {
   return (camera as PerspectiveCamera).isPerspectiveCamera === true;
 }
 
-/** One slot render (module scope, outside the hook, so mutating the camera is plain three.js). */
-function renderIntoSlot(state: RootState, slot: HTMLElement, camera: Camera, target: Object3D): boolean {
+/**
+ * One slot render (module scope, outside the hook, so mutating the camera is plain three.js).
+ * Returns false when the slot is off-screen or empty (nothing drawn).
+ */
+export function renderIntoSlot(state: RootState, slot: HTMLElement, camera: Camera, target: Object3D): boolean {
   const rect = slot.getBoundingClientRect();
   const { width: canvasW, height: canvasH, left: canvasLeft, top: canvasTop } = state.size;
   const x = rect.left - canvasLeft;

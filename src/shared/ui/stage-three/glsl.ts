@@ -73,3 +73,56 @@ float discMask(float r, float edge) {
   return 1.0 - smoothstep(edge - w, edge + w, r);
 }
 `;
+
+/**
+ * The local recede under text (design §9). `uRects` hold up to 10 rectangles in device px with a
+ * bottom-left origin (x0, y0, x1, y1), padded by the page; the mask is the max of rounded-rect SDFs
+ * with a smoothstep feather (`uFeather`, device px), so a pool slides in with its text and leaves
+ * with it. The terrain evaluates it per vertex, the ribbon and markers per fragment.
+ */
+export const GLSL_RECEDE_MASK = /* glsl */ `
+uniform vec4 uRects[10];
+uniform float uRectN;
+uniform float uFeather;
+uniform float uRadius;
+float sdRoundRect(vec2 p, vec4 r, float rad) {
+  vec2 h = max((r.zw - r.xy) * 0.5 - rad, vec2(0.0));
+  vec2 q = abs(p - (r.xy + r.zw) * 0.5) - h;
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - rad;
+}
+float recedeMaskAt(vec2 px) {
+  float m = 0.0;
+  for (int i = 0; i < 10; i++) {
+    if (float(i) >= uRectN) break;
+    m = max(m, 1.0 - smoothstep(0.0, uFeather, sdRoundRect(px, uRects[i], uRadius)));
+  }
+  return m * m * (3.0 - 2.0 * m);
+}
+`;
+
+/**
+ * Soft-knee recede (design §9), mixed in by the mask `m`, hue kept with 20% desaturation. Night:
+ * luminance below `uKnee` passes, above it compresses toward `uLumCap` (text keeps 4.5:1). Day: the
+ * mirror, darker than `uKneeDay` lifts toward `uLumFloor`. `uDay` blends the two (theme tween).
+ * Apply after the dither so the bound holds per pixel.
+ */
+export const GLSL_RECEDE = /* glsl */ `
+uniform float uLumCap;
+uniform float uLumFloor;
+uniform float uKnee;
+uniform float uKneeDay;
+uniform float uDay;
+float lumLin(vec3 l) { return dot(l, vec3(0.2126, 0.7152, 0.0722)); }
+vec3 recede(vec3 c, vec3 paper, float m) {
+  if (m <= 0.0) return c;
+  vec3 lin = pow(max(c, 0.0), vec3(2.2));
+  vec3 pl = pow(paper, vec3(2.2));
+  float L = max(lumLin(lin), 1e-5);
+  vec3 r = mix(lin, vec3(L), 0.2);
+  float Ln = L < uKnee ? L : uKnee + (uLumCap - uKnee) * (1.0 - exp(-(L - uKnee) / (uLumCap - uKnee)));
+  float Ld = L > uKneeDay ? L : uKneeDay - (uKneeDay - uLumFloor) * (1.0 - exp(-(uKneeDay - L) / (uKneeDay - uLumFloor)));
+  vec3 down = r * (Ln / L);
+  vec3 up = mix(r, pl, clamp((Ld - L) / max(lumLin(pl) - L, 1e-5), 0.0, 1.0));
+  return pow(mix(lin, mix(down, up, uDay), m), vec3(1.0 / 2.2));
+}
+`;

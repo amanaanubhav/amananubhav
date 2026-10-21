@@ -1,4 +1,4 @@
-import { lazy, useCallback, useRef, useSyncExternalStore, type ComponentType, type LazyExoticComponent } from 'react';
+import { lazy, useCallback, useEffect, useRef, useSyncExternalStore, type ComponentType, type LazyExoticComponent } from 'react';
 
 /*
  * The DOM side of the stage (§C.5). No three.js imports here: this module ships in the initial
@@ -23,6 +23,15 @@ export interface StageSceneEntry {
   readonly slot: HTMLElement;
   /** True while the slot intersects the viewport (rootMargin 50% 0px). */
   readonly visible: boolean;
+  /**
+   * The slot is the page's full-bleed stage (fixed, inset 0): the renderer moves its canvas inside
+   * the slot (poster and canvas are one map element) and caps the DPR at 1.25.
+   */
+  readonly fullBleed: boolean;
+}
+
+export interface StageSceneOptions {
+  fullBleed?: boolean;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -31,21 +40,89 @@ export interface StageSceneEntry {
 
 const progress = new Map<SceneId, number>();
 const params = new Map<SceneId, Record<string, number>>();
+const textParams = new Map<SceneId, Record<string, string>>();
+const bufferParams = new Map<SceneId, Record<string, Float32Array>>();
 
 export const stageProgress: ReadonlyMap<SceneId, number> = progress;
+/** Numeric params (booleans are stored as 1 / 0). */
 export const stageParams: ReadonlyMap<SceneId, Readonly<Record<string, number>>> = params;
+/** String params, e.g. `layer: 'alt' | 'temp'`. */
+export const stageTextParams: ReadonlyMap<SceneId, Readonly<Record<string, string>>> = textParams;
+/** Array params, e.g. the recede `rects` (copied into a Float32Array the scene reads). */
+export const stageBufferParams: ReadonlyMap<SceneId, Readonly<Record<string, Float32Array>>> = bufferParams;
+
+export type SceneParamValue = number | boolean | string | Float32Array | readonly number[];
 
 export function setSceneProgress(id: SceneId, value: number): void {
   progress.set(id, Number.isFinite(value) ? value : 0);
 }
 
-export function setSceneParam(id: SceneId, key: string, value: number): void {
-  let record = params.get(id);
+function recordOf<T>(map: Map<SceneId, Record<string, T>>, id: SceneId): Record<string, T> {
+  let record = map.get(id);
   if (!record) {
     record = {};
-    params.set(id, record);
+    map.set(id, record);
   }
-  record[key] = value;
+  return record;
+}
+
+/**
+ * Page -> scene, read by the scene inside useFrame (never React state). Numbers and booleans go to
+ * `stageParams`, strings to `stageTextParams`, arrays to `stageBufferParams` (copied, so the caller
+ * may reuse its array).
+ */
+export function setSceneParam(id: SceneId, key: string, value: SceneParamValue): void {
+  if (typeof value === 'number') recordOf(params, id)[key] = Number.isFinite(value) ? value : 0;
+  else if (typeof value === 'boolean') recordOf(params, id)[key] = value ? 1 : 0;
+  else if (typeof value === 'string') recordOf(textParams, id)[key] = value;
+  else {
+    const record = recordOf(bufferParams, id);
+    let buffer = record[key];
+    if (!buffer || buffer.length < value.length) buffer = record[key] = new Float32Array(Math.max(value.length, 4));
+    buffer.fill(0);
+    buffer.set(value);
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Scene -> page frames. A scene emits one frame object per rendered frame (the same object, mutated
+ * in place); DOM overlays (labels, readouts) subscribe and write transforms in the same tick.
+ * ---------------------------------------------------------------------------------------------- */
+
+const frameListeners = new Map<SceneId, Set<(frame: unknown) => void>>();
+const lastFrames = new Map<SceneId, unknown>();
+
+export function emitSceneFrame(id: SceneId, frame: unknown): void {
+  lastFrames.set(id, frame);
+  frameListeners.get(id)?.forEach((listener) => listener(frame));
+}
+
+/** Subscribes to a scene's frames; returns the unsubscribe function. */
+export function subscribeSceneFrame<T>(id: SceneId, listener: (frame: T) => void): () => void {
+  let set = frameListeners.get(id);
+  if (!set) {
+    set = new Set();
+    frameListeners.set(id, set);
+  }
+  const wrapped = listener as (frame: unknown) => void;
+  set.add(wrapped);
+  return () => {
+    set.delete(wrapped);
+  };
+}
+
+/** The last frame a scene emitted (undefined before its first frame). */
+export function lastSceneFrame<T>(id: SceneId): T | undefined {
+  return lastFrames.get(id) as T | undefined;
+}
+
+/** Calls `listener` with every frame of `id` while mounted (the latest listener, no resubscribe). */
+export function useSceneFrame<T>(id: SceneId, listener: (frame: T) => void): void {
+  const ref = useRef(listener);
+  useEffect(() => {
+    ref.current = listener;
+  });
+  useEffect(() => subscribeSceneFrame<T>(id, (frame) => ref.current(frame)), [id]);
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -71,8 +148,8 @@ function commit(next: readonly StageSceneEntry[]): void {
   listeners.forEach((listener) => listener());
 }
 
-function registerScene(id: SceneId, load: SceneLoader, slot: HTMLElement): void {
-  const entry: StageSceneEntry = { id, load, Scene: lazyScene(load), slot, visible: false };
+function registerScene(id: SceneId, load: SceneLoader, slot: HTMLElement, fullBleed: boolean): void {
+  const entry: StageSceneEntry = { id, load, Scene: lazyScene(load), slot, visible: false, fullBleed };
   commit([...entries.filter((e) => e.id !== id), entry]);
 }
 
@@ -113,7 +190,12 @@ export function hasVisibleScene(): boolean {
  * `load` must be a module-level constant (`() => import('../scenes/X')`) so the lazy scene is
  * created once and never remounts between renders.
  */
-export function useStageScene(id: SceneId, load: SceneLoader): (el: HTMLElement | null) => void {
+export function useStageScene(
+  id: SceneId,
+  load: SceneLoader,
+  options: StageSceneOptions = {},
+): (el: HTMLElement | null) => void {
+  const fullBleed = options.fullBleed === true;
   const state = useRef<{ el: HTMLElement | null; observer: IntersectionObserver | null }>({
     el: null,
     observer: null,
@@ -133,7 +215,7 @@ export function useStageScene(id: SceneId, load: SceneLoader): (el: HTMLElement 
       if (!el) return;
 
       current.el = el;
-      registerScene(id, load, el);
+      registerScene(id, load, el, fullBleed);
       if (typeof IntersectionObserver === 'undefined') {
         setSceneVisible(id, el, true);
         return;
@@ -148,6 +230,6 @@ export function useStageScene(id: SceneId, load: SceneLoader): (el: HTMLElement 
       observer.observe(el);
       current.observer = observer;
     },
-    [id, load],
+    [id, load, fullBleed],
   );
 }

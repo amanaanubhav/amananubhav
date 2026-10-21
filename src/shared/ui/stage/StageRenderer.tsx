@@ -2,7 +2,8 @@
 
 import { PerformanceMonitor } from '@react-three/drei/core/PerformanceMonitor';
 import { Canvas, useFrame, useThree, type RootState } from '@react-three/fiber';
-import { Component, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Component, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import { gsap } from '@/shared/lib/gsap';
 import { degradeStage } from '@/shared/lib/motion-tier';
@@ -18,6 +19,11 @@ import { ThemeUniforms } from './ThemeUniforms';
  * One fixed canvas behind the page, `frameloop="never"`: a gsap.ticker callback (added after
  * Lenis, which is prioritised) advances R3F in the same tick as the DOM scroll and ScrollTrigger,
  * and each scene renders itself into its slot with useSlotRender (scissored, priority 1).
+ *
+ * Full-bleed slots (the home story's fixed #stage): the canvas host element moves INSIDE the slot,
+ * so the SSR poster and the canvas are one map element (one stage, one DOM subtree), and the DPR is
+ * capped at 1.25. The canvas then fades in over 300 ms when the scene marks the slot live, above the
+ * poster it replaces. React owns only the host's children (a portal), so moving the host is safe.
  */
 
 export interface StageRendererProps {
@@ -27,6 +33,11 @@ export interface StageRendererProps {
 }
 
 const DPR_CAP: Record<1 | 2, number> = { 1: 1.25, 2: 1.75 };
+/** Full-bleed stages cover the whole viewport: cap the GPU cost (design §16, R42). */
+const DPR_CAP_FULL_BLEED = 1.25;
+const HOST_CLASS = 'stage-canvas pointer-events-none fixed inset-0 z-stage';
+const HOST_CLASS_IN_SLOT = 'stage-canvas pointer-events-none absolute inset-0';
+const CROSSFADE = 'opacity 300ms cubic-bezier(0.2, 0, 0, 1)';
 const DPR_FLOOR = 0.75;
 const DPR_STEP = 0.25;
 /** This many direction changes (incline after decline or back) means the device cannot hold a frame rate. */
@@ -148,6 +159,14 @@ function AdaptiveDpr({ cap, epoch }: { cap: number; epoch: number }) {
     dprRef.current = dpr;
   }, [dpr]);
 
+  // A lower cap (a full-bleed stage registered) applies at once.
+  useEffect(() => {
+    if (dprRef.current > cap) {
+      dprRef.current = cap;
+      setDpr(cap);
+    }
+  }, [cap, setDpr]);
+
   const step = useCallback(
     (direction: 1 | -1) => {
       const current = dprRef.current;
@@ -175,11 +194,65 @@ function AdaptiveDpr({ cap, epoch }: { cap: number; epoch: number }) {
   return <PerformanceMonitor key={epoch} onIncline={() => step(1)} onDecline={() => step(-1)} />;
 }
 
+/** Where the canvas host goes inside a full-bleed slot: `[data-stage-canvas]`, else after the poster. */
+function placeHostInSlot(host: HTMLElement, slot: HTMLElement): void {
+  const container = slot.querySelector<HTMLElement>('[data-stage-canvas]');
+  if (container) {
+    if (host.parentElement !== container) container.appendChild(host);
+    return;
+  }
+  if (host.parentElement === slot) return;
+  const poster = slot.querySelector(':scope > .stage-poster, :scope > [data-stage-poster]');
+  slot.insertBefore(host, poster ? poster.nextSibling : slot.firstChild);
+}
+
+/**
+ * Keeps the canvas host in the full-bleed slot while one is registered (else in the shell's
+ * placeholder), and fades it in when the scene marks the slot live (300 ms, over the poster).
+ */
+function useCanvasHost(host: HTMLElement, home: HTMLElement | null, fullBleed: HTMLElement | null): void {
+  useLayoutEffect(() => {
+    if (!fullBleed) {
+      host.className = HOST_CLASS;
+      host.style.opacity = '';
+      host.style.transition = '';
+      if (home && host.parentElement !== home) home.appendChild(host);
+      return;
+    }
+    host.className = HOST_CLASS_IN_SLOT;
+    placeHostInSlot(host, fullBleed);
+    const sync = () => {
+      const hasPoster = fullBleed.querySelector('.stage-poster, [data-stage-poster]') !== null;
+      host.style.opacity = !hasPoster || fullBleed.hasAttribute('data-stage-live') ? '1' : '0';
+    };
+    host.style.transition = CROSSFADE;
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(fullBleed, {
+      attributes: true,
+      attributeFilter: ['data-stage-live'],
+      childList: true,
+    });
+    return () => observer.disconnect();
+  }, [host, home, fullBleed]);
+}
+
 export default function StageRenderer({ paused, isDark, tier }: StageRendererProps) {
   const entries = useStageEntries();
+  const fullBleedSlot = entries.find((e) => e.fullBleed)?.slot ?? null;
   // Never render above the device's own ratio (supersampling buys nothing but GPU time).
-  const [cap] = useState(() => Math.max(DPR_FLOOR, Math.min(window.devicePixelRatio || 1, DPR_CAP[tier])));
-  const initialDpr = cap;
+  const deviceCap = Math.max(DPR_FLOOR, Math.min(window.devicePixelRatio || 1, DPR_CAP[tier]));
+  const cap = fullBleedSlot ? Math.min(deviceCap, Math.max(DPR_FLOOR, DPR_CAP_FULL_BLEED)) : deviceCap;
+  const [initialDpr] = useState(cap);
+  const [host] = useState(() => {
+    const el = document.createElement('div');
+    el.className = HOST_CLASS;
+    el.setAttribute('aria-hidden', 'true');
+    return el;
+  });
+  const [home, setHome] = useState<HTMLElement | null>(null);
+  useCanvasHost(host, home, fullBleedSlot);
+  useEffect(() => () => host.remove(), [host]);
   const [epoch, setEpoch] = useState(0);
   const onResume = useCallback(() => setEpoch((value) => value + 1), []);
 
@@ -196,24 +269,32 @@ export default function StageRenderer({ paused, isDark, tier }: StageRendererPro
   }, []);
 
   return (
-    <div className="stage-canvas pointer-events-none fixed inset-0 z-stage" aria-hidden="true">
-      <Canvas
-        frameloop="never"
-        flat
-        dpr={initialDpr}
-        gl={{ antialias: false, alpha: true, stencil: false, powerPreference: 'high-performance' }}
-        resize={{ scroll: false }}
-        style={{ pointerEvents: 'none' }}
-        onCreated={onCreated}
-      >
-        <TickerDriver paused={paused} onResume={onResume} />
-        <FrameClear />
-        <ThemeUniforms isDark={isDark} />
-        <AdaptiveDpr cap={cap} epoch={epoch} />
-        {entries.map((entry) => (
-          <SceneHost key={entry.id} entry={entry} tier={tier} isDark={isDark} />
-        ))}
-      </Canvas>
+    <div ref={setHome} className="contents">
+      {createPortal(
+        <Canvas
+          frameloop="never"
+          flat
+          dpr={initialDpr}
+          gl={{
+            antialias: false,
+            alpha: true,
+            stencil: false,
+            powerPreference: 'high-performance',
+          }}
+          resize={{ scroll: false }}
+          style={{ pointerEvents: 'none' }}
+          onCreated={onCreated}
+        >
+          <TickerDriver paused={paused} onResume={onResume} />
+          <FrameClear />
+          <ThemeUniforms isDark={isDark} />
+          <AdaptiveDpr cap={cap} epoch={epoch} />
+          {entries.map((entry) => (
+            <SceneHost key={entry.id} entry={entry} tier={tier} isDark={isDark} />
+          ))}
+        </Canvas>,
+        host,
+      )}
     </div>
   );
 }

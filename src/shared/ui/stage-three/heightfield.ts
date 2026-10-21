@@ -54,6 +54,11 @@ export interface LoadHeightfieldOptions {
   tier: 1 | 2;
   /** World width of the plane (§G.8: 20); the depth follows the bbox aspect. */
   width?: number;
+  /**
+   * Kilometres per world unit instead of a fixed width (the home story: 3.42 km, so camera keys
+   * and radii keep their meaning whatever the sheet's extent). Overrides `width`.
+   */
+  kmPerUnit?: number;
   exaggeration?: number;
   signal?: AbortSignal;
 }
@@ -249,7 +254,13 @@ export async function loadHeightfield(
 ): Promise<LoadedHeightfield> {
   const raw = await fetchRaw(id);
   options.signal?.throwIfAborted();
-  const frame = createTerrainFrame(raw.meta, options.width, options.exaggeration);
+  let width = options.width;
+  if (options.kmPerUnit) {
+    const [west, south, east, north] = raw.meta.bbox;
+    const midLat = ((south + north) / 2) * (Math.PI / 180);
+    width = ((east - west) * KM_PER_DEG * Math.cos(midLat)) / options.kmPerUnit;
+  }
+  const frame = createTerrainFrame(raw.meta, width, options.exaggeration);
   return {
     id,
     meta: raw.meta,
