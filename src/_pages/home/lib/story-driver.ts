@@ -6,7 +6,8 @@ import { setChromeDimmed } from '@/shared/lib/chrome';
 import { gsap } from '@/shared/lib/gsap';
 import { setSceneParam, setSceneProgress } from '@/shared/ui/stage';
 
-import { MOBILE_MAX_WIDTH, S_END, STORY_PARAM } from '../config/story-timeline';
+import { STORY_PARAM, STORY_SCENE_ID } from '../ui/scenes/story/frame';
+import { S_END } from '../ui/scenes/story/timeline';
 import {
   buildScrollMap,
   emitStoryTick,
@@ -22,15 +23,15 @@ import {
  *  - scroll -> s through the anchor map, sent raw to the scene (`progress = s / S_END`; the scene damps it),
  *    and a damped copy for the page's own readouts (legend line, numeral);
  *  - the recede pools (§9): every on-screen `[data-recede]` text box (padded 14 px) and the fixed chrome
- *    (navbar glass, rail, chat launcher, the legend; padded 6 px), the 10 largest, as `rects` in device px
- *    with a bottom-left origin, plus `rectN`, `feather` and `radius`;
+ *    (navbar glass, rail, chat launcher, the legend; padded 6 px), the 10 largest, as `rects` in CSS px
+ *    (viewport, top-left origin, the scene's default `rectUnits`), plus `rectN`;
  *  - the label obstacles (the same boxes in CSS px), read by StoryLabels in the same tick.
  *
  * Layout reads happen only when the layout changes (resize, fonts, content size); per tick the text boxes
  * are shifted by scrollY and only the few fixed chrome elements are measured.
  */
 
-export const SCENE_ID = 'relief-annapurna';
+export const SCENE_ID = STORY_SCENE_ID;
 
 /** Text and chrome boxes in viewport CSS px [x0, y0, x1, y1], refreshed every tick (read by the labels). */
 export const storyObstacles: { text: number[][]; chrome: number[][] } = { text: [], chrome: [] };
@@ -45,11 +46,13 @@ interface CachedBox {
   y0: number;
   x1: number;
   y1: number;
+  /** Inside a sticky block (the summit numeral): its document position changes, so it is read live. */
+  live?: HTMLElement;
 }
 
 function chromeElements(): HTMLElement[] {
   const out: HTMLElement[] = [];
-  document.querySelectorAll<HTMLElement>('[data-chrome], [data-story-chrome]').forEach((el) => {
+  document.querySelectorAll<HTMLElement>('[data-chrome], [data-recede-chrome]').forEach((el) => {
     // The navbar's <header> is a click-through full-width band: its glass is the <nav> inside it.
     const target = el.tagName === 'HEADER' ? (el.querySelector<HTMLElement>('nav') ?? el) : el;
     out.push(target);
@@ -88,7 +91,8 @@ export function useStoryDriver(enabled: boolean): void {
       content.querySelectorAll<HTMLElement>('[data-recede]').forEach((el) => {
         const b = el.getBoundingClientRect();
         if (b.width === 0 || b.height === 0) return;
-        boxes.push({ x0: b.left, y0: b.top + sy, x1: b.right, y1: b.bottom + sy });
+        const sticky = el.closest('[data-story-stick]') ? el : undefined;
+        boxes.push({ x0: b.left, y0: b.top + sy, x1: b.right, y1: b.bottom + sy, live: sticky });
       });
       chrome = chromeElements();
     };
@@ -120,8 +124,13 @@ export function useStoryDriver(enabled: boolean): void {
       // Text boxes on screen (CSS px), then the chrome.
       const text: number[][] = [];
       for (const b of boxes) {
-        const y0 = b.y0 - sy;
-        const y1 = b.y1 - sy;
+        let y0 = b.y0 - sy;
+        let y1 = b.y1 - sy;
+        if (b.live) {
+          const r = b.live.getBoundingClientRect();
+          y0 = r.top;
+          y1 = r.bottom;
+        }
         if (y1 < -40 || y0 > h + 40) continue;
         text.push([b.x0 - TEXT_PAD, y0 - TEXT_PAD, Math.min(w, b.x1 + TEXT_PAD), y1 + TEXT_PAD]);
       }
@@ -135,28 +144,18 @@ export function useStoryDriver(enabled: boolean): void {
       storyObstacles.text = text;
       storyObstacles.chrome = chromeBoxes;
 
-      // The 10 largest pools, device px, bottom-left origin.
+      // The 10 largest pools (CSS px, viewport, top-left origin).
       const pools = [...text, ...chromeBoxes].sort(
         (p, q) => (q[2] - q[0]) * (q[3] - q[1]) - (p[2] - p[0]) * (p[3] - p[1]),
       );
       const n = Math.min(MAX_RECTS, pools.length);
-      const canvas = document.querySelector<HTMLCanvasElement>('[data-story-stage] canvas, .stage-canvas canvas');
-      const dpr = canvas && canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : Math.min(window.devicePixelRatio || 1, 1.25);
       rects.fill(0);
-      for (let i = 0; i < n; i += 1) {
-        const [x0, y0, x1, y1] = pools[i];
-        rects[i * 4] = x0 * dpr;
-        rects[i * 4 + 1] = (h - y1) * dpr;
-        rects[i * 4 + 2] = x1 * dpr;
-        rects[i * 4 + 3] = (h - y0) * dpr;
-      }
-      const mobile = w <= MOBILE_MAX_WIDTH;
+      for (let i = 0; i < n; i += 1) rects.set(pools[i], i * 4);
+      setSceneParam(SCENE_ID, STORY_PARAM.rectUnits, 'css');
       setSceneParam(SCENE_ID, STORY_PARAM.rects, rects);
       setSceneParam(SCENE_ID, STORY_PARAM.rectN, n);
-      setSceneParam(SCENE_ID, STORY_PARAM.feather, mobile ? 64 : 112);
-      setSceneParam(SCENE_ID, STORY_PARAM.radius, 26);
-      setSceneParam(SCENE_ID, STORY_PARAM.mobile, mobile);
       setSceneParam(SCENE_ID, STORY_PARAM.reduced, isReduced());
+      setSceneParam(SCENE_ID, STORY_PARAM.labels, 1);
     };
 
     gsap.ticker.add(tick);

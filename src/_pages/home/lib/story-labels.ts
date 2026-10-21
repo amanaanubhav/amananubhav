@@ -1,167 +1,51 @@
-import {
-  ACTS,
-  MARK_STRIDE,
-  modelledTempC,
-  STORY_MARKS,
-  type StoryFrame,
-  type StoryMark,
-} from '../config/story-timeline';
+import type { StoryFrame, StoryMarkState } from '../ui/scenes/story/frame';
+import { STORY_MARKS, type StoryMarkDef } from '../ui/scenes/story/marks';
 
 /*
- * The DOM labels of the story map (§8): which marks are named at a given moment (priority), where each
- * label goes (four-way placement around its mark, clear of every text block, the chrome, the head and the
- * labels already placed) and how many (9 desktop, 5 mobile). The scene only projects; this module decides.
- * Pure functions plus the catalogue's printed facts (altitudes from entities/expedition, never DEM).
+ * The DOM labels of the story map (§8.2), page side: the scene projects every mark each frame and says
+ * which ones want a label (priority, visibility, "here"); this module formats the printed text and places
+ * the labels greedily by priority, each trying four positions around its mark, clear of every text block,
+ * the chrome, the walker and the labels already placed, capped at 9 (5 on phones). Pure functions.
  */
 
-export interface MarkText {
-  readonly mark: StoryMark;
-  /** Index into STORY_MARKS (and the frame's marks array). */
-  readonly index: number;
-  /** "~3,540 m", or '' (pass-through names, DEM-only values, unconfirmed lakes). */
-  readonly alt: string;
-  /** The cited altitude in metres (for the modelled °C at a named stop), if printed. */
-  readonly altM?: number;
-}
-
-/** Printed altitude per STORY_MARKS entry (resolved on the server by `resolveMarkAltitudes`). */
-export interface MarkAltitude {
-  readonly alt: string;
-  readonly altM?: number;
-}
-
-export function joinMarkTexts(alts: readonly MarkAltitude[]): MarkText[] {
-  return STORY_MARKS.map((mark, index) => ({ mark, index, alt: alts[index]?.alt ?? '', altM: alts[index]?.altM }));
-}
-
-/* ------------------------------------------------------------------------------------------------
- * Priority (§8.2)
- * ---------------------------------------------------------------------------------------------- */
-
-const OVERVIEW_SET: Readonly<Record<string, number>> = {
-  'thorong-la': 10,
-  'tilicho-lake': 8,
-  'ice-lake': 8,
-  manang: 7,
-  besisahar: 7,
-  'ranipauwa-muktinath': 7,
-};
-
-const tripOutStart = (trip: number): number =>
-  ACTS.find((a) => a.trip === trip && a.out)?.s0 ?? Number.POSITIVE_INFINITY;
-const JEEP_ACT = ACTS.find((a) => a.main === 'jeep');
-
-const inWindow = (mark: StoryMark, s: number) => (mark.windows ?? []).some(([a, b]) => s >= a && s <= b);
-
-export interface LabelContext {
-  readonly s: number;
-  readonly strip: number;
-  readonly overview: boolean;
-}
-
-/** > 0: the mark wants a label at this priority; <= 0: no label. */
-export function labelPriority(mark: StoryMark, sAt: number, dHead: number, ctx: LabelContext): number {
-  const { s, strip, overview } = ctx;
-  if (!mark.label) return -1;
-  if (overview) return OVERVIEW_SET[mark.id] ?? (mark.role === 'peak' && inWindow(mark, s) ? 6 : -1);
-  switch (mark.role) {
-    case 'pass-through':
-      return s >= sAt - 6 && s <= sAt + 38 ? 7 : -1;
-    case 'stay':
-      if (s < sAt - 6) return -1;
-      if (s - sAt < 55) return 7.5;
-      // Overnight stops persist near the head (about 15 km), quieter with age.
-      return dHead < 4.5 ? 3 - Math.min(2, (s - sAt) / 300) : -1;
-    case 'landmark':
-      return s >= sAt - 6 ? 6.5 : -1;
-    case 'col':
-      return s < 110 ? 8 : s >= 1100 ? 10 : -1;
-    case 'lake':
-      if (mark.trip === undefined || s < tripOutStart(mark.trip)) return -1;
-      return strip - 1 === mark.trip ? 12 : 5;
-    case 'peak':
-      return inWindow(mark, s) ? 6 : -1;
-    case 'tick':
-      return s >= sAt - 3 && s <= sAt + 36 ? 4.5 : -1;
-    case 'note':
-      return JEEP_ACT && s >= JEEP_ACT.s0 && s <= JEEP_ACT.s1 + (mark.tail ?? 0) ? 7 : -1;
-    default:
-      return -1;
-  }
-}
-
-/* ------------------------------------------------------------------------------------------------
- * The head readout (§6.2): cited altitude at a named stop, "above N m" + modelled °C between stops,
- * nothing on the Blue, Green and Ice trips, nothing during the arrival or the overview.
- * ---------------------------------------------------------------------------------------------- */
-
 const NUMBER = new Intl.NumberFormat('en');
-const READOUT_ROLES = new Set(['stay', 'landmark', 'col', 'lake']);
-const HERE_ROLES = new Set(['stay', 'pass-through', 'landmark', 'col']);
 
+/** "~3,540 m" for a mark with a cited altitude ('' for none). Pass-through names never carry one. */
+export function markAltitude(mark: StoryMarkDef): string {
+  if (mark.altM === null || mark.kind === 'pass' || mark.approxPlace) return '';
+  return `${mark.approxAlt ? '~' : ''}${NUMBER.format(mark.altM)} m`;
+}
+
+/** "−8 °C" with a real minus sign. */
 export function formatTempC(c: number): string {
   const sign = c < 0 ? '−' : c > 0 ? '+' : '';
-  return `${sign}${Math.abs(c)} °C`;
+  return `${sign}${Math.abs(Math.round(c))} °C`;
 }
 
-export interface Readout {
-  /** The altitude part ("~3,540 m" or "above 3,500 m"). */
-  readonly alt: string;
-  readonly temp: string;
-  /** The named stop the head is at (its label carries the °C and turns signal), if any. */
-  readonly here: number;
-}
-
-const NONE: Readout = { alt: '', temp: '', here: -1 };
-
-export function headReadout(frame: StoryFrame, texts: readonly MarkText[], ctx: LabelContext): Readout {
-  if (ctx.overview || frame.intro < 1 || frame.live <= 0) return NONE;
-  const { strip } = frame;
-  const m = frame.marks;
-  // "Here": the named place the head stands at (main line places, or the lake of the current trip).
-  let here = -1;
-  let hd = 0.09;
-  for (const t of texts) {
-    const mark = t.mark;
-    if (!mark.label) continue;
-    const onMain = strip === 0 && mark.trip === undefined && HERE_ROLES.has(mark.role);
-    const onTrip = mark.role === 'lake' && strip - 1 === mark.trip;
-    if (!onMain && !onTrip) continue;
-    const d = m[t.index * MARK_STRIDE + 4];
-    if (d < hd) {
-      hd = d;
-      here = t.index;
+/**
+ * The readout's altitude text: the stop's cited altitude when the head is at a named stop, else the last
+ * 500 m contour crossed ("above 3,500 m"). A DEM value is never printed.
+ */
+export function readoutAltitude(frame: StoryFrame): string {
+  const r = frame.readout;
+  if (!r) return '';
+  if (r.at) {
+    const mark = STORY_MARKS.find((m) => m.id === r.at);
+    if (mark) {
+      const alt = markAltitude(mark);
+      if (alt) return alt;
     }
   }
-  // Blue, Green and Ice: approximate positions or an unconfirmed altitude, so no number at all.
-  if (strip >= 1 && strip <= 3) return { ...NONE, here };
-  let best: MarkText | undefined;
-  let bd = 0.12;
-  for (const t of texts) {
-    if (t.altM === undefined || !READOUT_ROLES.has(t.mark.role)) continue;
-    const d = m[t.index * MARK_STRIDE + 4];
-    if (d < bd) {
-      bd = d;
-      best = t;
-    }
-  }
-  if (best && best.altM !== undefined) {
-    return { alt: best.alt, temp: formatTempC(modelledTempC(best.altM)), here };
-  }
-  const contour = Math.max(500, Math.floor(frame.headAltM / 500) * 500);
-  return { alt: `above ${NUMBER.format(contour)} m`, temp: formatTempC(modelledTempC(frame.headAltM)), here };
+  return `above ${NUMBER.format(Math.max(500, Math.floor(r.altM / 500) * 500))} m`;
 }
-
-/* ------------------------------------------------------------------------------------------------
- * Placement (§8.2): greedy by priority, four tries per label, obstacles = text, chrome, head, labels.
- * ---------------------------------------------------------------------------------------------- */
 
 export type Box = readonly [number, number, number, number];
+export type LabelRole = StoryMarkState['kind'];
 
 export interface PlaceInput {
-  /** STORY_MARKS index, or -1 for the head readout. */
+  /** STORY_MARKS index (the head readout has its own index too: the 'head' mark). */
   readonly index: number;
-  readonly role: StoryMark['role'] | 'head';
+  readonly role: LabelRole;
   readonly priority: number;
   /** Anchor in CSS px. */
   readonly x: number;
@@ -199,8 +83,8 @@ function tries(p: PlaceInput): [number, number][] {
 }
 
 /**
- * Places the candidates (any order; sorted here by priority) in a `vw` x `vh` viewport. Returns the
- * placed labels (top-left corners, CSS px); at most `cap`.
+ * Places the candidates (sorted here by priority, highest first) in a `vw` x `vh` viewport, avoiding
+ * `obstacles`. Returns the placed labels' top-left corners in CSS px; at most `cap`.
  */
 export function placeLabels(
   candidates: PlaceInput[],
@@ -209,17 +93,17 @@ export function placeLabels(
   vh: number,
   cap: number,
 ): Placed[] {
-  const placed: Box[] = obstacles.slice();
+  const taken: Box[] = obstacles.slice();
   const out: Placed[] = [];
   candidates.sort((a, b) => b.priority - a.priority);
   for (const c of candidates) {
     if (out.length >= cap) break;
-    if (c.x < 6 || c.x > vw - 6 || c.y < 6 || c.y > vh - 6) continue;
+    if (c.w <= 0 || c.x < 6 || c.x > vw - 6 || c.y < 6 || c.y > vh - 6) continue;
     for (const [lx, ly] of tries(c)) {
       const r: Box = [lx - 3, ly - 2, lx + c.w + 3, ly + c.h + 2];
       if (r[0] < 4 || r[2] > vw - 4 || r[1] < 4 || r[3] > vh - 4) continue;
-      if (placed.some((q) => overlaps(r, q))) continue;
-      placed.push(r);
+      if (taken.some((q) => overlaps(r, q))) continue;
+      taken.push(r);
       out.push({ index: c.index, x: lx, y: ly });
       break;
     }

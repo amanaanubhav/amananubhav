@@ -10,6 +10,16 @@ import type { StoryMarkKind } from './marks';
 
 export const STORY_SCENE_ID = 'relief-annapurna' as const;
 
+/** The story's data (about 37 KB): the route and the story heightfield (`/data/terrain/<id>.json|bin`). */
+export const STORY_ROUTE_URL = '/data/routes/annapurna-route.json';
+export const STORY_TERRAIN_ID = 'annapurna-story';
+/** What the page prefetches in parallel with the renderer chunk (load-in-3d §4), with the body kind. */
+export const STORY_DATA_PREFETCH: readonly (readonly [url: string, kind: 'json' | 'buffer'])[] = [
+  [`/data/terrain/${STORY_TERRAIN_ID}.json`, 'json'],
+  [`/data/terrain/${STORY_TERRAIN_ID}.bin`, 'buffer'],
+  [STORY_ROUTE_URL, 'json'],
+];
+
 /** Param keys the scene reads every frame (all optional; defaults in brackets). */
 export const STORY_PARAM = {
   /** s / S_END, 0..1 [0]. `setSceneProgress(id, p)` works too. */
@@ -33,7 +43,7 @@ export const STORY_PARAM = {
   reduced: 'reduced',
   /** 0 = skip label projection (e.g. tier 0 or labels hidden) [1]. */
   labels: 'labels',
-  /** The poster's clock: `performance.now()` at its first paint [window.__t0, else mount time]. */
+  /** The ambient sway's clock origin (`performance.now()`) [window.__t0, else 0 = navigation start]. */
   t0: 't0',
 } as const;
 
@@ -73,11 +83,11 @@ export interface StoryFrame {
   /** Day of 14 and the act's place line (empty at the overview). */
   day: number;
   place: string;
-  /** The scene has drawn its first frame: the stage is live and the poster may go (after 320 ms). */
+  /** The scene has drawn its first frame (ground-identical): the canvas is shown from this frame on. */
   live: boolean;
-  /** The relief's light, 0 (the poster's look) -> 1 over 1.2 s after the hand-off. */
+  /** The entrance's reveal, 0 (the ground) -> 1 (the map) over REVEAL_SECONDS (load-in-3d §3). */
   light: number;
-  /** The timed arrival is still running (no readouts). */
+  /** The timed entrance is still running (no readouts). */
   intro: boolean;
   overview: boolean;
   reduced: boolean;

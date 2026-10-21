@@ -1,4 +1,49 @@
-import { actAt, CLIMB_ACT, dissolveAt, NUMERAL_SPAN, S_END, S_OVERVIEW, SUMMIT_ACT, type StoryAct } from '../config/story-timeline';
+import {
+  S_DISSOLVE,
+  S_END,
+  S_OVERVIEW,
+  STORY_ACTS,
+  STORY_NUMERAL,
+  type StoryActDef,
+} from '../ui/scenes/story/timeline';
+
+/* ------------------------------------------------------------------------------------------------
+ * Acts with their story range (the scene's act list is the one source).
+ * ---------------------------------------------------------------------------------------------- */
+
+export interface StoryAct extends StoryActDef {
+  readonly index: number;
+  readonly s0: number;
+  readonly s1: number;
+}
+
+export const ACTS: readonly StoryAct[] = (() => {
+  let s = 0;
+  return STORY_ACTS.map((def, index) => {
+    const act: StoryAct = { ...def, index, s0: s, s1: s + def.len };
+    s = act.s1;
+    return act;
+  });
+})();
+
+const CLIMB_ACT = ACTS.find((a) => a.climb) as StoryAct;
+const SUMMIT_ACT = ACTS.find((a) => a.summit) as StoryAct;
+
+/** The act at `s` (clamped). */
+export function actAt(s: number): StoryAct {
+  const v = Math.min(S_END, Math.max(0, s));
+  return ACTS.find((a) => v < a.s1) ?? ACTS[ACTS.length - 1];
+}
+
+function smoothstep(a: number, b: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+
+/** 0 before the dissolve, 1 at S_END: the map melts into the ground in place (§10). */
+export function dissolveAt(s: number): number {
+  return smoothstep(S_DISSOLVE, S_END, s);
+}
 
 /*
  * Scroll -> story position `s` (vh), the page side of the story (design §3, §5.1).
@@ -171,15 +216,10 @@ export function onStoryTick(listener: TickListener): () => void {
  * The summit numeral (§5.4): counts 4,880 -> 5,416 with the head through the climb, holds at 5,416.
  * ---------------------------------------------------------------------------------------------- */
 
-const COUNT_FROM_M = 4880;
-
-export function numeralAt(s: number, summitM: number): number {
-  if (s >= CLIMB_ACT.s1) return summitM;
-  const t = Math.min(1, Math.max(0, (s - (CLIMB_ACT.s0 + 10)) / (CLIMB_ACT.s1 - CLIMB_ACT.s0 - 10)));
-  const eased = t * t * (3 - 2 * t);
+export function numeralAt(s: number): number {
+  const { fromM, toM } = STORY_NUMERAL;
+  if (s >= CLIMB_ACT.s1) return toM;
+  const eased = smoothstep(CLIMB_ACT.s0 + 10, CLIMB_ACT.s1, s);
   // Even metres only, so the tabular digits tick instead of flicker.
-  return Math.round((COUNT_FROM_M + (summitM - COUNT_FROM_M) * eased) / 2) * 2;
+  return Math.round((fromM + (toM - fromM) * eased) / 2) * 2;
 }
-
-/** The numeral span (the sticky readout is shown while the story is inside it). */
-export const NUMERAL_ACTIVE = { from: NUMERAL_SPAN[0] - 60, to: NUMERAL_SPAN[1] + 40 } as const;

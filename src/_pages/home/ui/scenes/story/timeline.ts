@@ -91,8 +91,13 @@ export const S_END = sumLen(() => false);
 export const S_OVERVIEW = sumLen((a) => a.overview === true);
 /** The dissolve into the ground starts here (vh). */
 export const S_DISSOLVE = sumLen((a) => a.dissolve === true);
-/** The arrival (poster -> scene) lasts this long (s); the walk runs from the first scroll pixel. */
-export const INTRO_SECONDS = 3.4;
+/**
+ * The entrance (load-in-3d §3), in seconds of the scene's own frame clock from its second drawn frame:
+ * the relief rises out of the ground in REVEAL_SECONDS and everything has settled by ENTRANCE_SECONDS.
+ * The walk runs from the first scroll pixel throughout.
+ */
+export const ENTRANCE_SECONDS = 1.0;
+export const REVEAL_SECONDS = 0.9;
 
 /** Camera keyframe (design §15.4): az = compass bearing looked toward, pitch = down-angle (deg). */
 export interface StoryCameraKey {
@@ -126,8 +131,8 @@ export const STORY_CAMERA_KEYS: readonly StoryCameraKey[] = [
   { s: 1320, az: 286, pitch: 31, dist: 6.6, fov: 40, follow: 1, lead: 0.1, anchor: 'tilicho' },
   { s: 1360, az: 280, pitch: 33, dist: 7.2, fov: 40, follow: 1, lead: 0.3, anchor: 'tilicho' },
   { s: 1430, az: 268, pitch: 42, dist: 10, fov: 34, follow: 0.9, lead: 0.3, anchor: 'overview' },
-  { s: 1535, az: 346, pitch: 58, dist: 46, fov: 30, follow: 0, lead: 0, anchor: 'overview' },
-  { s: S_END, az: 350, pitch: 60, dist: 48, fov: 30, follow: 0, lead: 0, anchor: 'overview' },
+  { s: 1535, az: 346, pitch: 58, dist: 52, fov: 30, follow: 0, lead: 0, anchor: 'overview' },
+  { s: S_END, az: 350, pitch: 60, dist: 54, fov: 30, follow: 0, lead: 0, anchor: 'overview' },
 ];
 
 /** Desktop framing: the subject sits at this fraction of the width (outside the text column). */
