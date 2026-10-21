@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { applyPendingHistoryScroll, restoreHistoryScroll, settleHistoryTraversal } from '@/shared/lib/dom';
 import { ScrollTrigger } from '@/shared/lib/gsap';
 import { getLenis } from '@/shared/lib/smooth-scroll';
 
@@ -12,7 +13,10 @@ const RESIZE_DEBOUNCE_MS = 200;
  * Keeps Lenis and ScrollTrigger in step with the App Router (§C.6): on every route change Lenis
  * re-measures and adopts the scroll position Next.js chose, ScrollTrigger forgets the old page's
  * scroll memory and refreshes on the next frame; `<main>` resizes (debounced) and the web fonts
- * arriving refresh too. Back/forward restoration stays Next.js's.
+ * arriving refresh too. Back/forward (§J.4 #16): the browser restores first; once the route has
+ * committed and ScrollTrigger has refreshed (pin spacers exist), the position remembered for the
+ * history entry is re-applied if that restore was clamped by the shorter pre-hydration page, and the
+ * Back/Forward flag that keeps useScrollToTopOnMount from resetting it is settled.
  */
 export function RouteScrollSync() {
   const pathname = usePathname();
@@ -28,7 +32,12 @@ export function RouteScrollSync() {
       }
     }
     ScrollTrigger.clearScrollMemory();
-    const frame = requestAnimationFrame(() => ScrollTrigger.refresh());
+    const frame = requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+      restoreHistoryScroll();
+      // The new route's mount effects (which ran before this one) have seen the Back/Forward flag.
+      settleHistoryTraversal();
+    });
     return () => cancelAnimationFrame(frame);
   }, [pathname]);
 
@@ -52,6 +61,12 @@ export function RouteScrollSync() {
       observer.disconnect();
       clearTimeout(timer);
     };
+  }, []);
+
+  // A restore the page was still too short for is retried after every later refresh (boot, resize, fonts).
+  useEffect(() => {
+    ScrollTrigger.addEventListener('refresh', applyPendingHistoryScroll);
+    return () => ScrollTrigger.removeEventListener('refresh', applyPendingHistoryScroll);
   }, []);
 
   useEffect(() => {
