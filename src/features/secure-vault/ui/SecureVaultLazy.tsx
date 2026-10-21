@@ -13,7 +13,7 @@ function VaultLoading() {
   return (
     <div className="fixed inset-0 z-vault flex items-center justify-center bg-ground/[0.92] px-6">
       <p role="status" className="font-body text-ui italic text-ink-muted">
-        Opening secure contact...
+        Opening the Vault...
       </p>
     </div>
   );

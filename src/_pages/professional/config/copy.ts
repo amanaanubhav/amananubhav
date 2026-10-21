@@ -31,7 +31,7 @@ export const HERO_COPY = {
     education: 'B.Tech, Mathematics and Computer Science, KIIT, 2027 (expected)',
   },
   logLabel: 'At a glance',
-  actions: { email: 'Email me', vault: 'Secure contact' },
+  actions: { email: 'Email me', vault: 'Vault' },
   proofLabel: 'Three things I can show you',
   /**
    * Plate 1 caption (M-PRO-AGENT-01): the G-05a note, word for word. It is set in HTML under the plate rather than
@@ -178,7 +178,7 @@ export const REMOTE_COPY = {
     title: 'Hiring remotely?',
     line: 'I’d like to hear what you’re building.',
     email: 'Email me',
-    vault: 'Secure contact',
+    vault: 'Vault',
   },
 } as const;
 

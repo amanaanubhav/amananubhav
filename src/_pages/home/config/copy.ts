@@ -162,7 +162,7 @@ export const ENTRY_LINKS = {
   work: { label: 'See the work', href: '/professional' },
   pass: { label: 'Read the journal entry', storyId: ANNAPURNA.storyId ?? 'annapurna-circuit-solo' },
   ask: { label: 'Open the terminal' },
-  write: { label: 'Secure contact' },
+  write: { label: 'Vault' },
 } as const;
 
 /** Entry 3's extra line renders only once Aman confirms it (Q-90). */
@@ -249,7 +249,7 @@ export const TERMINAL_PREVIEW = {
 export const LEDGER_GLYPH = {
   caption: 'Each message is chained to the one before it.',
   title: 'Three linked message blocks',
-  desc: 'Blocks 1, 2 and 3, each joined to the one before it, the way the secure contact chains messages.',
+  desc: 'Blocks 1, 2 and 3, each joined to the one before it, the way the Vault chains messages.',
 } as const;
 
 /* ------------------------------------------------------------------ #next */
@@ -264,7 +264,7 @@ export const NEXT_COPY = {
     "I'm looking for a remote AI engineering role: give me a clear problem and a quiet room, and I'll give you focused, well-documented work.",
   then: 'a remote AI engineering role',
   terminal: 'Open the terminal',
-  vault: 'Secure contact',
+  vault: 'Vault',
   email: 'Email me',
   storyLink: 'Read the journal entry',
   overlapCaption: 'My working day in IST, against yours.',

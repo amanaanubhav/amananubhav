@@ -102,7 +102,7 @@
     border-color var(--dur-hover) var(--ease-settle);
 }
 
-/* Secure contact keeps its outlined pill, now inset like the bead. */
+/* Vault keeps its outlined pill, now inset like the bead. */
 .pill::before {
   border: 1px solid rgb(var(--c-ink) / 0.16);
   background-color: rgb(var(--c-ink) / 0.04);

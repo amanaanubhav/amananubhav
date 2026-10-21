@@ -292,11 +292,11 @@ export function Navbar() {
             data-liquid-target=""
             data-return-focus="nav-vault"
             aria-haspopup="dialog"
-            title="Secure contact"
+            title="Vault"
             className={action(styles.pill, 'max-lg:w-10 max-lg:gap-0 lg:px-4')}
           >
             <Lock aria-hidden="true" focusable="false" className="size-[18px] shrink-0" strokeWidth={1.75} />
-            <span className="max-lg:sr-only">Secure contact</span>
+            <span className="max-lg:sr-only">Vault</span>
           </button>
         </div>
       </motion.div>

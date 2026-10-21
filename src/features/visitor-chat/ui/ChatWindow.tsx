@@ -172,7 +172,7 @@ export function ChatWindow({ id, chat, isCompact, placement, onClose, onOpenTerm
               onClick={onOpenTerminal}
             />
             <IconButton
-              label="Open secure contact"
+              label="Open the Vault"
               icon={Lock}
               size={40}
               data-return-focus="chat-vault"

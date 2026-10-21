@@ -70,10 +70,10 @@ const t = (...rows: readonly string[]): string => rows.join('\n');
 const EMAIL = 'amannbhv.cswork@gmail.com';
 
 // Refusals keep the wording of the terminal's system-prompt rules (rules 9-17).
-const REFUSE_PRIVATE = 'I keep that private. For anything personal, use the secure contact.';
+const REFUSE_PRIVATE = 'I keep that private. For anything personal, use the Vault.';
 const REFUSE_SYSTEM = "That's behind the scenes. Ask me about my work, treks or how I work remotely.";
 const REFUSE_COMMIT = `I can't commit to anything from this terminal. Email me at ${EMAIL} and I'll reply myself.`;
-const REFUSE_ACTION = `I can't send emails, book calls or forward messages from here. Email me at ${EMAIL} or use the secure contact.`;
+const REFUSE_ACTION = `I can't send emails, book calls or forward messages from here. Email me at ${EMAIL} or use the Vault.`;
 const REFUSE_OPINION =
   "I don't rate or criticise employers, clients or the people I work with. I can tell you about my own work: try 'work'.";
 const REFUSE_POLITICS = 'I keep politics and religion out of this terminal. Ask me about my work, treks or how I work remotely.';
@@ -186,7 +186,7 @@ const PROJECT_ENTRIES: readonly OfflineEntry[] = [
       '>> AMANANUBHAV.COM',
       'This site: Next.js App Router + Feature-Sliced Design.',
       '- This terminal: an AI assistant with automatic fallback, plus these offline notes when it is unreachable',
-      '- A secure contact, encrypted in your browser (AES-GCM) and chained into a tamper-evident ledger',
+      '- The Vault, a private contact encrypted in your browser (AES-GCM) and chained into a tamper-evident ledger',
       '- A visitor chat with email alerts',
     ),
   },
@@ -324,12 +324,12 @@ const WORK_ENTRIES: readonly OfflineEntry[] = [
 
 const TREK_ENTRIES: readonly OfflineEntry[] = [
   {
-    names: ['annapurna', 'annapurna-circuit', 'tilicho', 'ice-lake', 'manang', 'nepal'],
+    names: ['annapurna', 'annapurna-circuit', 'tilicho', 'ice-lake', 'kicho-tal', 'blue-lake', 'green-lake', 'manang', 'nepal'],
     text: t(
       '>> ANNAPURNA CIRCUIT',
-      'Manang and Mustang, Nepal. 2026, solo and self-supported: 14 days, 250 km, an 18 kg pack.',
-      '- Route: Besisahar ~760 m, Chame ~2,670 m, Manang ~3,540 m, Thorong Phedi ~4,450 m, Thorong La 5,416 m, Muktinath ~3,760 m',
-      '- From Manang: Ice Lake as an acclimatisation climb, then Tilicho Lake at about 4,919 m, one of the highest lakes in the world',
+      'Manang and Mustang, Nepal. April–May 2026, solo and self-supported: 14 days, 250 km, an 18 kg pack.',
+      '- Route: Besisahar ~760 m, Ngadi, Syange, by road to Tal, Timang ~2,750 m, Chame ~2,670 m, Dhikur Pokhari ~3,060 m, Pisang, Mungji, Manang ~3,540 m, Khangsar, Shri Kharka ~4,060 m, Yak Kharka, Churi Ledar ~4,200 m, Thorong High Camp ~4,880 m, Thorong La 5,416 m, Muktinath ~3,760 m',
+      '- Side trips: Blue Lake and Green Lake from Mungji on a rest day, Ice Lake (Kicho Tal) as an acclimatisation climb, then Tilicho Lake at about 4,919 m from Shri Kharka, one of the highest lakes in the world',
       '"I\'m capable of more than I plan for, if I plan well."',
     ),
   },
@@ -337,7 +337,7 @@ const TREK_ENTRIES: readonly OfflineEntry[] = [
     names: ['thorong', 'thorong-la'],
     text: t(
       '>> THORONG LA, 5,416 m',
-      'The high point of my solo Annapurna Circuit in 2026, and my highest pass so far: up from Thorong Phedi (~4,450 m), down to Muktinath (~3,760 m), with an 18 kg pack.',
+      'The high point of my solo Annapurna Circuit in 2026, and my highest pass so far: up from Thorong High Camp (~4,880 m), down to Muktinath (~3,760 m), with an 18 kg pack.',
       "Type 'treks annapurna' for the whole route.",
     ),
   },
@@ -614,16 +614,16 @@ const COMMANDS: readonly OfflineCommand[] = [
   },
   {
     name: 'contact',
-    aliases: ['email', 'mail', 'reach'],
+    aliases: ['email', 'mail', 'reach', 'vault'],
     section: true,
     text: t(
       '>> CONTACT',
       `[EMAIL]    ${EMAIL}`,
       '[LINKEDIN] https://www.linkedin.com/in/amananubhav',
       '[GITHUB]   https://github.com/amanaanubhav',
-      '[SECURE]   the secure contact on this site, encrypted in your browser before it is stored',
+      '[VAULT]    the Vault on this site, encrypted in your browser before it is stored',
       '',
-      "For anything private, use the secure contact. Type 'socials' for the rest.",
+      "For anything private, use the Vault. Type 'socials' for the rest.",
     ),
   },
   {
@@ -789,7 +789,7 @@ const KEYWORDS: readonly OfflineKeyword[] = [
   { pattern: /\b(current|present) (role|job|position|work)\b|\bwhere do you work\b/, run: 'work atlys' },
   { pattern: /\b(remote\w*|hir(e|ing)|recruit\w*|open to (work|roles)|availab\w*|looking for|opportunit\w*|job|roles?|position)\b/, run: 'remote' },
   { pattern: /\b(resume|cv)\b/, run: 'resume' },
-  { pattern: /\b(contact|e-?mail|reach (you|out)|get in touch|message you|talk to you)\b/, run: 'contact' },
+  { pattern: /\b(contact|vault|e-?mail|reach (you|out)|get in touch|message you|talk to you)\b/, run: 'contact' },
   { pattern: /\b(linkedin|github|kaggle|instagram|socials?|links?)\b/, run: 'socials' },
   { pattern: /\b(skills?|stack|tech\w*|languages?|frameworks?|tools|python|typescript|pytorch|langchain|fastapi)\b/, run: 'skills' },
   { pattern: /\b(educat\w*|college|universit\w*|kiit|school|degree|b\.?tech|stud(y|ying)|graduat\w*|major)\b/, run: 'education' },
@@ -841,7 +841,7 @@ export const OFFLINE_KNOWLEDGE: OfflineKnowledge = {
   keywords: KEYWORDS,
   pages: PAGES,
   replies: {
-    unknown: `I haven't written that down here yet. Ask me directly at ${EMAIL} or through the secure contact. Type 'help' for what I can answer offline.`,
+    unknown: `I haven't written that down here yet. Ask me directly at ${EMAIL} or through the Vault. Type 'help' for what I can answer offline.`,
     notFoundHint: "Type 'help' for the list.",
     tooLong: "That's longer than I can read offline. Ask in a sentence or two, or type 'help'.",
     openNote: "Offline, so I'm only printing the path: close the terminal (Esc) and go there from the navbar.",

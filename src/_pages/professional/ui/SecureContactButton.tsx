@@ -5,7 +5,7 @@ import { openVault } from '@/features/secure-vault';
 import { Button } from '@/shared/ui/button';
 import type { ButtonVariant } from '@/shared/ui/button';
 
-/** Opens the secure contact vault (the same `openVault` the navbar and footer use). */
+/** Opens the Vault (the same `openVault` the navbar and footer use). */
 export function SecureContactButton({
   label,
   variant = 'secondary',

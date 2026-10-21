@@ -37,7 +37,7 @@ export const PAGE_LINKS: readonly PageLink[] = [
 /**
  * Routes that already end on the page's one full ask (§A.4, §H.3). Their last page keeps the full-viewport
  * composition but closes on the sign-off instead of a second ask: no h2, no body, no primary buttons;
- * Secure contact stays as a quiet link in the "write" column so the vault is reachable from every footer.
+ * The Vault stays as a quiet link in the "write" column so the vault is reachable from every footer.
  */
 export const COMPACT_FOOTER_ROUTES: readonly string[] = [ROUTES.home, ROUTES.professional];
 
@@ -45,7 +45,7 @@ export const COMPACT_FOOTER_ROUTES: readonly string[] = [ROUTES.home, ROUTES.pro
 export const FOOTER_COPY = {
   heading: "Let's build something worth the climb.",
   bodyLead: "I'm open to remote AI engineering roles and good problems. Email",
-  bodyTail: ", or use the secure contact if it's sensitive.",
+  bodyTail: ", or use the Vault if it's sensitive.",
   signOff: 'Pack light. Ship clean. Keep climbing.',
   /** The giant decorative stamp across the foot of the page (the previous footer's wordmark, kept). */
   wordmark: 'ANUBHAV',

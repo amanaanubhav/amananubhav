@@ -185,7 +185,7 @@ const PROJECT_DATA: readonly ProjectInput[] = [
     type: 'Products and platforms',
     oneLiner: 'This site: a story you can scroll and a version of me you can talk to.',
     approach:
-      'Next.js App Router with Feature-Sliced Design; an AI terminal that streams answers from /api/chat with automatic provider fallback and an offline knowledge base; a secure contact channel that encrypts messages in the browser (AES-GCM) into a hash-chained ledger; a visitor chat on Firestore with email alerts.',
+      'Next.js App Router with Feature-Sliced Design; an AI terminal that streams answers from /api/chat with automatic provider fallback and an offline knowledge base; the Vault, a private contact channel that encrypts messages in the browser (AES-GCM) into a hash-chained ledger; a visitor chat on Firestore with email alerts.',
     tech: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS', 'three.js', 'GSAP', 'Motion', 'Firestore', 'WebCrypto'],
     year: 'Present',
     link: 'https://amananubhav.com',

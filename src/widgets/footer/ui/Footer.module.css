@@ -142,7 +142,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Text buttons in the write column (Copy email, the compact footer's Secure contact). */
+/* Text buttons in the write column (Copy email, the compact footer's Vault). */
 .textAction {
   appearance: none;
   margin: 0;

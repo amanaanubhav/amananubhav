@@ -29,7 +29,7 @@ export const CANNED = {
   tooLong: `That's more than I can read here. Keep it under 1,000 characters, or email me at ${PUBLIC_EMAIL}.`,
   noise: "I couldn't make sense of that. Try 'projects', 'treks', 'remote' or 'contact'.",
   extraction: "That's behind the scenes. Ask me about my work, treks or how I work remotely.",
-  private: 'I keep that private. For anything personal, use the secure contact.',
+  private: 'I keep that private. For anything personal, use the Vault.',
 } as const;
 
 export type CannedReason = keyof typeof CANNED;

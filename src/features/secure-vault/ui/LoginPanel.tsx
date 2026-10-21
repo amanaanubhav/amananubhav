@@ -34,7 +34,7 @@ export function LoginPanel({
           style={PANEL_TITLE_STYLE}
           className="font-display text-h3 font-semibold text-ink [text-wrap:balance] focus:outline-none"
         >
-          Secure contact
+          Vault
         </h2>
         <p className="mt-3 font-body text-body text-ink-muted [text-wrap:pretty]">
           Your message is encrypted in your browser with AES-GCM and added to a hash-chained ledger before it is

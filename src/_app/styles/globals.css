@@ -32,14 +32,14 @@
   src: local('Courier New'), local('CourierNewPSMT'), local('Liberation Mono'), local('Cousine');
   size-adjust: 100%; ascent-override: 102.5%; descent-override: 27.5%; line-gap-override: 0%; }
 /* Manrope's fallback, one face per weight the navbar uses, each sized to Manrope's advance on the bar's own
-   labels (500: Home, Life, Work, Journal; 600: wordmark, Ask, Secure contact), so the centred bar keeps its
+   labels (500: Home, Life, Work, Journal; 600: wordmark, Ask, Vault), so the centred bar keeps its
    width when the face swaps in. Overrides are Manrope's (103.5% / 33.9%) divided by size-adjust. */
 @font-face { font-family: 'Manrope Fallback'; font-weight: 100 550;
   src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
   size-adjust: 104.22%; ascent-override: 99.31%; descent-override: 32.53%; line-gap-override: 0%; }
 @font-face { font-family: 'Manrope Fallback'; font-weight: 551 900;
   src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('Arimo Bold');
-  size-adjust: 99.16%; ascent-override: 104.38%; descent-override: 34.19%; line-gap-override: 0%; }
+  size-adjust: 97.75%; ascent-override: 105.88%; descent-override: 34.68%; line-gap-override: 0%; }
 
 /* ─── Variables (hand-written; colors live in tokens.css) ───────────────────────────────────────── */
 

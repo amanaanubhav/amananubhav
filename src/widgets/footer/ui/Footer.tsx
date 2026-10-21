@@ -99,7 +99,7 @@ function Closing({ compact }: { compact: boolean }) {
               className={buttonClassName({ variant: 'primary', size: 'lg', className: cn(styles.sheen, 'w-full px-6 sm:w-auto') })}
             >
               <Lock aria-hidden="true" focusable="false" className="size-[18px] shrink-0" strokeWidth={1.75} />
-              Secure contact
+              Vault
             </button>
           </span>
         </span>
@@ -131,7 +131,7 @@ function WriteColumn({ compact }: { compact: boolean }) {
         {compact ? (
           <button type="button" onClick={openVault} data-return-focus="footer-vault" className={cn(styles.line, styles.textAction)}>
             <Lock aria-hidden="true" focusable="false" className="size-4 shrink-0" strokeWidth={1.75} />
-            <span className={styles.lineText}>Secure contact</span>
+            <span className={styles.lineText}>Vault</span>
           </button>
         ) : null}
       </div>

@@ -23,7 +23,7 @@ export interface SecureVaultProps {
 }
 
 /**
- * Secure contact (§H.7): a modal dialog at z-vault, mounted only while open (no isOpen prop).
+ * The Vault (§H.7, formerly "Secure contact"): a modal dialog at z-vault, mounted only while open (no isOpen prop).
  * Desktop: sidebar + main pane in one panel; below 768 px: a full-screen sheet with the mobile bar.
  */
 export function SecureVault({ onClose }: SecureVaultProps) {
@@ -101,7 +101,7 @@ export function SecureVault({ onClose }: SecureVaultProps) {
 
         <div ref={mainRef} className="flex min-h-0 min-w-0 flex-1 flex-col">
           <VaultHelp>
-            <IconButton label="Close secure contact" icon={X} size={40} onClick={onClose} />
+            <IconButton label="Close the Vault" icon={X} size={40} onClick={onClose} />
           </VaultHelp>
 
           <VaultMobileBar {...navProps} />
