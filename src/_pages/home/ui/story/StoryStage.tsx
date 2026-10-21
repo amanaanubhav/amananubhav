@@ -4,73 +4,107 @@ import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode 
 
 import { setChromeDimmed } from '@/shared/lib/chrome';
 import { useMotionTier } from '@/shared/lib/motion-tier';
-import { useStageScene } from '@/shared/ui/stage';
+import { prefetch } from '@/shared/lib/stage-prefetch';
+import { preloadStage, useStageScene } from '@/shared/ui/stage';
 
-import type { MarkAltitude } from '../../lib/story-labels';
 import { useStoryDriver } from '../../lib/story-driver';
 import { getPhase, getServerPhase, subscribePhase } from '../../lib/story-scroll';
+import { STORY_DATA_PREFETCH } from '../scenes/story/frame';
+import { STORY_HUE_VARS } from './palette-vars';
 import styles from './story.module.css';
 import { StoryLabels } from './StoryLabels';
 
 /** The relief scene module, resolved lazily inside the shared canvas (§C.5). Module-level constant. */
 const loadRelief = () => import('../scenes/ReliefAnnapurnaScene');
 
-/** The crossfade from the poster to the live scene (the poster is removed after it). */
-const HANDOFF_MS = 320;
+const noSubscribe = () => () => {};
+const onClient = () => true;
+const onServer = () => false;
 
 export interface StoryStageProps {
-  /** The SSR plan sheet: the arrival poster at tier >= 1 and the one static map at tier 0. */
+  /** The SSR plan sheet: the one static map (motion off, lite, no JavaScript, or a failed 3D load). */
   poster: ReactNode;
-  /** Printed altitude per STORY_MARKS entry (resolved on the server). */
-  altitudes: readonly MarkAltitude[];
 }
 
 /**
- * THE map of the home page (design §3): one fixed, full-bleed stage behind the hero and every story
- * section. The poster (an SVG plan sheet, server-rendered, moving from first paint) and the WebGL canvas
- * live in this one element and are the same map: the renderer moves its canvas inside this slot, the
- * scene sets `data-stage-live` on its first frame, the poster fades for 300 ms and is then removed from
- * the DOM. At tier 0 (reduced motion, lite, no WebGL) the poster stays as the single static map.
+ * THE map of the home page (design §3, load-in-3d): one fixed, full-bleed stage behind the hero and every
+ * story section. On a capable device with motion on (the pre-paint gate `html[data-motion=on][data-lite=0]`)
+ * the plan sheet is never painted: the hero shows its text on the plain ground, the renderer moves its
+ * canvas into this slot, and the scene's first frame is the ground itself, from which the relief rises in
+ * 3D. The sheet is the whole map only where it is static from first paint (motion off, lite, no JS), or
+ * after a hard failure (tier 0 at hydration, a chunk, data or scene error), where it fades in once and
+ * stays. Once the sheet has been shown on a page view the scene never takes over on that page view: every
+ * input of `staged` only ever turns it off (the tier only drops, the gate only turns off, failure sticks).
  *
  * aria-hidden: the route list (RouteList, beside it in the page) carries the facts as text.
  */
-export function StoryStage({ poster, altitudes }: StoryStageProps) {
+export function StoryStage({ poster }: StoryStageProps) {
   const tier = useMotionTier();
-  const staged = tier > 0;
-  const register = useStageScene('relief-annapurna', loadRelief, { fullBleed: true });
+  const hydrated = useSyncExternalStore(noSubscribe, onClient, onServer);
+  const [failed, setFailed] = useState(false);
+  const [shown, setShown] = useState(false);
   const [el, setEl] = useState<HTMLDivElement | null>(null);
-  const [live, setLive] = useState(false);
-  const [posterGone, setPosterGone] = useState(false);
   const phase = useSyncExternalStore(subscribePhase, getPhase, getServerPhase);
+  const register = useStageScene('relief-annapurna', loadRelief, { fullBleed: true, eager: true });
 
-  const ref = useCallback(
-    (node: HTMLDivElement | null) => {
-      register(node);
-      setEl(node);
-    },
-    [register],
-  );
+  const root = hydrated ? document.documentElement.dataset : null;
+  const gateOn = root !== null && root.motion === 'on' && root.lite === '0';
+  const staged = gateOn && tier > 0 && !failed;
+  const isStatic = hydrated && !staged;
+
+  const ref = useCallback((node: HTMLDivElement | null) => setEl(node), []);
+
+  // The scene registers only while staged; it unregisters (and the canvas leaves) once the stage is static.
+  useEffect(() => {
+    if (!el || !staged) return;
+    register(el);
+    return () => register(null);
+  }, [el, staged, register]);
 
   useStoryDriver(staged);
 
-  // The scene marks the slot live on its first frame; it removes the mark when it unmounts (tier drop).
+  // The kick (load-in-3d §4): after the fonts (the h1's LCP keeps the network) and one frame, the renderer
+  // chunk, the scene module and the story data load in parallel. A renderer chunk that fails to load
+  // never reaches the scene's boundary, so it is caught here and treated as a failure.
+  useEffect(() => {
+    if (!staged) return;
+    let cancelled = false;
+    let frame = 0;
+    void document.fonts.ready.then(() => {
+      if (cancelled) return;
+      frame = requestAnimationFrame(() => {
+        preloadStage().catch(() => {
+          if (!cancelled) setFailed(true);
+        });
+        loadRelief().catch(() => {}); // a scene chunk error reaches the scene boundary (data-stage-failed)
+        for (const [url, kind] of STORY_DATA_PREFETCH) prefetch(url, kind);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [staged]);
+
+  // The scene marks the slot: `data-stage-shown` once the relief has risen far enough for the labels,
+  // `data-stage-failed` when it cannot draw. A failure sticks for the page view (the scene's unmount
+  // clears the attribute, so an addition seen in the records counts too).
   useEffect(() => {
     if (!el) return;
-    const read = () => setLive(el.hasAttribute('data-stage-live'));
-    read();
+    const read = (records: readonly MutationRecord[]) => {
+      setShown(el.hasAttribute('data-stage-shown'));
+      const added = records.some((r) => r.attributeName === 'data-stage-failed' && r.oldValue === null);
+      if (added || el.hasAttribute('data-stage-failed')) setFailed(true);
+    };
     const observer = new MutationObserver(read);
-    observer.observe(el, { attributes: true, attributeFilter: ['data-stage-live'] });
+    observer.observe(el, {
+      attributes: true,
+      attributeOldValue: true,
+      attributeFilter: ['data-stage-shown', 'data-stage-failed'],
+    });
+    if (el.hasAttribute('data-stage-shown') || el.hasAttribute('data-stage-failed')) read([]);
     return () => observer.disconnect();
   }, [el]);
-
-  useEffect(() => {
-    if (!live) {
-      setPosterGone(false);
-      return;
-    }
-    const id = window.setTimeout(() => setPosterGone(true), HANDOFF_MS);
-    return () => window.clearTimeout(id);
-  }, [live]);
 
   // The summit hold dims the chrome (§5.4), never under reduced motion.
   const dim = staged && phase.summit;
@@ -86,15 +120,18 @@ export function StoryStage({ poster, altitudes }: StoryStageProps) {
       data-story-stage=""
       data-scene="relief-annapurna"
       data-tier={tier}
+      data-static={isStatic ? '' : undefined}
+      data-stage-instant=""
       data-gone={staged && phase.gone ? '' : undefined}
       className={`stage-slot ${styles.stage}`}
+      style={STORY_HUE_VARS}
     >
-      {posterGone && staged ? null : (
-        <div className={styles.poster}>
+      {hydrated && !isStatic ? null : (
+        <div className={styles.poster} data-stage-poster="">
           <div className={styles.sheet}>{poster}</div>
         </div>
       )}
-      {staged ? <StoryLabels altitudes={altitudes} hidden={!live} /> : null}
+      {staged ? <StoryLabels hidden={!shown} /> : null}
     </div>
   );
 }

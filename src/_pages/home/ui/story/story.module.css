@@ -1,15 +1,10 @@
 /*
- * The home story map: the fixed full-bleed stage (poster + canvas + labels = one map), its DOM labels and
- * the legend chrome (design §3, §8, §12, §13). Colours are theme tokens; the few map-only hues (the 0 °C
+ * The home story map: the fixed full-bleed stage (the 3D canvas or the static sheet, one map), its DOM
+ * labels and the legend chrome (design §3, §8, §12, §13). Colours are theme tokens; the few map-only hues (the 0 °C
  * teal, the lightened lake ink) are local custom properties per theme.
  */
 
 .stage {
-  --story-cold: #5fc0c2;
-  --story-cold-fine: #9ad6d0;
-  --story-warm-line: #9a948c;
-  --story-lake-ink: #c2b8dd;
-  --story-halo: rgb(18 19 22 / 0.9);
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -18,19 +13,26 @@
   contain: strict;
 }
 
-:global(html[data-theme='day']) .stage,
-:global(html[data-theme='day']) .legend {
-  --story-cold: #0f6a70;
-  --story-cold-fine: #4e9da0;
-  --story-warm-line: #857e75;
-  --story-lake-ink: var(--water);
-  --story-halo: rgb(238 240 234 / 0.92);
+/*
+ * Map-only hues (the 0 °C teal, the fine -10 °C line, the +10 °C hairline, the lake label ink) come from
+ * STORY_PALETTE as inline custom properties (--story-*-night / --story-*-day) on the stage and the legend.
+ */
+.stage,
+.legend {
+  --story-cold: var(--story-cold-night);
+  --story-cold-fine: var(--story-cold-fine-night);
+  --story-warm-line: var(--story-warm-night);
+  --story-lake-ink: var(--story-lake-night);
+  --story-halo: rgb(var(--c-ground) / 0.9);
 }
 
-.legend {
-  --story-cold: #5fc0c2;
-  --story-cold-fine: #9ad6d0;
-  --story-warm-line: #9a948c;
+:global(html[data-theme='day']) .stage,
+:global(html[data-theme='day']) .legend {
+  --story-cold: var(--story-cold-day);
+  --story-cold-fine: var(--story-cold-fine-day);
+  --story-warm-line: var(--story-warm-day);
+  --story-lake-ink: var(--story-lake-day);
+  --story-halo: rgb(var(--c-ground) / 0.92);
 }
 
 /* The map has melted into the ground: hidden, so the renderer idles (the slot is no longer intersecting). */
@@ -44,32 +46,72 @@
   }
 }
 
-/* ---------------------------------------------------------------- the poster (pre-scene arrival, tier 0) */
+/* ---------------------------------------------------------------- the static sheet (load-in-3d §5) */
 
+/*
+ * The plan sheet is the whole map only where it is static: motion off, lite, no JavaScript (the gate never
+ * wrote `data-lite`), or the stage marked `data-static` after hydration (tier 0, a failed 3D load). On the
+ * 3D path it is never painted: hidden from first paint, and StoryStage drops it from the DOM after hydration.
+ */
 .poster {
   position: absolute;
   inset: 0;
-  transition: opacity 300ms linear;
 }
 
-/* The scene has taken over: the poster fades in 300 ms, then StoryStage removes it from the DOM. */
-.stage[data-stage-live] .poster {
-  opacity: 0;
+:global(html[data-motion='on'][data-lite='0']) .stage:not([data-static]) .poster {
+  display: none;
+}
+
+/* The 3D could not run after all (gate path only): one calm fade, static after. Never under motion off. */
+:global(html[data-motion='on'][data-lite='0']) .stage[data-static] .poster {
+  animation: poster-in 400ms linear both;
+}
+
+@keyframes poster-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /*
- * The plan sheet sits where the scene frames its subject: right of the text column on desktop (centre at
- * 63.5% of the width), above the hero copy on phones. A slow push-in from first paint (compositor only)
- * keeps the arrival moving while the route draws (R6).
+ * Framed like the overview: right of the text column on desktop (the route, y 12% to 88% of the sheet, fits
+ * between the navbar and the legend, Besisahar clear of the legend's top), above the hero copy on phones.
  */
 .sheet {
   position: absolute;
-  top: 0;
-  height: 100%;
+  top: -2.5svh;
+  height: 90svh;
   aspect-ratio: 4 / 5;
-  left: calc(63.5vw - 40svh);
-  transform-origin: 50% 45%;
-  animation: story-push 9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  left: calc(63.5vw - 36svh);
+  /* R29: the relief feathers into the ground on every side (no sheet edge), clear of the route's ends. */
+  mask-image:
+    linear-gradient(to right, transparent, #000 9%, #000 91%, transparent),
+    linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+  mask-composite: intersect;
+}
+
+/* The plan sheet's static story layers (band fills, isotherms, markers): both themes' colours ride on
+   --n / --d custom properties (PlanSheetLayers), picked here by html[data-theme]. */
+.sheet :global(.plan-fill) {
+  fill: var(--n);
+}
+.sheet :global(.plan-stroke) {
+  stroke: var(--n);
+}
+.sheet :global(.plan-ring) {
+  stroke: var(--ring-n);
+}
+:global(html[data-theme='day']) .sheet :global(.plan-fill) {
+  fill: var(--d);
+}
+:global(html[data-theme='day']) .sheet :global(.plan-stroke) {
+  stroke: var(--d);
+}
+:global(html[data-theme='day']) .sheet :global(.plan-ring) {
+  stroke: var(--ring-d);
 }
 
 @media (max-width: 760px) {
@@ -81,25 +123,10 @@
   }
 }
 
-@keyframes story-push {
-  from {
-    transform: scale(1.06);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
-/* Tier 0 (reduced motion, lite, no WebGL): the static sheet carries a soft column veil (no edge, no panel). */
-.stage[data-tier='0'] .sheet,
-:global(html[data-motion='off']) .sheet,
-:global(html[data-lite='1']) .sheet {
-  animation: none;
-}
-
-.stage[data-tier='0']::after,
-:global(html[data-motion='off']) .stage::after,
-:global(html[data-lite='1']) .stage::after {
+/* Wherever the sheet is the map, it carries a soft column veil (no edge, no panel); never over the 3D. */
+.stage[data-static]::after,
+:global(html:not([data-motion='on'])) .stage::after,
+:global(html:not([data-lite='0'])) .stage::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -113,9 +140,9 @@
 }
 
 @media (max-width: 760px) {
-  .stage[data-tier='0']::after,
-  :global(html[data-motion='off']) .stage::after,
-  :global(html[data-lite='1']) .stage::after {
+  .stage[data-static]::after,
+  :global(html:not([data-motion='on'])) .stage::after,
+  :global(html:not([data-lite='0'])) .stage::after {
     background: color-mix(in srgb, var(--ground) 80%, transparent);
   }
 }
@@ -126,10 +153,16 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
+  transition: opacity 240ms ease-out;
 }
 
+/* Until the relief has risen far enough (data-stage-shown): faded out, then hidden. */
 .labels[data-wait] {
+  opacity: 0;
   visibility: hidden;
+  transition:
+    opacity 240ms ease-out,
+    visibility 0s linear 240ms;
 }
 
 .lbl {
@@ -156,23 +189,31 @@
 }
 
 .n {
-  font: 500 12.5px/1 var(--font-display), sans-serif;
+  font:
+    500 12.5px/1 var(--font-display),
+    sans-serif;
   letter-spacing: 0.005em;
 }
 
 .a {
-  font: 400 11px/1 var(--font-data), monospace;
+  font:
+    400 11px/1 var(--font-data),
+    monospace;
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .q {
-  font: 400 10px/1 var(--font-data), monospace;
+  font:
+    400 10px/1 var(--font-data),
+    monospace;
   color: var(--ink-muted);
 }
 
 .t {
-  font: 400 11px/1 var(--font-data), monospace;
+  font:
+    400 11px/1 var(--font-data),
+    monospace;
   color: var(--story-cold);
   font-variant-numeric: tabular-nums;
 }
@@ -181,7 +222,7 @@
   display: none;
 }
 
-.lbl[data-role='pass-through'] .n {
+.lbl[data-role='pass'] .n {
   font-weight: 400;
   color: var(--ink-muted);
 }
@@ -196,7 +237,9 @@
 }
 
 .lbl[data-role='col'] .n {
-  font: 650 15px/1 var(--font-display), sans-serif;
+  font:
+    650 15px/1 var(--font-display),
+    sans-serif;
   letter-spacing: 0.01em;
 }
 
@@ -206,7 +249,9 @@
 }
 
 .lbl[data-role='lake'] .n {
-  font: italic 450 13.5px/1 var(--font-text), serif;
+  font:
+    italic 450 13.5px/1 var(--font-text),
+    serif;
   color: var(--story-lake-ink);
 }
 
@@ -217,7 +262,9 @@
 }
 
 .lbl[data-role='peak'] .n {
-  font: 500 10.5px/1 var(--font-display), sans-serif;
+  font:
+    500 10.5px/1 var(--font-display),
+    sans-serif;
   letter-spacing: 0.08em;
   color: var(--ink-muted);
 }
@@ -227,7 +274,9 @@
 }
 
 .lbl[data-role='tick'] .n {
-  font: 500 10.5px/1 var(--font-data), monospace;
+  font:
+    500 10.5px/1 var(--font-data),
+    monospace;
   color: var(--ink-muted);
 }
 
@@ -236,7 +285,9 @@
 }
 
 .lbl[data-role='note'] .n {
-  font: italic 400 12px/1 var(--font-text), serif;
+  font:
+    italic 400 12px/1 var(--font-text),
+    serif;
   color: var(--ink-muted);
 }
 
@@ -245,7 +296,9 @@
 }
 
 .lbl[data-role='head'] .n {
-  font: 500 12px/1 var(--font-data), monospace;
+  font:
+    500 12px/1 var(--font-data),
+    monospace;
   color: var(--signal);
   font-variant-numeric: tabular-nums;
 }
@@ -278,16 +331,21 @@
   background: color-mix(in srgb, var(--ground) 74%, transparent);
   -webkit-backdrop-filter: blur(12px) saturate(1.1);
   backdrop-filter: blur(12px) saturate(1.1);
-  font: 400 11px/1.3 var(--font-display), sans-serif;
+  font:
+    400 11px/1.3 var(--font-display),
+    sans-serif;
   color: var(--ink);
   transition: opacity 300ms ease-out;
 }
 
-/* From 1024 px the waypoint rail owns the right edge: the legend sits left of it, on the launcher's line. */
-@media (min-width: 1024px) {
+/*
+ * Desktop (design §13): bottom-right, stacked 12 px above the chat launcher (bottom 84 px), under the waypoint
+ * rail, so it never sits on the route's start at Besisahar (the subject is framed left of it).
+ */
+/* Shorter desktop screens: the rail's last ticks reach down to the legend's top, so it steps left of them. */
+@media (min-width: 1024px) and (max-height: 860px) {
   .legend {
-    right: 200px;
-    bottom: 24px;
+    right: 72px;
   }
 }
 
@@ -314,14 +372,18 @@
 }
 
 .day {
-  font: 500 11px/1 var(--font-data), monospace;
+  font:
+    500 11px/1 var(--font-data),
+    monospace;
   color: var(--signal);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .place {
-  font: 500 12.5px/1.25 var(--font-display), sans-serif;
+  font:
+    500 12.5px/1.25 var(--font-display),
+    sans-serif;
   color: var(--ink);
 }
 
@@ -345,7 +407,9 @@
   border: 0;
   border-radius: 999px;
   background: none;
-  font: 500 11.5px/1 var(--font-display), sans-serif;
+  font:
+    500 11.5px/1 var(--font-display),
+    sans-serif;
   color: var(--ink-muted);
   cursor: pointer;
 }
@@ -360,7 +424,9 @@
   padding: 6px 2px;
   border: 0;
   background: none;
-  font: 500 11px/1 var(--font-display), sans-serif;
+  font:
+    500 11px/1 var(--font-display),
+    sans-serif;
   color: var(--ink-muted);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -385,7 +451,9 @@
   margin: 4px 0 0;
   padding: 0;
   list-style: none;
-  font: 400 10px/1 var(--font-data), monospace;
+  font:
+    400 10px/1 var(--font-data),
+    monospace;
   color: var(--ink-muted);
 }
 
@@ -443,7 +511,9 @@
 
 .note {
   margin: 7px 0 0;
-  font: 400 10.5px/1.4 var(--font-display), sans-serif;
+  font:
+    400 10.5px/1.4 var(--font-display),
+    sans-serif;
   color: var(--ink-muted);
 }
 
@@ -512,7 +582,9 @@
 
 .honesty {
   margin: 8px 0 0;
-  font: 400 10px/1.4 var(--font-display), sans-serif;
+  font:
+    400 10px/1.4 var(--font-display),
+    sans-serif;
   color: var(--ink-muted);
 }
 
@@ -524,6 +596,8 @@
     bottom: calc(72px + env(safe-area-inset-bottom));
     width: auto;
     padding: 8px 12px 7px;
+    /* Near-opaque on phones: text scrolling under the bar must never show through it (a text-clip zone). */
+    background: color-mix(in srgb, var(--ground) 94%, transparent);
   }
 
   .where,
@@ -532,7 +606,54 @@
   }
 
   .legend:not([data-open]) .iso,
+  .legend:not([data-open]) .ticks,
   .legend:not([data-open]) .note {
     display: none;
   }
+}
+
+/* ---------------------------------------------------------------- the story flow (text in normal flow) */
+
+/*
+ * Each block sits centred in a slot whose minimum height spaces the story (§15.3): the map has room to
+ * walk between blocks, and the map-only stretches let it come fully forward. Static layout (reduced
+ * motion, lite): the slots collapse to their content.
+ */
+.slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--slot-h, auto);
+}
+
+:global(html[data-motion='off']) .slot,
+:global(html[data-lite='1']) .slot {
+  min-height: 0;
+}
+
+/* The summit numeral: sticky while the head climbs and holds on the pass (28 vh; 50 svh on phones). */
+.stick {
+  position: sticky;
+  top: 28vh;
+}
+
+@media (max-width: 760px) {
+  .stick {
+    top: 50svh;
+  }
+}
+
+:global(html[data-motion='off']) .stick,
+:global(html[data-lite='1']) .stick {
+  position: static;
+}
+
+/* The route tick before a story head ("Day 6"): graphic oxblood, the text stays ink (§9). */
+.tick {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--signal-line);
 }

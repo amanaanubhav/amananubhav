@@ -4,38 +4,21 @@ import { useEffect, useId, useState, useSyncExternalStore, type CSSProperties } 
 
 import type { CSSVars } from '@/shared/lib/css';
 import { useMotionTier } from '@/shared/lib/motion-tier';
-import { setSceneParam } from '@/shared/ui/stage';
+import { setSceneParam, STORY_HYPSO_STOPS_M, STORY_TEMP_STOPS_C, storyRampGradient } from '@/shared/ui/stage';
 
-import {
-  ACTS,
-  HYPSO_AT_M,
-  STORY_PARAM,
-  STORY_RAMPS,
-  TEMP_AT_C,
-  TREK_DAYS,
-} from '../../config/story-timeline';
 import { LEGEND_COPY } from '../../config/copy';
-import { SCENE_ID } from '../../lib/story-driver';
-import { getPhase, getServerPhase, subscribePhase } from '../../lib/story-scroll';
+import { ACTS, getPhase, getServerPhase, subscribePhase } from '../../lib/story-scroll';
+import { STORY_PARAM, STORY_SCENE_ID } from '../scenes/story/frame';
+import { STORY_HUE_VARS } from './palette-vars';
 import styles from './story.module.css';
+
+const TREK_DAYS = 14;
 
 type Layer = 'alt' | 'temp';
 
-function gradient(colors: readonly string[], at: readonly number[]): string {
-  const lo = at[0];
-  const hi = at[at.length - 1];
-  return `linear-gradient(90deg, ${colors.map((c, i) => `${c} ${(((at[i] - lo) / (hi - lo)) * 100).toFixed(1)}%`).join(', ')})`;
-}
-
 const RAMP_STYLE: Record<Layer, CSSVars> = {
-  alt: {
-    '--ramp-night': gradient(STORY_RAMPS.night.hypso, HYPSO_AT_M),
-    '--ramp-day': gradient(STORY_RAMPS.day.hypso, HYPSO_AT_M),
-  },
-  temp: {
-    '--ramp-night': gradient(STORY_RAMPS.night.temp, TEMP_AT_C),
-    '--ramp-day': gradient(STORY_RAMPS.day.temp, TEMP_AT_C),
-  },
+  alt: { '--ramp-night': storyRampGradient('night', 'alt'), '--ramp-day': storyRampGradient('day', 'alt') },
+  temp: { '--ramp-night': storyRampGradient('night', 'temp'), '--ramp-day': storyRampGradient('day', 'temp') },
 };
 
 const TICKS: Record<Layer, { at: number; text: string }[]> = {
@@ -55,7 +38,7 @@ const TICKS: Record<Layer, { at: number; text: string }[]> = {
 };
 
 function tickLeft(layer: Layer, at: number): CSSProperties {
-  const range = layer === 'alt' ? HYPSO_AT_M : TEMP_AT_C;
+  const range: readonly number[] = layer === 'alt' ? STORY_HYPSO_STOPS_M : STORY_TEMP_STOPS_C;
   const lo = range[0];
   const hi = range[range.length - 1];
   return { left: `${(((at - lo) / (hi - lo)) * 100).toFixed(1)}%` };
@@ -67,7 +50,7 @@ function tickLeft(layer: Layer, at: number): CSSProperties {
  * stops as the shader, the isotherm key and the honesty note ("modelled from altitude, not measured").
  * "Key" discloses the line styles. Server-rendered with its default text (no layout shift when the scene
  * arrives); it fades out as the map dissolves. At tier 0 (the static plan sheet) it shows the trek line
- * and the line key only. A recede pool sits under it (`data-story-chrome`).
+ * and the line key only. A recede pool sits under it (`data-recede-chrome`).
  */
 export function StoryLegend() {
   const tier = useMotionTier();
@@ -78,21 +61,22 @@ export function StoryLegend() {
   const keyId = useId();
 
   useEffect(() => {
-    setSceneParam(SCENE_ID, STORY_PARAM.layer, layer);
+    setSceneParam(STORY_SCENE_ID, STORY_PARAM.layer, layer);
   }, [layer]);
 
   const act = ACTS[phase.act];
-  const whole = !staged || phase.overview || act.day === undefined;
-  const day = whole ? LEGEND_COPY.wholeDays(TREK_DAYS) : LEGEND_COPY.day(act.day ?? 1, TREK_DAYS);
-  const place = whole ? LEGEND_COPY.wholePlace : (act.place ?? '');
+  const whole = !staged || phase.overview || !act.place;
+  const day = whole ? LEGEND_COPY.wholeDays(TREK_DAYS) : LEGEND_COPY.day(act.day, TREK_DAYS);
+  const place = whole ? LEGEND_COPY.wholePlace : act.place;
 
   return (
     <aside
       aria-label={LEGEND_COPY.label}
-      data-story-chrome=""
+      data-recede-chrome=""
       data-hidden={staged && phase.legendHidden ? '' : undefined}
       data-open={open ? '' : undefined}
       className={styles.legend}
+      style={STORY_HUE_VARS}
     >
       <p className={styles.where}>
         <span className={styles.day}>{day}</span>
