@@ -5,7 +5,7 @@ import localFont from 'next/font/local';
 // Font loader options must be literals, so Google's latin unicode-range is written out in each declaration; other
 // scripts fall through to the fallback stack (no visible copy uses a latin-ext, greek or cyrillic glyph of these fonts).
 // next/font/local names the @font-face family after the const it is assigned to, so each font is bound to its family
-// name (Archivo, Literata, IBM_Plex_Mono) and exported under its role.
+// name (Archivo, Literata, IBM_Plex_Mono, Manrope) and exported under its role.
 
 /** Display: headings, map labels for built things and peaks, spot heights, stamps, buttons. wght 100-900, wdth 62-125. */
 // fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900
@@ -62,5 +62,27 @@ const IBM_Plex_Mono = localFont({
 });
 export const data = IBM_Plex_Mono;
 
+/** UI: the navbar's wordmark, labels and actions. Even strokes, open shapes, a calm rhythm at 16 px. wght 500-600. */
+// fonts.googleapis.com/css2?family=Manrope:wght@500..600 (Manrope by Mikhail Sharanda, SIL OFL 1.1)
+const Manrope = localFont({
+  src: './fonts/manrope-latin-normal.woff2', weight: '500 600', style: 'normal',
+  declarations: [
+    { prop: 'unicode-range', value: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD' },
+    // The file's ascent/descent (106.6% / 30%) set the baseline 0.55 px lower than Archivo did, so labels sat low
+    // in the bead. Rebalanced so capitals centre in the 34 px bead within 0.25 px. Chrome rounds ascent and descent
+    // to whole px at 16 px (16.4 -> 16 left caps 0.9 px high), so the ascent clears 16.5 px to round to 17.
+    { prop: 'ascent-override', value: '103.5%' },
+    { prop: 'descent-override', value: '33.9%' },
+    { prop: 'line-gap-override', value: '0%' },
+  ],
+  // Not preloaded (§J.2 budget: 25 KB, only the navbar uses it). globals.css defines 'Manrope Fallback' (Arial
+  // and Arial Bold, sized per weight to Manrope's advance, same vertical overrides), so the bar keeps its size
+  // when the face swaps in.
+  display: 'swap', variable: '--font-ui', preload: false,
+  adjustFontFallback: false,
+  fallback: ['Manrope Fallback'],
+});
+export const ui = Manrope;
+
 /** Combined CSS-variable class names, applied to <html>; tailwind fontFamily reads the variables. */
-export const fontVariables = [display.variable, text.variable, data.variable].join(' ');
+export const fontVariables = [display.variable, text.variable, data.variable, ui.variable].join(' ');

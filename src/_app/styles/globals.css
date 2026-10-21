@@ -11,11 +11,13 @@
 
 /*
  * Metric-matched fallback faces for the swap period (fonts.ts turns off next/font's single generated face for
- * all three). Widths are fitted to the log strips and labels, so a late Literata or Plex Mono swap does not
+ * all four). Widths are fitted to the log strips and labels, so a late Literata or Plex Mono swap does not
  * re-wrap them (§J.2 CLS). Vertical overrides keep each family's ascent and descent.
  * Archivo: Arial at 98.7%, the metrics next/font/google used to compute (the local loader's 102.8% re-wraps headings).
  * Literata: Times New Roman roman at 117.01% and italic at 111.13% (fitted to Literata's widths).
  * IBM Plex Mono: a 0.6 em monospace (Courier New and its metric clones), the same advance as Plex Mono.
+ * Manrope (the navbar): Arial at 100.14% (from the file's average advance); its vertical overrides are the ones
+ * fonts.ts gives Manrope itself (102.7% / 33.9% of the em, rebalanced so labels sit optically centred in the bead).
  */
 @font-face { font-family: 'Archivo Fallback';
   src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
@@ -29,6 +31,15 @@
 @font-face { font-family: 'IBM Plex Mono Fallback';
   src: local('Courier New'), local('CourierNewPSMT'), local('Liberation Mono'), local('Cousine');
   size-adjust: 100%; ascent-override: 102.5%; descent-override: 27.5%; line-gap-override: 0%; }
+/* Manrope's fallback, one face per weight the navbar uses, each sized to Manrope's advance on the bar's own
+   labels (500: Home, Life, Work, Journal; 600: wordmark, Ask, Secure contact), so the centred bar keeps its
+   width when the face swaps in. Overrides are Manrope's (103.5% / 33.9%) divided by size-adjust. */
+@font-face { font-family: 'Manrope Fallback'; font-weight: 100 550;
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
+  size-adjust: 104.22%; ascent-override: 99.31%; descent-override: 32.53%; line-gap-override: 0%; }
+@font-face { font-family: 'Manrope Fallback'; font-weight: 551 900;
+  src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('Arimo Bold');
+  size-adjust: 99.16%; ascent-override: 104.38%; descent-override: 34.19%; line-gap-override: 0%; }
 
 /* ─── Variables (hand-written; colors live in tokens.css) ───────────────────────────────────────── */
 

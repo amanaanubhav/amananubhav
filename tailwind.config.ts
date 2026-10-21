@@ -20,6 +20,7 @@ const config: Config = {
         display: ['var(--font-display)', 'Arial Narrow', 'sans-serif'],
         body: ['var(--font-text)', 'Georgia', 'serif'],
         data: ['var(--font-data)', 'ui-monospace', 'monospace'],
+        ui: ['var(--font-ui)', 'system-ui', 'sans-serif'], // the navbar
         // legacy aliases so un-migrated classes still resolve to the new faces
         sans: ['var(--font-text)', 'Georgia', 'serif'],
         serif: ['var(--font-text)', 'Georgia', 'serif'],

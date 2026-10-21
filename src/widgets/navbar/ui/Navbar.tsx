@@ -71,7 +71,7 @@ function isCompactScroll(y: number): boolean {
 const CONTROL = cn(
   styles.ctl,
   'relative inline-flex h-10 min-w-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full',
-  'font-display transition-colors duration-hover ease-settle',
+  'font-ui transition-colors duration-hover ease-settle',
   'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-signal',
 );
 
@@ -196,13 +196,13 @@ export function Navbar() {
           onClick={(event) => onLinkClick(event, ROUTES.home)}
           className={action('max-[399px]:hidden sm:ps-2.5', compact ? 'sm:pe-2.5' : 'sm:pe-3.5')}
         >
-          <RidgeMark size={20} lit className="shrink-0 text-ink" />
+          <RidgeMark size={22} lit className="shrink-0 text-ink" />
           <span
             aria-hidden="true"
             data-collapsed={compact ? '' : undefined}
             className={cn(styles.wordmark, 'max-sm:!hidden')}
           >
-            <span className="font-semibold [font-variation-settings:'wdth'_100]">Aman Anubhav</span>
+            <span className="font-semibold">Aman Anubhav</span>
           </span>
         </Link>
 
