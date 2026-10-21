@@ -1,5 +1,7 @@
 import { BufferAttribute, BufferGeometry } from 'three';
 
+import { takePrefetched } from '@/shared/lib/stage-prefetch';
+
 /*
  * Heightfields (§C.5 "Heightfield format"): `public/data/terrain/<id>.bin` holds little-endian
  * Uint16 heights in whole metres, `cols x rows` samples, row-major north to south, west to east;
@@ -112,9 +114,14 @@ function fetchRaw(id: string): Promise<RawHeightfield> {
   const cached = rawCache.get(id);
   if (cached) return cached;
   const base = `/data/terrain/${encodeURIComponent(id)}`;
+  // A page may have started these downloads early (stage-prefetch); a failed prefetch fetches once more.
+  const json = `${base}.json`;
+  const bin = `${base}.bin`;
   const promise = Promise.all([
-    fetchOk(`${base}.json`).then((r) => r.json() as Promise<unknown>),
-    fetchOk(`${base}.bin`).then((r) => r.arrayBuffer()),
+    (takePrefetched<unknown>(json) ?? Promise.reject()).catch(() =>
+      fetchOk(json).then((r) => r.json() as Promise<unknown>),
+    ),
+    (takePrefetched<ArrayBuffer>(bin) ?? Promise.reject()).catch(() => fetchOk(bin).then((r) => r.arrayBuffer())),
   ]).then(([json, buffer]) => {
     const meta = parseMeta(json);
     const count = meta.cols * meta.rows;

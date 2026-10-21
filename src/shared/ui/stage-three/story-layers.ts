@@ -22,6 +22,18 @@ import type { StoryUniforms } from './story-uniforms';
  * peaks, ticks and the head). Colours are uniforms fed from STORY_PALETTE / THEME_PALETTE.
  */
 
+/*
+ * Terrain. The map ends as a soft island around the trek (`aFocus`: 1 near the route and the peaks,
+ * feathering to 0 farther out), never as a sheet edge or a floating slab. The sheet rim (R29) uses a superellipse radius of degree 8 (the corners round off), so no
+ * straight edge or corner reads at any angle: colour, lines and fog fade to the ground over the
+ * outer band and the relief sinks to its base there, so no ridge silhouette marks the edge. The
+ * fill is 70% stepped into 500 m bands on the index contours; temperature is modelled from altitude
+ * (lapse rate), never measured; frost dots sit on a world grid (colder = more cells); isotherms are
+ * one teal family (0 °C bold, -10 °C fine) plus a neutral +10 °C hairline for close zooms.
+ * Ribbon: walked = solid core in a 2 px ground casing, in the theme's `signal` tone (R22: it holds 3:1
+ * against the high tints, which `signal-line` does not in Night); jeep = dotted, thin, muted; still to
+ * walk = a dashed ghost in a soft ground trench.
+ */
 const TERRAIN_VS = /* glsl */ `
 uniform vec2 uResolution;
 uniform float uRangeM;
@@ -30,6 +42,7 @@ uniform float uDpr;
 uniform vec2 uHalf;
 ${GLSL_RECEDE_MASK}
 attribute float aHeightM;
+attribute float aFocus;
 attribute vec2 aGrad;
 varying float vH;
 varying float vMpp;
@@ -39,16 +52,13 @@ varying float vSheet;
 varying vec2 vPlane;
 varying vec3 vN;
 void main() {
-  // Feathered sheet rim (R29): a superellipse radius (degree 8: the corners round off), so no straight edge or corner reads at any
-  // angle. Colour, lines and fog fade to the ground over the outer band, and the relief sinks to
-  // its base there, so no ridge silhouette marks the edge.
   vec2 q = abs(position.xz) / uHalf;
   q *= q;
   q *= q;
   q *= q;
   float r = pow(q.x + q.y, 0.125);
-  float sink = 1.0 - smoothstep(0.88, 1.0, r);
-  float sheet = 1.0 - smoothstep(0.82, 0.99, r);
+  float sink = 1.0 - smoothstep(0.8, 1.0, r);
+  float sheet = (1.0 - smoothstep(0.7, 0.99, r)) * aFocus;
   vSheet = sheet * sheet * (3.0 - 2.0 * sheet);
   vec3 p = vec3(position.x, position.y * uEx * sink, position.z);
   vN = normalize(vec3(-aGrad.x * uEx / uRangeM, 1.0, -aGrad.y * uEx / uRangeM));
@@ -92,6 +102,8 @@ uniform float uHatch;
 uniform float uHatchK;
 uniform float uWarmK;
 uniform float uLive;
+uniform float uReveal;
+uniform float uRangeM;
 uniform float uFadeNear;
 uniform float uFadeFar;
 uniform float uFade;
@@ -126,14 +138,12 @@ float isoLine(float t, float lvl, float wpx) {
 }
 void main() {
   float sheet = vSheet;
-  // Elevation: hypsometric fill, 70% stepped into 500 m bands whose edges sit on the index contours.
   float f = vH / 500.0;
   float w = max(fwidth(f), 1e-4);
   float hb = (floor(f) + 0.5 + smoothstep(1.0 - w, 1.0, fract(f))) * 500.0;
   vec3 fill = ramp(uHypso, uHypsoAt, mix(vH, hb, 0.7));
-  // Temperature, modelled from altitude (lapse rate), never measured.
   float t = uLapse.y + uLapse.z * (vH - uLapse.x) * 0.001;
-  fill = mix(ramp(uTempC, uTempAt, t), fill, uFillMix);
+  if (uFillMix < 0.999) fill = mix(ramp(uTempC, uTempAt, t), fill, uFillMix);
   fill = mix(fill, uColdTint, clamp(-t / 20.0, 0.0, 1.0) * uHatch * 0.3 * uLive);
 #ifdef HILLSHADE
   float shd = uShade * uLive;
@@ -144,7 +154,6 @@ void main() {
   float index = clayer(vH, 500.0, 1.6, vMpp);
   color = mix(color, uInk, max(index * uIndex, minor * uMinor * uMinorK * uLive) * sheet);
 #ifdef FROST
-  // Frost stipple below 0 °C: dots on a world grid (they stay on the ground); colder = more cells.
   vec2 gp = vPlane * uHatchK;
   vec2 fp = fract(gp) - 0.5;
   vec2 gw2 = max(fwidth(gp), vec2(1e-5));
@@ -154,17 +163,60 @@ void main() {
   dotm *= 1.0 - smoothstep(0.2, 0.33, max(gw2.x, gw2.y));
   color = mix(color, uIsoZero, dotm * uHatch * 0.6 * sheet * uLive);
 #endif
-  // Isotherms: one teal family (0 °C bold, -10 °C fine) + a neutral +10 °C hairline (close zooms).
   float isoK = uIso * sheet * uLive * (1.0 - 0.75 * smoothstep(20.0, 70.0, vMpp));
   color = mix(color, uIsoWarm, isoLine(t, 10.0, uDpr) * isoK * 0.32 * uWarmK);
   color = mix(color, uIsoCold, isoLine(t, -10.0, uDpr) * isoK * 0.7);
   color = mix(color, uIsoZero, isoLine(t, 0.0, 2.0 * uDpr) * isoK * 0.95);
   color = mix(color, uFog, smoothstep(uFadeNear, uFadeFar, vDepth) * 0.78 * sheet);
   color = mix(uPaper, color, uFade);
-  color += (bayer4(gl_FragCoord.xy) - 0.5) * 0.018 * sheet;
-  gl_FragColor = vec4(recede(color, uPaper, vMask), 1.0);
+  // The entrance: summits lead, valleys last; every height has risen at uReveal = 1. Mixed after the
+  // recede, so uReveal = 0 is the ground exactly (no dither, no pool) and the pools only gain contrast.
+  float rv = smoothstep(0.0, 1.0, uReveal * 1.7 - (1.0 - clamp(vH / uRangeM, 0.0, 1.0)) * 0.7);
+  color += (bayer4(gl_FragCoord.xy) - 0.5) * 0.018 * sheet * rv;
+  gl_FragColor = vec4(mix(uPaper, recede(color, uRecedePaper, vMask), rv), 1.0);
 }
 `;
+
+/**
+ * Writes `aFocus` on the terrain: 1 within `inner` world units of any focus point (the route, the
+ * peaks), smoothly 0 beyond `outer`. A coarse distance grid (half-unit cells), sampled per vertex.
+ */
+export function setTerrainFocus(
+  geometry: BufferGeometry,
+  half: { x: number; y: number },
+  points: ArrayLike<number>,
+  inner: number,
+  outer: number,
+): void {
+  const cell = 0.5;
+  const gx = Math.ceil((half.x * 2) / cell) + 1;
+  const gz = Math.ceil((half.y * 2) / cell) + 1;
+  const grid = new Float32Array(gx * gz);
+  for (let j = 0; j < gz; j++)
+    for (let i = 0; i < gx; i++) {
+      const x = -half.x + i * cell;
+      const z = -half.y + j * cell;
+      let best = Infinity;
+      for (let k = 0; k < points.length; k += 2) best = Math.min(best, (points[k] - x) ** 2 + (points[k + 1] - z) ** 2);
+      grid[j * gx + i] = Math.sqrt(best);
+    }
+  const pos = geometry.getAttribute('position');
+  const focus = new Float32Array(pos.count);
+  for (let v = 0; v < pos.count; v++) {
+    const fx = Math.min(gx - 1.001, Math.max(0, (pos.getX(v) + half.x) / cell));
+    const fz = Math.min(gz - 1.001, Math.max(0, (pos.getZ(v) + half.y) / cell));
+    const i = Math.floor(fx);
+    const j = Math.floor(fz);
+    const tx = fx - i;
+    const tz = fz - j;
+    const d =
+      (grid[j * gx + i] * (1 - tx) + grid[j * gx + i + 1] * tx) * (1 - tz) +
+      (grid[(j + 1) * gx + i] * (1 - tx) + grid[(j + 1) * gx + i + 1] * tx) * tz;
+    const t = Math.min(1, Math.max(0, (d - inner) / (outer - inner)));
+    focus[v] = 1 - t * t * (3 - 2 * t);
+  }
+  geometry.setAttribute('aFocus', new BufferAttribute(focus, 1));
+}
 
 export interface StoryTerrainOptions {
   /** Tier 2 only (R42 levers): hillshade and the frost stipple. */
@@ -172,7 +224,10 @@ export interface StoryTerrainOptions {
   frost: boolean;
 }
 
-/** The terrain mesh over a displaced plane from `loadHeightfield` (the caller disposes the geometry). */
+/**
+ * The terrain mesh over a displaced plane from `loadHeightfield` (the caller disposes the geometry).
+ * The geometry needs an `aFocus` attribute (0..1 per vertex, see `setTerrainFocus`).
+ */
 export function createStoryTerrain(geometry: BufferGeometry, uniforms: StoryUniforms, opts: StoryTerrainOptions): Mesh {
   const defines: Record<string, string> = {};
   if (opts.hillshade) defines.HILLSHADE = '';
@@ -213,7 +268,6 @@ void main() {
   vec2 dir = length(sp) > 1e-6 ? normalize(sp) : vec2(1.0, 0.0);
   float trip = step(0.5, aStrip);
   float jeep = step(1.5, aStyle);
-  // Half widths in CSS px, including the ground casing (2 px, R22).
   float halfW = mix(mix(4.6, 3.4, jeep), 3.9, trip);
   c0.xy += vec2(-dir.y, dir.x) * aSide * halfW * 2.0 / uResolution * c0.w;
   vec4 pick = vec4(equal(vec4(aStrip), vec4(1.0, 2.0, 3.0, 4.0)));
@@ -229,12 +283,13 @@ void main() {
 
 const RIBBON_FS = /* glsl */ `
 uniform vec3 uPaper;
-uniform vec3 uSignal;
+uniform vec3 uHeadC;
 uniform vec3 uBranch;
 uniform vec3 uJeep;
 uniform float uDashK;
 uniform float uFade;
 uniform float uGhost;
+uniform float uReveal;
 varying float vDist;
 varying float vDraw;
 varying float vSide;
@@ -254,9 +309,7 @@ void main() {
   float k = vDist * uDashK;
   float dots = step(fract(k * 1.6), 0.38);
   float dash = step(fract(k), 0.55);
-  vec3 line = mix(mix(uSignal, uJeep, vJeep), uBranch, vTrip);
-  // Walked: solid core in a ground casing. Jeep: dotted, thin, muted. Still to walk: a dashed ghost
-  // in a soft ground trench.
+  vec3 line = mix(mix(uHeadC, uJeep, vJeep), uBranch, vTrip);
   float walked = reveal * mix(1.0, dots, vJeep);
   float ghostCore = 1.0 - smoothstep(0.9 - pw, 0.9 + pw, px);
   float ghost = (1.0 - reveal) * ghostCore * mix(dash, dots, vJeep) * uGhost * mix(1.0, 0.75, vTrip);
@@ -266,7 +319,8 @@ void main() {
   vec3 c = mix(gc, mix(uPaper, line, max(core, 1.0 - walked)), reveal);
   float a = max(casing * walked, ga);
   c = mix(uPaper, c, uFade);
-  gl_FragColor = vec4(recede(c, uPaper, recedeMaskAt(gl_FragCoord.xy)), a * uFade);
+  a *= smoothstep(0.45, 0.9, uReveal);
+  gl_FragColor = vec4(recede(c, uRecedePaper, recedeMaskAt(gl_FragCoord.xy)), a * uFade);
 }
 `;
 
@@ -386,6 +440,7 @@ uniform vec3 uBranch;
 uniform float uTime;
 uniform float uPulse;
 uniform float uFade;
+uniform float uReveal;
 varying vec2 vUv;
 varying float vKind;
 varying float vAlpha;
@@ -438,7 +493,8 @@ void main() {
     a = disc(r, 0.9);
   }
   c = mix(uPaper, c, uFade);
-  gl_FragColor = vec4(recede(c, uPaper, recedeMaskAt(gl_FragCoord.xy)), a * vAlpha * uFade);
+  a *= smoothstep(0.45, 0.9, uReveal);
+  gl_FragColor = vec4(recede(c, uRecedePaper, recedeMaskAt(gl_FragCoord.xy)), a * vAlpha * uFade);
 }
 `;
 

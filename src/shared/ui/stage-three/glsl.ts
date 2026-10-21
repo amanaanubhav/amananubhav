@@ -112,6 +112,10 @@ uniform float uLumFloor;
 uniform float uKnee;
 uniform float uKneeDay;
 uniform float uDay;
+// The recede follows the TARGET theme at once (not the 700 ms tween), so the pool under text always
+// matches the text's new ink: R31 holds during a theme switch too.
+uniform float uRecedeDay;
+uniform vec3 uRecedePaper;
 float lumLin(vec3 l) { return dot(l, vec3(0.2126, 0.7152, 0.0722)); }
 vec3 recede(vec3 c, vec3 paper, float m) {
   if (m <= 0.0) return c;
@@ -123,6 +127,6 @@ vec3 recede(vec3 c, vec3 paper, float m) {
   float Ld = L > uKneeDay ? L : uKneeDay - (uKneeDay - uLumFloor) * (1.0 - exp(-(uKneeDay - L) / (uKneeDay - uLumFloor)));
   vec3 down = r * (Ln / L);
   vec3 up = mix(r, pl, clamp((Ld - L) / max(lumLin(pl) - L, 1e-5), 0.0, 1.0));
-  return pow(mix(lin, mix(down, up, uDay), m), vec3(1.0 / 2.2));
+  return pow(mix(lin, mix(down, up, uRecedeDay), m), vec3(1.0 / 2.2));
 }
 `;

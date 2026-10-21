@@ -35,14 +35,16 @@ export function useSlotSize(slot: HTMLElement | null): RefObject<SlotSize> {
 }
 
 /**
- * Marks the slot live (`data-stage-live`, which fades the SSR poster out, §C.5) the first time the
- * returned callback runs, typically `useSlotRender`'s `onRender` once the scene's data is ready;
- * removes the attribute on unmount so the poster returns.
+ * Marks the slot live (`data-stage-live`: the scene has drawn its first frame, §C.5) the first time the
+ * returned callback runs, typically `useSlotRender`'s `onRender` once the scene's data is ready. On
+ * unmount it removes the live, shown and failed marks, so the slot's poster (or static map) returns.
  */
 export function useStageLive(slot: HTMLElement | null): () => void {
   useEffect(
     () => () => {
       slot?.removeAttribute('data-stage-live');
+      slot?.removeAttribute('data-stage-shown');
+      slot?.removeAttribute('data-stage-failed');
     },
     [slot],
   );
@@ -50,4 +52,14 @@ export function useStageLive(slot: HTMLElement | null): () => void {
   return useCallback(() => {
     if (slot && !slot.hasAttribute('data-stage-live')) slot.setAttribute('data-stage-live', '');
   }, [slot]);
+}
+
+/** The scene's map has risen far enough for its DOM labels (`data-stage-shown`, load-in-3d §3). */
+export function markStageShown(slot: HTMLElement | null): void {
+  if (slot && !slot.hasAttribute('data-stage-shown')) slot.setAttribute('data-stage-shown', '');
+}
+
+/** The scene cannot draw on this page view (chunk, data or render failure): `data-stage-failed`. */
+export function markStageFailed(slot: HTMLElement | null): void {
+  if (slot && !slot.hasAttribute('data-stage-failed')) slot.setAttribute('data-stage-failed', '');
 }

@@ -1,6 +1,7 @@
 import { Color } from 'three';
 
 import { CONTOUR_ALPHA, THEME_PALETTE, hexToRgb01, type ThemeName } from '@/shared/config';
+import { gsap } from '@/shared/lib/gsap';
 
 /*
  * Theme uniforms shared by every stage material (§C.5). One object, so a material that spreads
@@ -69,3 +70,28 @@ export const stageUniforms = {
 };
 
 export type StageUniforms = typeof stageUniforms;
+
+const STAGE_COLOR_KEYS: readonly StageColorUniform[] = ['uPaper', 'uInk', 'uSignal', 'uWater', 'uSky'];
+
+/**
+ * Puts the theme uniforms on `theme` at once and stops ThemeUniforms' 700 ms tween. A scene still rising
+ * out of the ground calls it on a theme switch: its ground-identical frames then keep matching the page
+ * ground, which the view transition swaps at once (load-in-3d §3).
+ */
+export function snapStageTheme(theme: ThemeName): void {
+  const targets = themeUniformTargets(theme);
+  for (const key of STAGE_COLOR_KEYS) {
+    const color = stageUniforms[key].value;
+    gsap.killTweensOf(color);
+    [color.r, color.g, color.b] = targets.colors[key];
+  }
+  const scalars = [
+    [stageUniforms.uDay, targets.day],
+    [stageUniforms.uContourMinor, targets.contourMinor],
+    [stageUniforms.uContourIndex, targets.contourIndex],
+  ] as const;
+  for (const [uniform, value] of scalars) {
+    gsap.killTweensOf(uniform);
+    uniform.value = value;
+  }
+}

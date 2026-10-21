@@ -27,6 +27,12 @@ export interface ContourSheetProps {
   /** G-09: tent light fades, a headlamp line climbs the planned route (once, in view). */
   alpineStart?: boolean;
   className?: string;
+  /** SVG drawn under the contours (e.g. the plan sheet's band fills), inside the one SVG. */
+  underlay?: ReactNode;
+  /** SVG drawn above the contours and under the routes (isotherms, the by-road stretch). */
+  lines?: ReactNode;
+  /** SVG drawn above the routes (markers). */
+  overlay?: ReactNode;
   /** HTML overlays positioned in percent of the viewBox (pins, cards, readouts). */
   children?: ReactNode;
 }
@@ -85,6 +91,9 @@ export function ContourSheet({
   aspect = 'meet',
   alpineStart = false,
   className,
+  underlay,
+  lines,
+  overlay,
   children,
 }: ContourSheetProps): ReactElement {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
@@ -141,7 +150,12 @@ export function ContourSheet({
         <path
           d={route.d}
           className="route-line"
-          style={{ ...ROUTE, strokeWidth: look.width, strokeDasharray: look.dash }}
+          style={{
+            ...ROUTE,
+            ...(route.kind === 'side-trip' ? { stroke: 'rgb(var(--c-water))' } : {}),
+            strokeWidth: look.width,
+            strokeDasharray: look.dash,
+          }}
           vectorEffect={NON_SCALING}
           data-sheet-planned={plannedRoute?.id === route.id ? '' : undefined}
         />
@@ -201,6 +215,8 @@ export function ContourSheet({
         </defs>
       )}
 
+      {underlay}
+
       <g data-sheet-contours="" aria-hidden="true">
         <g data-sheet-minor="">
           <use href={`#${symbolId}-minor`} width={w} height={h} />
@@ -244,6 +260,8 @@ export function ContourSheet({
         </g>
       )}
 
+      {lines}
+
       <g aria-hidden="true" mask={animateDraw ? `url(#${maskId})` : undefined}>
         {routeGroup(lead)}
       </g>
@@ -252,6 +270,8 @@ export function ContourSheet({
           {routeGroup(after)}
         </g>
       )}
+
+      {overlay}
 
       {data.tent && (
         <g aria-hidden="true" transform={`translate(${data.tent.x} ${data.tent.y}) scale(${mark.toFixed(2)})`}>

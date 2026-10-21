@@ -92,8 +92,13 @@ export function createStoryUniforms() {
     uHatchK: { value: 10 },
     /** The +10 °C hairline's zoom gate (close shots only). */
     uWarmK: { value: 1 },
-    /** 0 = the poster's look (flat bands + index contours), 1 = the lit relief. */
+    /** 0 = flat bands + index contours only, 1 = the lit relief. Pinned to 1 since the map loads in 3D. */
     uLive: { value: 1 },
+    /**
+     * The entrance (load-in-3d §3): 0 = the ground exactly (terrain, ribbon and markers at the paper),
+     * 1 = the map. The relief rises summits first; the route and markers fade in from 0.45 to 0.9.
+     */
+    uReveal: { value: 1 },
     uFadeNear: { value: 20 },
     uFadeFar: { value: 60 },
     /** 1 -> 0: the map dissolves into the ground in place (the ending). */
@@ -114,7 +119,30 @@ export function createStoryUniforms() {
     uLumFloor: { value: 0.64 },
     uKnee: { value: 0.022 },
     uKneeDay: { value: 0.7 },
+    /** The recede's theme and paper: the target theme at once, never mid-tween (`setRecedeTheme`). */
+    uRecedeDay: { value: 0 },
+    uRecedePaper: { value: paperColor('night') },
   };
+}
+
+function paperColor(theme: 'night' | 'day'): Color {
+  const [r, g, b] = hexToRgb01(STORY_PALETTE[theme].ground);
+  const color = new Color();
+  color.r = r;
+  color.g = g;
+  color.b = b;
+  return color;
+}
+
+const RECEDE_PAPER = { night: paperColor('night'), day: paperColor('day') } as const;
+
+/**
+ * Points the recede (the pools under text) at the target theme immediately, while the map's colours
+ * tween: the text switches ink at once, so its pool must too (R31 during the theme tween).
+ */
+export function setRecedeTheme(u: StoryUniforms, isDark: boolean): void {
+  u.uRecedeDay.value = isDark ? 0 : 1;
+  u.uRecedePaper.value.copy(isDark ? RECEDE_PAPER.night : RECEDE_PAPER.day);
 }
 
 export type StoryUniforms = ReturnType<typeof createStoryUniforms>;
