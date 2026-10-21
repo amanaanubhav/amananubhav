@@ -82,9 +82,6 @@ export const HERO_COPY = {
   readStory: 'Read my story',
   status: 'Open to remote roles',
   statusHref: '/professional#remote',
-  plateTitle: 'Annapurna Circuit plan sheet',
-  plateDesc:
-    'Contour map of the Annapurna Circuit with my 250 km route from Besisahar over Thorong La, 5,416 m, to Muktinath.',
 } as const;
 
 /** Hero log rows (the status row is rendered by the hero as a StatusChip). */
@@ -163,7 +160,7 @@ export const ENTRY_PLACE_KEY: Readonly<Partial<Record<HomeEntryId, string>>> = {
 export const ENTRY_LINKS = {
   origin: { label: "More about where I'm from", href: '/personal#about' },
   work: { label: 'See the work', href: '/professional' },
-  pass: { label: 'Read the field note', storyId: ANNAPURNA.storyId ?? 'annapurna-circuit-solo' },
+  pass: { label: 'Read the journal entry', storyId: ANNAPURNA.storyId ?? 'annapurna-circuit-solo' },
   ask: { label: 'Open the terminal' },
   write: { label: 'Secure contact' },
 } as const;
@@ -174,31 +171,70 @@ export const QUIET_ROOM_LINE = {
   confirmed: false,
 } as const;
 
-/** Captions of the tier-0 static entry plates and the stage. */
-export const STAGE_COPY = {
+/* ------------------------------------------------------------ the story map */
+
+/** The one map of the page, in words (the stage is aria-hidden; this and the route list are its text). */
+export const MAP_COPY = {
+  heading: 'The route on the map',
   description:
-    'Relief of the Annapurna massif with my 250 km route from Besisahar over Thorong La, 5,416 m, to Muktinath.',
-  posterTitle: 'Annapurna Circuit relief, plan view',
-  profileTitle: 'Elevation profile of the Annapurna Circuit',
-  profileDesc:
-    'Altitude along my route from Besisahar at about 760 m over Thorong La at 5,416 m down to Muktinath at about 3,760 m.',
-  summitLabel: 'Thorong La',
+    'A relief map of the Annapurna massif behind the page. As you scroll, my 14-day walk draws along the trail from Besisahar over Thorong La, 5,416 m, to Muktinath, with side trips to Blue Lake, Green Lake, Ice Lake and Tilicho Lake. Colour shows altitude; lines show temperature, modelled from altitude.',
+  routeListLabel: 'The route, in walking order',
+  sideTrip: 'side trip',
+  approxPosition: 'approximate position',
+  byJeep: 'Syange to Tal by jeep, not walked',
+  /** The sheet's title and description when it is the static map (tier 0) or the arrival poster. */
+  sheetTitle: 'Annapurna Circuit, the whole route',
+  sheetDesc:
+    'Contour map of the Annapurna Circuit with my route from Besisahar over Thorong La, 5,416 m, to Muktinath, and the side trips to the lakes.',
 } as const;
 
-/** The static plate shown per entry at tier 0 (§G.1): route state on the plan sheet. */
-export const STATIC_PLATE_STATE: Readonly<Partial<Record<HomeEntryId, 'hidden' | 'graph' | 'solid'>>> = {
-  origin: 'hidden',
-  work: 'graph',
-  how: 'graph',
-  pass: 'solid',
-};
+/** One-line captions of the map-only stretch (the Manang days, §4 B6-B9), each anchored to its beat. */
+export const STORY_CAPTIONS = [
+  { id: 'day6', head: 'Day 6', text: 'A rest day at Mungji: Blue Lake, then Green Lake.' },
+  { id: 'day7', head: 'Day 7', text: 'Ice Lake, from Mungji up past the small lake below it, and back down.' },
+  {
+    id: 'days910',
+    head: 'Days 9 and 10',
+    text: 'Through Manang and Khangsar to Shri Kharka. Then Tilicho Lake, 4,919 m, and back.',
+  },
+] as const;
 
-export const STATIC_PLATE_DESC: Readonly<Partial<Record<HomeEntryId, string>>> = {
-  origin: 'The Annapurna sheet before the route: contours only, a printed plan.',
-  work: 'The route as a dashed graph from Besisahar over Thorong La to Muktinath, each waypoint a ringed node, with the Ice Lake and Tilicho Lake side trips.',
-  how: 'The same dashed graph: Manang, mid-route, is the node where the Ice Lake and Tilicho Lake side trips branch off.',
-  pass: 'The route as one solid trail over Thorong La, 5,416 m, down to Muktinath.',
-};
+/** The summit numeral (§5.4), counted once with the head and held. */
+export const NUMERAL_COPY = {
+  kicker: 'Thorong La, day 14',
+  after: 'The highest point of the circuit. Then a long way down to Muktinath.',
+} as const;
+
+/** The map legend (§13). Honesty notes only: no sources or credits. */
+export const LEGEND_COPY = {
+  label: 'Map legend',
+  day: (day: number, of: number) => `Day ${day} of ${of}`,
+  wholeDays: (days: number) => `${days} days`,
+  wholePlace: 'Annapurna Circuit, April–May 2026',
+  emphasis: 'Colour the terrain by',
+  altitude: 'Altitude',
+  temperature: 'Temperature',
+  key: 'Key',
+  altitudeScale: 'Altitude scale, metres',
+  temperatureScale: 'Temperature scale, degrees Celsius',
+  isoWarm: '+10',
+  isoZero: '0 °C',
+  isoCold: '−10',
+  frost: 'below 0',
+  noteAltitude: 'Colour: altitude, 500 m bands. Lines: temperature, modelled from altitude, not measured.',
+  noteTemperature:
+    'Colour: temperature on an April–May day, modelled from altitude (−6.5 °C per 1,000 m from about +22 °C at Besisahar). Not measured.',
+  keys: [
+    { id: 'walked', style: 'kRoute', text: 'Walked' },
+    { id: 'ahead', style: 'kGhost', text: 'To walk' },
+    { id: 'jeep', style: 'kJeep', text: 'By jeep' },
+    { id: 'side', style: 'kSide', text: 'Side trip' },
+    { id: 'lake', style: 'kLake', text: 'Lake' },
+    { id: 'peak', style: 'kPeak', text: 'Peak' },
+  ],
+  honesty:
+    'April–May 2026. Altitudes are commonly cited and approximate (~). Blue Lake and Green Lake are at approximate positions.',
+} as const;
 
 /* ------------------------------------------------------------ G-21 extras */
 
@@ -230,8 +266,6 @@ export const NEXT_COPY = {
   terminal: 'Open the terminal',
   vault: 'Secure contact',
   email: 'Email me',
-  storyLink: 'Read the field note',
+  storyLink: 'Read the journal entry',
   overlapCaption: 'My working day in IST, against yours.',
-  plateTitle: 'Garhwal sheet: my last solo route and the next one',
-  plateDesc: 'Planned route to Dodital and Darwa Top, dashed, beside my last solo route to Chandrashila.',
 } as const;
