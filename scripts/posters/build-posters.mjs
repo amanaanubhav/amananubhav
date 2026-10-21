@@ -1,9 +1,9 @@
-// npm run gen:posters  (DESIGN-SPEC §C.5 data pipeline, §F G-01, G-03, G-04a, G-04b, G-09)
+// npm run gen:posters  (DESIGN-SPEC §C.5 data pipeline, §F G-01, G-03, G-04a, G-04b; the G-09 Garhwal sheet was
+// retired with the home redesign: one map on the home page)
 //
 // Runs d3-contour on the heightfields in public/data/terrain and projects stars from d3-celestial, then
-// regenerates the four generated modules with the export names and types of the wave-0 stubs:
+// regenerates the three generated modules with the export names and types of the wave-0 stubs:
 //   src/_pages/home/config/plan-sheet.generated.ts      PLAN_SHEET            (≤ 60 KB; reads public/data/routes/annapurna-route.json)
-//   src/_pages/home/config/garhwal-sheet.generated.ts   GARHWAL_SHEET         (≤ 30 KB)
 //   src/_pages/stories/config/atlas.generated.ts        ATLAS_SHEET, ATLAS_BBOX, atlasPoint (≤ 60 KB)
 //   src/_pages/personal/config/sky-charts.generated.ts  WINTER_SKY, SKY_POSTER (≤ 30 KB for the module)
 // Coordinates are rounded to 1 decimal. Each sheet climbs a coarsening ladder until it fits its cap.
@@ -14,7 +14,7 @@ import { join, relative, resolve } from 'node:path';
 
 import { SHEETS, TERRAIN_DIR, ROOT, importSource, makeProjection, parseArgs, readHeightfield } from '../terrain/shared.mjs';
 import { contourLayers, fitToCap } from './contour-sheet.mjs';
-import { r1, routePath } from './geometry.mjs';
+import { r1 } from './geometry.mjs';
 import { buildSkyModule } from './sky-charts.mjs';
 import { previewSheetSvg, previewStarSvg } from './preview.mjs';
 import { reportClearance } from './label-clearance.mjs';
@@ -28,7 +28,6 @@ const dry = Boolean(args.dry);
 if (previewDir) mkdirSync(previewDir, { recursive: true });
 
 const entity = await importSource('src/entities/expedition/model/expeditions.ts');
-const { getExpedition } = entity;
 // The publishable route (reconstructed day lines along mapped trails; no timestamps). --route=<file> overrides.
 const routeFile = args.route ? resolve(String(args.route)) : join(ROOT, 'public/data/routes/annapurna-route.json');
 
@@ -37,7 +36,6 @@ const KB = 1000;
 const PLAN_CAP = 60 * KB;
 const OUT = {
   plan: join(ROOT, 'src/_pages/home/config/plan-sheet.generated.ts'),
-  garhwal: join(ROOT, 'src/_pages/home/config/garhwal-sheet.generated.ts'),
   atlas: join(ROOT, 'src/_pages/stories/config/atlas.generated.ts'),
   sky: join(ROOT, 'src/_pages/personal/config/sky-charts.generated.ts'),
 };
@@ -61,24 +59,6 @@ const LADDER = [
   [2.8, 3.0, 50, 8, 1.5],
   [3.2, 3.5, 60, 10, 2],
 ].map(([sigma, tolerance, minLength, minSpacing, indexMinSpacing]) => ({ sigma, tolerance, minLength, minSpacing, indexMinSpacing }));
-
-const fmtDeg = (deg, pos, neg) => {
-  const a = Math.abs(deg);
-  const d = Math.floor(a + 1e-9);
-  const m = Math.round((a - d) * 60);
-  return `${d}°${String(m).padStart(2, '0')}′ ${deg >= 0 ? pos : neg}`;
-};
-
-const node = (projection, wp) => {
-  const [x, y] = projection.project(wp.lon, wp.lat);
-  return { x: r1(x), y: r1(y), name: wp.name };
-};
-
-function route(projection, id, waypoints, kind) {
-  const nodes = waypoints.filter((wp) => typeof wp.lon === 'number' && typeof wp.lat === 'number').map((wp) => node(projection, wp));
-  const { d, length } = routePath(nodes.map((n) => [n.x, n.y]));
-  return { id, d, lengthPx: Math.round(length), nodes, kind };
-}
 
 function sourceFields(field) {
   return field.meta.source === 'terrain-tiles'
@@ -176,85 +156,12 @@ const sizes = [];
     PLAN_CAP,
   );
   sizes.push(report('plan-sheet', OUT.plan, result, PLAN_CAP));
-  reportClearance('plan-sheet', result.data);
+  // Shown full-bleed at tier 0: about 0.39 px/unit on phones (390 px wide, priority-1 names only) to 0.72 on a
+  // 900 px tall desktop (every name).
+  const priorityOne = { ...result.data, labels: result.data.labels.filter((l) => l.priority === 1) };
+  reportClearance('plan-sheet (phone)', priorityOne, 0.5, [0.39, 0.51]);
+  reportClearance('plan-sheet (desktop)', result.data, 0.5, [0.64, 0.72, 1]);
   if (previewDir) writeFileSync(join(previewDir, 'plan-sheet.svg'), previewPlanSvg(result.data));
-}
-
-/* ------------------------------------------------------------------------------------------------
- * G-09 Garhwal sheet
- * --------------------------------------------------------------------------------------------- */
-{
-  const sheet = SHEETS.garhwal;
-  const projection = makeProjection(sheet);
-  const field = readHeightfield(terrainDir, 'garhwal');
-  const chandrashila = getExpedition('chandrashila');
-  const dodital = getExpedition('dodital');
-  const cw = (name) => chandrashila.waypoints.find((wp) => wp.name === name);
-  const dw = (name) => dodital.waypoints.find((wp) => wp.name === name);
-  const p = (wp) => node(projection, wp);
-  // Chopta is the last camp of the Chandrashila route until Q-54 names it. Chopta sits about 1 km from
-  // the summit in the entity data (9 viewBox units), while ContourSheet draws the tent about 40 units wide
-  // and the Chandrashila label runs left from the summit; so the tent is displaced (standard cartographic
-  // symbol displacement) to sit just above the trail by Chopta, clear of the summit mark and its label.
-  const campNode = p(cw('Chopta'));
-  const camp = { x: r1(campNode.x - 12), y: r1(campNode.y - 34) };
-  const uttarkashi = projection.project(78.443, 30.729);
-  const ticks = [
-    { x: r1(projection.project(78.5, 30.7)[0]), text: fmtDeg(78.5, 'E', 'W') },
-    { x: r1(projection.project(79, 30.7)[0]), text: fmtDeg(79, 'E', 'W') },
-    { y: r1(projection.project(79, 30.5)[1]), text: fmtDeg(30.5, 'N', 'S') },
-    { y: r1(projection.project(79, 31)[1]), text: fmtDeg(31, 'N', 'S') },
-  ];
-  const summit = cw('Chandrashila');
-  const darwa = dw('Darwa Top');
-
-  const makeBase = (minorStep) => ({
-    id: 'garhwal',
-    viewBox: sheet.viewBox,
-    routes: [
-      route(projection, 'chandrashila', chandrashila.waypoints, 'done'),
-      route(projection, 'dodital', dodital.waypoints, 'planned'),
-    ],
-    labels: [
-      { ...pick(p(summit)), text: 'Chandrashila', kind: 'peak', altitudeM: summit.altitudeM, approx: summit.approx, anchor: 'end', priority: 1 },
-      { ...pick(p(darwa)), text: 'Darwa Top', kind: 'peak', altitudeM: darwa.altitudeM, approx: darwa.approx, anchor: 'start', priority: 1 },
-      { x: p(cw('Deoriatal')).x, y: r1(p(cw('Deoriatal')).y - 46), text: 'Deoriatal', kind: 'water', anchor: 'middle', priority: 2 },
-      { ...pick(p(dw('Dodital'))), text: 'Dodital', kind: 'water', anchor: 'end', priority: 1 },
-      { x: r1(uttarkashi[0]), y: r1(uttarkashi[1]), text: 'Uttarkashi', kind: 'town', anchor: 'start', priority: 2 },
-    ],
-    graticule: ticks,
-    scaleBar: { x: 60, y: 830, lengthPx: r1(10 * projection.pxPerKm), text: '10 km' },
-    northArrow: { x: 940, y: 110 },
-    tent: { x: camp.x, y: camp.y },
-    sheetTitle: `Garhwal: Chandrashila, then Dodital. Contours ${minorStep} m.`,
-    ...sourceFields(field),
-  });
-  const doc = (minorStep) =>
-    [
-      '/**',
-      ' * G-09: Garhwal sheet with the alpine start (home `#next`).',
-      ` * Relief: ${field.meta.source === 'terrain-tiles' ? 'Terrain Tiles (SRTM)' : 'illustrative (procedural, seeded)'}; minor contours every ${minorStep} m, index every 500 m (ascending, so`,
-      ' * the last index path is the highest contour: the alpenglow ridge of the alpine start).',
-      ' * Projection: bbox 78.30 to 79.40 E, 30.30 to 31.10 N; equirectangular with cos(30.7°) x-scaling,',
-      ' * fitted and centred in a 1000 × 1000 viewBox. Chandrashila route done (solid), Dodital route planned',
-      ' * (dashed), tent beside Chopta until Q-54 names the camp. Waypoints from entities/expedition (estimates).',
-      ' */',
-    ].join('\n');
-  // 100 m contours first; 250 m only if the 100 m sheet cannot fit the cap.
-  const ladder = [100, 250].flatMap((minorStep) => LADDER.map((rung) => ({ ...rung, minorStep })));
-  const result = fitToCap(
-    (rung) => {
-      const layers = contourLayers(field, projection, sheet.viewBox, { indexStep: 500, ...rung });
-      const data = { ...makeBase(rung.minorStep), minor: layers.minor, index: layers.index, water: [] };
-      const text = `${GENERATED_HEADER}\nimport type { ContourSheetData } from '@/shared/ui/map';\n\n${doc(rung.minorStep)}\nexport const GARHWAL_SHEET: ContourSheetData = ${toTs(order(data))};\n`;
-      return { text, data, bytes: Buffer.byteLength(text), layers };
-    },
-    ladder,
-    30 * KB,
-  );
-  sizes.push(report('garhwal-sheet', OUT.garhwal, result, 30 * KB));
-  reportClearance('garhwal-sheet', result.data);
-  if (previewDir) writeFileSync(join(previewDir, 'garhwal-sheet.svg'), previewSheetSvg(result.data));
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -356,10 +263,6 @@ for (const s of sizes) {
 }
 
 /* ------------------------------------------------------------------------------------------------ */
-
-function pick(n) {
-  return { x: n.x, y: n.y };
-}
 
 /** Key order of the stub modules, so diffs against them stay readable. */
 function order(data) {

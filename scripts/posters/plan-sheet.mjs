@@ -193,18 +193,18 @@ export function overviewLabels(projection, entity) {
   };
   return [
     // The pass mark rises off the line so the name clears the climb from High Camp.
-    { x: thorong.x, y: r1(thorong.y - 6), text: 'Thorong La', kind: 'pass', ...shown(wp('Thorong La')), anchor: 'start', priority: 1 },
+    { x: thorong.x, y: r1(thorong.y - 9), text: 'Thorong La', kind: 'pass', ...shown(wp('Thorong La')), anchor: 'start', priority: 1 },
     { x: r1(tilicho.x - 4), y: r1(tilicho.y - 22), text: 'Tilicho Lake', kind: 'water', ...shown(wp('Tilicho Lake')), anchor: 'middle', priority: 1 },
     { x: r1(ice.x + 8), y: r1(ice.y - 14), text: waypointLabel(wp('Ice Lake')), kind: 'water', ...shown(wp('Ice Lake')), anchor: 'start', priority: 1 },
     { x: r1(blue.x + 12), y: r1(blue.y + 16), text: 'Blue Lake (approx.)', kind: 'water', anchor: 'start', priority: 2 },
-    { x: r1(green.x - 6), y: r1(green.y + 22), text: 'Green Lake (approx.)', kind: 'water', anchor: 'end', priority: 2 },
-    { x: manang.x, y: r1(manang.y - 20), text: 'Manang', kind: 'village', anchor: 'end', priority: 2 },
+    { x: r1(green.x - 4), y: r1(green.y + 42), text: 'Green Lake (approx.)', kind: 'water', anchor: 'end', priority: 2 },
+    // Manang's dot drops below the Khangsar line (symbol displacement); the name runs west, under it.
+    { x: r1(manang.x - 3), y: r1(manang.y + 15), text: 'Manang', kind: 'village', anchor: 'end', priority: 2 },
     { ...besisahar, text: 'Besisahar', kind: 'village', ...shown(wp('Besisahar')), anchor: 'end', priority: 1 },
-    { x: muktinath.x, y: r1(muktinath.y - 12), text: 'Muktinath', kind: 'village', ...shown(wp('Muktinath')), anchor: 'start', priority: 1 },
+    { x: muktinath.x, y: r1(muktinath.y - 20), text: 'Muktinath', kind: 'village', ...shown(wp('Muktinath')), anchor: 'start', priority: 1 },
     pk('annapurna-i', 'start'),
     pk('annapurna-ii', 'start'),
     pk('annapurna-iii', 'start'),
-    pk('tilicho-peak', 'start', 0, 40),
   ].map(({ name: _name, ...l }) => l);
 }
 

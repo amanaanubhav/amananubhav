@@ -132,9 +132,10 @@ export function labelClearance(data, scales = PLATE_SCALES) {
 }
 
 /** Prints one line per label and returns false when any name touches a route or leaves the plate. */
-export function reportClearance(sheetName, data, minPx = 0.5) {
+/** `scales`: the plate sizes this sheet is shown at (px per viewBox unit); PLATE_SCALES by default. */
+export function reportClearance(sheetName, data, minPx = 0.5, scales = PLATE_SCALES) {
   let ok = true;
-  for (const r of labelClearance(data)) {
+  for (const r of labelClearance(data, scales)) {
     const bad = r.minGap < minPx || r.clipped.length > 0;
     if (bad) ok = false;
     const clip = r.clipped.length ? `, clipped at ${r.clipped.join(', ')} px/unit` : '';

@@ -59,13 +59,12 @@ export type FillGlyph =
   | 'Tent'
   | 'Backpack';
 
-/** Every registry id of §E.3 (117 slots; multi-slot rows counted per slot). */
+/** Every registry id of §E.3 (116 slots since the one-map home retired the G-09 Garhwal sheet, M-EPI-01; multi-slot rows counted per slot). */
 export type MediaSlotId =
   // home
   | 'M-HERO-01'
   | 'M-HERO-02'
   | 'M-ALTIMETER-01'
-  | 'M-EPI-01'
   // origin
   | 'M-ORIGIN-01'
   | 'M-ORIGIN-02'
@@ -335,10 +334,10 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
   'M-HERO-01': {
     chapter: 'home', kind: 'svg', status: 'generated', ratio: '4:5',
     path: 'src/_pages/home/config/plan-sheet.generated.ts', generator: 'G-01 + scene relief-annapurna',
-    subject: 'Annapurna plan sheet and relief scene, built from the heightfield and the route.',
-    short: 'contour map of the Annapurna Circuit',
-    alt: 'Contour map of the Annapurna Circuit with my 250 km route from Besisahar over Thorong La, 5,416 m, to Muktinath.',
-    usedIn: ['/#home', '/#meander'],
+    subject: 'The home story map: the Annapurna plan sheet (altitude bands, modelled isotherms, the walked route, the jeep stretch and the four side trips) and the relief scene, built from the heightfield and the reconstructed route.',
+    short: 'map of the Annapurna Circuit',
+    alt: 'Map of the Annapurna Circuit with my 250 km route from Besisahar over Thorong La, 5,416 m, to Muktinath, and the side trips to Blue, Green, Ice and Tilicho Lake.',
+    usedIn: ['/#home (story map: arrival poster, tier 0 and reduced-motion static map)'],
   },
   'M-HERO-02': {
     chapter: 'home', kind: 'photo', status: 'placeholder', ratio: '3:2', minPx: PHOTO_L_32, optional: true,
@@ -351,14 +350,6 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
     subject: 'Your watch, GPS or phone screen showing the altitude on Thorong La (or Kun Tso).',
     short: 'my altimeter on the pass', alt: 'My watch reading [N] m on Thorong La',
     usedIn: ['/#pass', '/stories#annapurna'], priority: 2, confirm: ['Q-97'],
-  },
-  'M-EPI-01': {
-    chapter: 'home', kind: 'svg', status: 'generated', ratio: '1:1',
-    path: 'src/_pages/home/config/garhwal-sheet.generated.ts', generator: 'G-09',
-    subject: 'Garhwal sheet with the alpine start, built from the heightfield and the waypoints.',
-    short: 'the route to Dodital and Darwa Top',
-    alt: 'Planned route to Dodital and Darwa Top, dashed, beside my last solo route to Chandrashila.',
-    usedIn: ['/#next'],
   },
 
   // ── Origin ──────────────────────────────────────────────────────────────────────────────────────
@@ -588,7 +579,7 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
     path: 'src/shared/ui/charts (ElevationProfile)', generator: 'G-02 (+ relief)',
     subject: 'Elevation profiles, drawn at runtime from the expedition waypoints (GPX when supplied).',
     short: 'an elevation profile', alt: 'Elevation profile of [trek]',
-    usedIn: ['/stories', 'story reader', '/#meander (section cut)'],
+    usedIn: ['/stories', 'story reader'],
   },
   'M-ALT-02': {
     chapter: 'expeditions', kind: 'svg', status: 'generated', ratio: '3:2',
@@ -632,7 +623,7 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
   },
   'M-EXP-ANN-04': {
     chapter: 'expeditions', kind: 'photo', status: 'placeholder', ratio: '3:2', minPx: { w: 2400, h: 1600 },
-    subject: 'Your tent pitched at a camp (Khudi, Dharapani, Chame or higher).',
+    subject: 'Your tent pitched at a camp (Ngadi, Syange, Timang, Dhikur Pokhari, Mungji or higher).',
     short: 'my tent at a camp', alt: 'My tent at [camp]',
     usedIn: ['/stories#annapurna', 'story reader'], priority: 1,
   },
@@ -653,7 +644,7 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
     chapter: 'expeditions', kind: 'data', status: 'placeholder', ratio: '1:1',
     subject: 'The full circuit track (Strava, Gaia, Komoot, OsmAnd or Garmin export), or a camp list with altitude and date.',
     short: 'the Annapurna track', alt: '',
-    usedIn: ['relief scene', 'elevation profiles', 'atlas'], priority: 1, confirm: ['Q-41', 'Q-52', 'Q-100'],
+    usedIn: ['/#home (story map; rebuilt from the recorded days until a GPX arrives)', 'plan sheet', 'elevation profiles', 'atlas'], priority: 1, confirm: ['Q-41', 'Q-52', 'Q-100'],
   },
   'M-EXP-KUN-01': {
     chapter: 'expeditions', kind: 'photo', status: 'placeholder', ratio: '3:2', minPx: PHOTO_L_32,
