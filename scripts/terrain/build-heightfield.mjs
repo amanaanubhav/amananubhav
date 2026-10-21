@@ -2,7 +2,7 @@
 //
 // Writes public/data/terrain/<id>.bin (257 x 257 little-endian Uint16 metres, row-major north to south,
 // west to east) and <id>.json for `annapurna` (relief scene, plan sheet), `garhwal` (home #next sheet)
-// and `himalaya` (the /stories atlas).
+// `himalaya` (the /stories atlas) and `annapurna-story` (the home story map, a wider Annapurna box).
 //
 // Source: public Terrain Tiles (Terrarium PNG over HTTPS, decoded with sharp:
 // h = R * 256 + G + B / 256 - 32768), area-averaged onto the grid. When a region's tiles cannot all be
@@ -58,7 +58,7 @@ function regionRoutes(id, { hints = false } = {}) {
         ? wp
         : { ...wp, altitudeM: PROCEDURAL_ALTITUDE_HINTS[wp.name] },
     );
-  if (id === 'annapurna') return [ANNAPURNA_ROUTE, ...ANNAPURNA_SIDE_TRIPS];
+  if (id === 'annapurna' || id === 'annapurna-story') return [ANNAPURNA_ROUTE, ...ANNAPURNA_SIDE_TRIPS];
   if (id === 'garhwal') return [getExpedition('chandrashila').waypoints, withHints(getExpedition('dodital').waypoints)];
   return [];
 }

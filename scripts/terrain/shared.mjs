@@ -89,6 +89,9 @@ export const SHEETS = {
 
 export const REGIONS = {
   annapurna: { id: 'annapurna', bbox: SHEETS.annapurna.bbox, zoom: 11, repairPits: true },
+  // The home story map (design §15.2): wider east and south than the plan sheet, so the relief runs past
+  // the trek on every side and the scene's rim fade never lands on the route (R29).
+  'annapurna-story': { id: 'annapurna-story', bbox: [83.75, 28.08, 84.57, 28.92], zoom: 11, repairPits: true },
   garhwal: { id: 'garhwal', bbox: coverBbox(SHEETS.garhwal), zoom: 10, repairPits: true },
   // At ~6 km per sample the atlas's hollows are real basins and gorges (voids average out): left as is.
   himalaya: { id: 'himalaya', bbox: coverBbox(SHEETS.himalaya), zoom: 7, repairPits: false },

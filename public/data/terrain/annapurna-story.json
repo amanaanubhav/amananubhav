@@ -1,0 +1,9 @@
+{
+  "cols": 257,
+  "rows": 257,
+  "bbox": [83.75, 28.08, 84.57, 28.92],
+  "minM": 381,
+  "maxM": 7859,
+  "source": "terrain-tiles",
+  "attribution": "Terrain Tiles (Mapzen, AWS Open Data) from SRTM and other public sources"
+}
