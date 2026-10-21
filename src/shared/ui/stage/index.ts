@@ -17,19 +17,13 @@ export {
   useStageEntries,
   useStageScene,
 } from './registry';
-export type {
-  SceneId,
-  SceneLoader,
-  SceneParamValue,
-  SceneProps,
-  StageSceneEntry,
-  StageSceneOptions,
-} from './registry';
-export { StageCanvas } from './StageCanvas';
+export type { SceneId, SceneLoader, SceneParamValue, SceneProps, StageSceneEntry, StageSceneOptions } from './registry';
+export { StageCanvas, preloadStage } from './StageCanvas';
 export type { StageCanvasProps } from './StageCanvas';
 export { StageSlot } from './StageSlot';
 export type { StageSlotProps } from './StageSlot';
 export { StagePoster } from './StagePoster';
 export type { StagePosterProps } from './StagePoster';
-export { STORY_HYPSO_STOPS_M, STORY_PALETTE, STORY_TEMP_STOPS_C, storyRampGradient } from './story-palette';
-export type { StoryThemeColors } from './story-palette';
+// The story map's colours live in shared/config (server-safe, used by the SSR plan sheet too).
+export { STORY_HYPSO_STOPS_M, STORY_PALETTE, STORY_TEMP_STOPS_C, storyRampGradient } from '@/shared/config';
+export type { StoryThemeColors } from '@/shared/config';

@@ -1,4 +1,4 @@
-import { THEME_PALETTE, type ThemeName } from '@/shared/config';
+import { THEME_PALETTE, type ThemeName } from './palette';
 
 /*
  * The home story map's colours (design pass 3, §6). One source for the relief scene's uniforms and

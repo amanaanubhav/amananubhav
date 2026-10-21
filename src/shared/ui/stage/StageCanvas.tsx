@@ -1,16 +1,45 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { Component, useEffect, useState, type ReactNode } from 'react';
 
 import { useBootDone } from '@/shared/lib/boot';
-import { useMotionTier } from '@/shared/lib/motion-tier';
+import { degradeStage, useMotionTier } from '@/shared/lib/motion-tier';
 
 import { onIdle } from './idle';
 import { useStageEntries } from './registry';
 
 /* The three/R3F chunk. Never in an initial chunk: reached only through this dynamic import. */
 const StageRenderer = dynamic(() => import('./StageRenderer'), { ssr: false, loading: () => null });
+
+/**
+ * Starts downloading the renderer chunk now (the same module StageCanvas loads), for a page that wants its
+ * scene as early as possible (the home story's kick, load-in-3d §4). Rejects when the chunk fails to load.
+ */
+export function preloadStage(): Promise<unknown> {
+  return import('./StageRenderer');
+}
+
+/**
+ * The renderer chunk failed to load, or the renderer threw (no WebGL context): no canvas for the rest of
+ * the session. The tier drops to 0, so every stage shows its static map instead of an error page.
+ */
+class RendererBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: unknown): void {
+    if (process.env.NODE_ENV !== 'production') console.warn('Stage renderer failed; static maps from now on.', error);
+    degradeStage();
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 export interface StageCanvasProps {
   /** Booting, an overlay open, a story open, or any scroll lock held. */
@@ -20,21 +49,32 @@ export interface StageCanvasProps {
 
 /**
  * The one persistent canvas, owned by the shell (§C.5). Renders nothing until it is armed: boot
- * done, tier >= 1 and at least one scene registered, then an idle callback. Once armed it stays
- * mounted across routes; it unmounts only when the tier drops to 0 (context loss, degradeStage,
- * the footer switch), and the posters stay for the rest of the session.
+ * done, tier >= 1 and at least one scene registered, then an idle callback (or the next frame when a
+ * registered scene is `eager`). Once armed it stays mounted across routes; it unmounts only when the
+ * tier drops to 0 (context loss, degradeStage, the footer switch), and the posters stay for the rest
+ * of the session.
  */
 export function StageCanvas({ paused, isDark }: StageCanvasProps) {
   const tier = useMotionTier();
   const bootDone = useBootDone();
-  const sceneCount = useStageEntries().length;
+  const entries = useStageEntries();
+  const sceneCount = entries.length;
+  const eager = entries.some((entry) => entry.eager);
   const [armed, setArmed] = useState(false);
 
   useEffect(() => {
     if (armed || tier === 0 || !bootDone || sceneCount === 0) return;
+    if (eager) {
+      const frame = requestAnimationFrame(() => setArmed(true));
+      return () => cancelAnimationFrame(frame);
+    }
     return onIdle(() => setArmed(true), 2000);
-  }, [armed, tier, bootDone, sceneCount]);
+  }, [armed, tier, bootDone, sceneCount, eager]);
 
   if (!armed || tier === 0) return null;
-  return <StageRenderer paused={paused} isDark={isDark} tier={tier} />;
+  return (
+    <RendererBoundary>
+      <StageRenderer paused={paused} isDark={isDark} tier={tier} />
+    </RendererBoundary>
+  );
 }

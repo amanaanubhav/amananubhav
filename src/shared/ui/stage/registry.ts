@@ -28,10 +28,13 @@ export interface StageSceneEntry {
    * the slot (poster and canvas are one map element) and caps the DPR at 1.25.
    */
   readonly fullBleed: boolean;
+  /** Arm the canvas on the next frame after boot instead of on idle (the home story, load-in-3d §4). */
+  readonly eager: boolean;
 }
 
 export interface StageSceneOptions {
   fullBleed?: boolean;
+  eager?: boolean;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -148,8 +151,8 @@ function commit(next: readonly StageSceneEntry[]): void {
   listeners.forEach((listener) => listener());
 }
 
-function registerScene(id: SceneId, load: SceneLoader, slot: HTMLElement, fullBleed: boolean): void {
-  const entry: StageSceneEntry = { id, load, Scene: lazyScene(load), slot, visible: false, fullBleed };
+function registerScene(id: SceneId, load: SceneLoader, slot: HTMLElement, fullBleed: boolean, eager: boolean): void {
+  const entry: StageSceneEntry = { id, load, Scene: lazyScene(load), slot, visible: false, fullBleed, eager };
   commit([...entries.filter((e) => e.id !== id), entry]);
 }
 
@@ -196,6 +199,7 @@ export function useStageScene(
   options: StageSceneOptions = {},
 ): (el: HTMLElement | null) => void {
   const fullBleed = options.fullBleed === true;
+  const eager = options.eager === true;
   const state = useRef<{ el: HTMLElement | null; observer: IntersectionObserver | null }>({
     el: null,
     observer: null,
@@ -215,7 +219,7 @@ export function useStageScene(
       if (!el) return;
 
       current.el = el;
-      registerScene(id, load, el, fullBleed);
+      registerScene(id, load, el, fullBleed, eager);
       if (typeof IntersectionObserver === 'undefined') {
         setSceneVisible(id, el, true);
         return;
@@ -230,6 +234,6 @@ export function useStageScene(
       observer.observe(el);
       current.observer = observer;
     },
-    [id, load, fullBleed],
+    [id, load, fullBleed, eager],
   );
 }

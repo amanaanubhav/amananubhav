@@ -2,12 +2,22 @@
 
 import { PerformanceMonitor } from '@react-three/drei/core/PerformanceMonitor';
 import { Canvas, useFrame, useThree, type RootState } from '@react-three/fiber';
-import { Component, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  Component,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import { gsap } from '@/shared/lib/gsap';
 import { degradeStage } from '@/shared/lib/motion-tier';
-import { StageSceneRoot } from '@/shared/ui/stage-three';
+import { StageSceneRoot, markStageFailed } from '@/shared/ui/stage-three';
 
 import { onIdle } from './idle';
 import { hasVisibleScene, useStageEntries, type StageSceneEntry } from './registry';
@@ -23,7 +33,9 @@ import { ThemeUniforms } from './ThemeUniforms';
  * Full-bleed slots (the home story's fixed #stage): the canvas host element moves INSIDE the slot,
  * so the SSR poster and the canvas are one map element (one stage, one DOM subtree), and the DPR is
  * capped at 1.25. The canvas then fades in over 300 ms when the scene marks the slot live, above the
- * poster it replaces. React owns only the host's children (a portal), so moving the host is safe.
+ * poster it replaces; a slot marked `data-stage-instant` (the home story, which loads straight in 3D and
+ * has no poster to replace) shows the canvas at once on its first frame and never before. React owns
+ * only the host's children (a portal), so moving the host is safe.
  */
 
 export interface StageRendererProps {
@@ -109,8 +121,11 @@ function CompileWhenIdle() {
   return null;
 }
 
-/** A failing scene (chunk load error, a throw) renders nothing; its poster simply stays. */
-class SceneBoundary extends Component<{ id: string; children: ReactNode }, { failed: boolean }> {
+/**
+ * A failing scene (chunk load error, a throw) renders nothing and marks its slot `data-stage-failed`
+ * (the home story then shows its static map); a poster simply stays.
+ */
+class SceneBoundary extends Component<{ id: string; slot: HTMLElement; children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
 
   static getDerivedStateFromError(): { failed: boolean } {
@@ -118,6 +133,7 @@ class SceneBoundary extends Component<{ id: string; children: ReactNode }, { fai
   }
 
   componentDidCatch(error: unknown): void {
+    markStageFailed(this.props.slot);
     if (process.env.NODE_ENV !== 'production') {
       console.warn(`Stage scene "${this.props.id}" failed; keeping its poster.`, error);
     }
@@ -132,7 +148,7 @@ function SceneHost({ entry, tier, isDark }: { entry: StageSceneEntry; tier: 1 | 
   const { Scene } = entry;
   return (
     <StageSceneRoot visible={entry.visible}>
-      <SceneBoundary id={entry.id}>
+      <SceneBoundary id={entry.id} slot={entry.slot}>
         <Suspense fallback={null}>
           <Scene id={entry.id} tier={tier} slot={entry.slot} isDark={isDark} />
           <CompileWhenIdle />
@@ -208,10 +224,18 @@ function placeHostInSlot(host: HTMLElement, slot: HTMLElement): void {
 
 /**
  * Keeps the canvas host in the full-bleed slot while one is registered (else in the shell's
- * placeholder), and fades it in when the scene marks the slot live (300 ms, over the poster).
+ * placeholder), and fades it in when the scene marks the slot live (300 ms, over the poster). With
+ * `data-stage-instant` on the slot the host is hidden until the slot is live and shown on that frame,
+ * with no transition, so a clear or half-built frame is never seen.
  */
-function useCanvasHost(host: HTMLElement, home: HTMLElement | null, fullBleed: HTMLElement | null): void {
+function useCanvasHost(
+  hostRef: RefObject<HTMLDivElement | null>,
+  home: HTMLElement | null,
+  fullBleed: HTMLElement | null,
+): void {
   useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
     if (!fullBleed) {
       host.className = HOST_CLASS;
       host.style.opacity = '';
@@ -221,11 +245,13 @@ function useCanvasHost(host: HTMLElement, home: HTMLElement | null, fullBleed: H
     }
     host.className = HOST_CLASS_IN_SLOT;
     placeHostInSlot(host, fullBleed);
+    const instant = fullBleed.hasAttribute('data-stage-instant');
     const sync = () => {
-      const hasPoster = fullBleed.querySelector('.stage-poster, [data-stage-poster]') !== null;
-      host.style.opacity = !hasPoster || fullBleed.hasAttribute('data-stage-live') ? '1' : '0';
+      const live = fullBleed.hasAttribute('data-stage-live');
+      const hasPoster = !instant && fullBleed.querySelector('.stage-poster, [data-stage-poster]') !== null;
+      host.style.opacity = live || (!instant && !hasPoster) ? '1' : '0';
     };
-    host.style.transition = CROSSFADE;
+    host.style.transition = instant ? '' : CROSSFADE;
     sync();
     const observer = new MutationObserver(sync);
     observer.observe(fullBleed, {
@@ -234,7 +260,7 @@ function useCanvasHost(host: HTMLElement, home: HTMLElement | null, fullBleed: H
       childList: true,
     });
     return () => observer.disconnect();
-  }, [host, home, fullBleed]);
+  }, [hostRef, home, fullBleed]);
 }
 
 export default function StageRenderer({ paused, isDark, tier }: StageRendererProps) {
@@ -244,15 +270,23 @@ export default function StageRenderer({ paused, isDark, tier }: StageRendererPro
   const deviceCap = Math.max(DPR_FLOOR, Math.min(window.devicePixelRatio || 1, DPR_CAP[tier]));
   const cap = fullBleedSlot ? Math.min(deviceCap, Math.max(DPR_FLOOR, DPR_CAP_FULL_BLEED)) : deviceCap;
   const [initialDpr] = useState(cap);
+  // The canvas host: created once, outside React's tree (a portal container), so it can move.
   const [host] = useState(() => {
     const el = document.createElement('div');
     el.className = HOST_CLASS;
     el.setAttribute('aria-hidden', 'true');
     return el;
   });
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    hostRef.current = host;
+    return () => {
+      hostRef.current?.remove();
+      hostRef.current = null;
+    };
+  }, [host]);
   const [home, setHome] = useState<HTMLElement | null>(null);
-  useCanvasHost(host, home, fullBleedSlot);
-  useEffect(() => () => host.remove(), [host]);
+  useCanvasHost(hostRef, home, fullBleedSlot);
   const [epoch, setEpoch] = useState(0);
   const onResume = useCallback(() => setEpoch((value) => value + 1), []);
 
