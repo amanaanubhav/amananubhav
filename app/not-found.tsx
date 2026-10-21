@@ -60,7 +60,7 @@ function TrailEndDrawing({ className }: { className?: string }) {
         }}
       />
       <circle cx={24} cy={276} r={4} className="fill-ground" style={{ stroke: 'rgb(var(--c-line-strong))', strokeWidth: 1.5 }} />
-      <g transform={`translate(${MARK_AT.x} ${MARK_AT.y})`} className="text-ink">
+      <g transform={`translate(${MARK_AT.x} ${MARK_AT.y})`} className="text-ink-muted">
         <RidgeMark size={MARK} lit />
       </g>
     </svg>

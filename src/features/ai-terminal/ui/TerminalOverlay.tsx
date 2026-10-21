@@ -321,6 +321,9 @@ export function TerminalOverlay({ isOpen, onClose }: TerminalOverlayProps) {
       {isOpen && (
         <div
           key="terminal"
+          // No wheel or touch scroll inside the terminal (rail, log, scrim) may reach Lenis: the open terminal scrolls
+          // its own panes and the page behind stays still (§C.3 overlay scroll-stop).
+          data-lenis-prevent=""
           className={`${s.overlay} z-terminal`}
           style={viewport ? { top: viewport.top, height: viewport.height, bottom: 'auto' } : undefined}
         >

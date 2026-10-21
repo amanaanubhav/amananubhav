@@ -35,7 +35,7 @@ export function QuickLink({ link, className, onNavigate }: { link: TerminalQuick
 /** The desktop rail: Ask about, Commands, Go to. */
 export function TerminalRail({ onFill, onNavigate }: RailProps) {
   return (
-    <aside className={s.rail} aria-label="Shortcuts">
+    <aside data-lenis-prevent="" className={`scroll-pane ${s.rail}`} aria-label="Shortcuts">
       <section>
         <h3 className={s.railHead}>Ask about</h3>
         <ul className={s.list}>

@@ -1,3 +1,4 @@
+import { cn } from '@/shared/lib/cn';
 import {
   MARK_VIEWBOX,
   RIDGE_OFFSET_Y,
@@ -45,7 +46,8 @@ export function RidgeMark({ size = 20, lit = false, className, title }: RidgeMar
       height={size}
       viewBox={MARK_VIEWBOX}
       fill="none"
-      className={className}
+      // Forced colors keep authored SVG colors (preserve-parent-color), so the mark opts into system colors.
+      className={cn(className, 'forced-colors:text-[CanvasText]')}
       role={labelled ? 'img' : undefined}
       aria-label={labelled ? title : undefined}
       aria-hidden={labelled ? undefined : true}
@@ -60,7 +62,7 @@ export function RidgeMark({ size = 20, lit = false, className, title }: RidgeMar
         strokeLinejoin="round"
         strokeLinecap="round"
       />
-      <Trekker figure={trekkerFor(size)} className={lit ? 'text-signal' : undefined} />
+      <Trekker figure={trekkerFor(size)} className={lit ? 'text-signal forced-colors:text-[Highlight]' : undefined} />
     </svg>
   );
 }
