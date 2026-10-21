@@ -7,7 +7,7 @@ import { TERMINAL_PREVIEW } from '../../config/copy';
 export function TerminalPreview({ className }: { className?: string }) {
   return (
     <figure className={className} aria-label="Terminal preview">
-      <div className="overflow-hidden rounded-panel border border-line bg-surface">
+      <div className="overflow-hidden rounded-panel border border-line bg-surface/70 backdrop-blur-md">
         <div className="border-b border-line px-4 py-2">
           <span className="font-data text-caption text-ink-muted">{TERMINAL_PREVIEW.title}</span>
         </div>

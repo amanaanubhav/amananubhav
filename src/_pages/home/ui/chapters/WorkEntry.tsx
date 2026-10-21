@@ -1,20 +1,19 @@
 import { Button } from '@/shared/ui/button';
 
 import { ENTRY_LINKS } from '../../config/copy';
-import { EntryStaticPlate } from './EntryStaticPlate';
-import { RouteEntry } from './RouteEntry';
+import { RouteEntry, type StorySlot } from './RouteEntry';
 
-/** Entry 2, Chame: the work. The route appears as a dashed graph on the relief. */
-export function WorkEntry() {
+/** Entry 2, Days 3 and 4 on the map (the valley turns west): the work. */
+export function WorkEntry({ slot }: { slot: StorySlot }) {
   return (
     <RouteEntry
       id="work"
+      slot={slot}
       extras={
         <Button variant="text" href={ENTRY_LINKS.work.href}>
           {ENTRY_LINKS.work.label}
         </Button>
       }
-      staticPlate={<EntryStaticPlate id="work" />}
     />
   );
 }

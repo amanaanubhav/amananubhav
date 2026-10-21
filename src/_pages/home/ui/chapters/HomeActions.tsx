@@ -82,7 +82,7 @@ export function SecureContactButton({ variant = 'secondary', label, className }:
 }
 
 /** Opens a published story in the reader (the server passes the one story, so the list never ships to the client). */
-export function ReadFieldNoteButton({ variant = 'text', label, story, className }: ActionProps & { story: Story }) {
+export function ReadJournalEntryButton({ variant = 'text', label, story, className }: ActionProps & { story: Story }) {
   return (
     <Button variant={variant} icon={BookOpen} className={className} aria-haspopup="dialog" onClick={() => openStory(story)}>
       {label}

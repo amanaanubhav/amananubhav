@@ -57,7 +57,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { isDark } = useTheme();
   const pathname = usePathname();
   const tier = useMotionTier();
-  const [loading, setLoading] = useState(true);
+  // The home page's arrival is its story map (design §14, R5): no preloader (and its elevation profile) on
+  // '/'. Boot is done from the first render there, so the stage and the poster's route draw never wait.
+  const isHome = pathname === ROUTES.home;
+  const [loading, setLoading] = useState(!isHome);
   const isVaultOpen = useVaultOpen();
   const isTerminalOpen = useTerminalOpen();
   const isReading = useSelectedStory() !== null;
@@ -74,6 +77,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     markBootDone();
     requestAnimationFrame(() => ScrollTrigger.refresh());
   }, []);
+
+  useEffect(() => {
+    if (isHome) {
+      markBootDone();
+      requestAnimationFrame(() => ScrollTrigger.refresh());
+    }
+  }, [isHome]);
 
   useSmoothScrollRoot(tier > 0 && !isAdminRoute);
   useBodyScrollLock(isVaultOpen || isTerminalOpen);

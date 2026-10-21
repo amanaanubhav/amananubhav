@@ -1,44 +1,55 @@
-import { getExpedition } from '@/entities/expedition';
-import { sheetSourceNote } from '@/shared/ui/map';
+import { ContourSheet } from '@/shared/ui/map';
 import { SectionDotNav } from '@/shared/ui/section-dot-nav';
 
-import { STAGE_COPY } from '../config/copy';
+import { MAP_COPY } from '../config/copy';
 import { PLAN_SHEET } from '../config/plan-sheet.generated';
-import { HOME_SECTIONS, HOME_TRACK, HOME_WAYPOINTS } from '../config/sections';
-import { AnnapurnaProfile } from './chapters/AnnapurnaProfile';
-import { MeanderEntries } from './chapters/MeanderEntries';
+import { HOME_SECTIONS, HOME_TRACK } from '../config/sections';
 import { NextSection } from './chapters/NextSection';
-import { RoutePoster } from './chapters/RoutePoster';
 import { HeroSection } from './HeroSection';
 import { Meander } from './meander/Meander';
+import { PlanSheetLines, PlanSheetOverlay, PlanSheetUnderlay } from './story/PlanSheetLayers';
+import { RouteList } from './story/RouteList';
+import { StoryLegend } from './story/StoryLegend';
+import { StoryStage } from './story/StoryStage';
 
 /**
- * Home `/` (§G.1): base camp, the route (six entries along the Annapurna Circuit over a sticky relief),
- * and the next base camp. Server Component; the shell owns the single `<main>`. The client parts are
- * small islands: the rail, the stage and its overlays, the summit readout, the hero drift and the action buttons.
- *
- * Rail reservation (§B.5, §J.3): from 1024 px text columns stay clear of the fixed rail; plates (the hero's
- * bleed plate, the #next plate) and the canvas may run under it.
+ * Home `/` (design §3): ONE story map, fixed and full-bleed behind the hero and every story section, and
+ * the text in normal flow over it with no backgrounds. The map is the StoryStage: the relief scene, which
+ * loads straight in 3D (it rises out of the ground; no plan sheet is painted first), or, under reduced
+ * motion, on lite devices, without JavaScript or after a failed load, the server-rendered plan sheet alone
+ * as the calm static map. Scrolling walks the route from the first pixel; the map recedes under each text
+ * block and returns after it; it dissolves into the ground before `#next`. Server Component; the shell owns the single `<main>`.
  */
 export function HomePage() {
-  const annapurna = getExpedition('annapurna');
-  const pass = HOME_WAYPOINTS.pass;
-  const summitAltitude = pass.altitudeM ?? annapurna.highPoint.altitudeM;
-
   return (
     <>
       <SectionDotNav sections={HOME_SECTIONS} track={HOME_TRACK} />
+      {/* The hero comes first in the document: its h1 (the LCP element) is parsed and painted before the
+          stage's static SVG sheet, and it is the first thing a screen reader meets. The stage is fixed at
+          z-0 and the hero sits above it at z-[1], so the order changes nothing on screen. */}
       <HeroSection />
-      <Meander
-        description={STAGE_COPY.description}
-        poster={<RoutePoster />}
-        profile={<AnnapurnaProfile />}
-        summit={{ altitudeM: summitAltitude ?? 0, place: pass.name || STAGE_COPY.summitLabel }}
-        sourceNote={sheetSourceNote(PLAN_SHEET)}
-      >
-        <MeanderEntries />
-      </Meander>
+      <StoryStage
+        poster={
+          <ContourSheet
+            data={PLAN_SHEET}
+            mode="define"
+            routeState="solid"
+            drawRoute="none"
+            labels="responsive"
+            aspect="slice"
+            title={MAP_COPY.sheetTitle}
+            desc={MAP_COPY.sheetDesc}
+            className="size-full"
+            underlay={<PlanSheetUnderlay data={PLAN_SHEET} />}
+            lines={<PlanSheetLines data={PLAN_SHEET} />}
+            overlay={<PlanSheetOverlay data={PLAN_SHEET} />}
+          />
+        }
+      />
+      <RouteList />
+      <Meander />
       <NextSection />
+      <StoryLegend />
     </>
   );
 }

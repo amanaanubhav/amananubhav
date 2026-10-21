@@ -1,85 +1,73 @@
-'use client';
+import type { CSSVars } from '@/shared/lib/css';
 
-import { useRef, type ReactNode } from 'react';
+import { NUMERAL_COPY, STORY_CAPTIONS } from '../../config/copy';
+import { AskEntry } from '../chapters/AskEntry';
+import { HowEntry } from '../chapters/HowEntry';
+import { OriginEntry } from '../chapters/OriginEntry';
+import { PassEntry } from '../chapters/PassEntry';
+import type { StorySlot } from '../chapters/RouteEntry';
+import { WorkEntry } from '../chapters/WorkEntry';
+import { WriteEntry } from '../chapters/WriteEntry';
+import { STORY_TEXT_AT as AT } from '../scenes/story/timeline';
+import styles from '../story/story.module.css';
+import { StoryCaption } from '../story/StoryCaption';
+import { StoryNumeral } from '../story/StoryNumeral';
 
-import { useMotionAllowed } from '@/shared/lib/motion-tier';
-import { StageSlot } from '@/shared/ui/stage';
+/*
+ * Slot heights (vh) from the anchors (§15.3): each block's slot runs from the midpoint with the previous
+ * anchor to the midpoint with the next, so its centre lands near its anchor; the scroll map
+ * (lib/story-scroll.ts) reads the real positions, so taller copy never desynchronises the walk.
+ */
+const mid = (a: number, b: number) => (a + b) / 2;
+const HERO_END = 50; // the hero is one viewport: its bottom is the viewport centre at s 50
+const NUMERAL_STICK_START = AT.numeralFrom + 28; // the wrapper's top at 28 vh when it starts sticking
+const END = 1765; // #next's top at the viewport bottom when the dissolve ends (S_END + 100)
 
-import { useBandClip } from '../../lib/band-clip';
-import { useMeanderPhase, useSegmentProgress, useSummitChromeDim } from '../../lib/segment-progress';
-import { ProfileOverlay } from '../chapters/ProfileOverlay';
-import { StageLegend } from '../chapters/StageLegend';
-import { SummitReadout } from '../chapters/SummitReadout';
+const slot = (at: number, from: number, to: number): StorySlot => ({ at, vh: Math.round((to - from) * 10) / 10 });
 
-/** The relief scene module, resolved lazily inside the shared canvas (§C.5, §K.8). */
-const loadRelief = () => import('../scenes/ReliefAnnapurnaScene');
+const SLOTS = {
+  origin: slot(AT.entry1, HERO_END, mid(AT.entry1, AT.entry2)),
+  work: slot(AT.entry2, mid(AT.entry1, AT.entry2), mid(AT.entry2, AT.entry3)),
+  how: slot(AT.entry3, mid(AT.entry2, AT.entry3), mid(AT.entry3, AT.day6)),
+  day6: slot(AT.day6, mid(AT.entry3, AT.day6), mid(AT.day6, AT.day7)),
+  day7: slot(AT.day7, mid(AT.day6, AT.day7), mid(AT.day7, AT.days9and10)),
+  days910: slot(AT.days9and10, mid(AT.day7, AT.days9and10), mid(AT.days9and10, AT.entry4)),
+  pass: slot(AT.entry4, mid(AT.days9and10, AT.entry4) + 50, NUMERAL_STICK_START),
+  ask: slot(AT.entry5, AT.numeralTo + 28 + 15, mid(AT.entry5, AT.entry6) + 50),
+  write: slot(AT.entry6, mid(AT.entry5, AT.entry6) + 50, END),
+} as const;
 
-export interface MeanderProps {
-  /** Visually hidden description of the scene (what the relief shows, in words). */
-  description: string;
-  /** SSR poster of the slot (the plan sheet, route hidden), rendered on the server. */
-  poster: ReactNode;
-  /** The DOM elevation profile the stage cross-fades to (server-rendered). */
-  profile: ReactNode;
-  /** Pass altitude and name for the band's summit readout (below 1024 px). */
-  summit: { altitudeM: number; place: string };
-  /** The relief's honesty note ("Illustrative relief"), if any. */
-  sourceNote?: string;
-  /** The six entry `<li>`s and the hold spacer (server-rendered; the spacer carries the column readout). */
-  children: ReactNode;
-}
+const CAPTION_SLOTS = { day6: SLOTS.day6, day7: SLOTS.day7, days910: SLOTS.days910 } as const;
 
 /**
- * `#meander`, the route (§G.1). Staged layout: a sticky stage slot (≥ 1024 px: beside the entries, full
- * viewport height, bleeding right; below: a 42svh band on top with the entries sliding under it on an
- * opaque panel). Per-segment ScrollTriggers drive the relief scene and the DOM overlays. Static layout
- * (`.motion-static`, chosen before paint): no stage, each entry shows its own plate; the list stops at
- * content column 10 so the plates stay clear of the fixed rail (§J.3).
+ * `#meander`, the story (§3, §4): the six entries, the three Manang captions and the summit numeral, in
+ * normal flow over the fixed story map. No backgrounds, borders or panels at any breakpoint: under each
+ * text box the map recedes softly, and it comes back once the text has passed. The section takes focus
+ * (tabindex -1, set by the hero's "Read my story") so the next Tab starts in the route.
  *
- * The section takes focus (tabindex -1, set by the hero's "Read my story") so the next Tab starts in the route.
+ * `data-story-end` (after entry 6) is where the dissolve ends: #next starts on plain ground.
  */
-export function Meander({ description, poster, profile, summit, sourceNote, children }: MeanderProps) {
-  const scope = useRef<HTMLElement>(null);
-  const motionAllowed = useMotionAllowed();
-  useSegmentProgress(scope, [motionAllowed]);
-  useBandClip(scope, '[data-meander-stage] .stage-slot', '[data-meander-list]', [motionAllowed]);
-  const phase = useMeanderPhase();
-  useSummitChromeDim(phase.hold, motionAllowed);
-
+export function Meander() {
   return (
-    <section id="meander" ref={scope} aria-label="The route" className="journal-grid relative focus:outline-none">
-      {/* Below 1024 px the band takes the top of the section; the entries start under it. */}
-      <div aria-hidden="true" className="motion-stage col-[full-start/full-end] row-start-1 h-[42svh] lg:hidden" />
-
-      <div
-        data-meander-stage=""
-        className="motion-stage col-[full-start/full-end] row-[1/span_2] lg:col-[7/full-end]"
-      >
-        <StageSlot
-          sceneId="relief-annapurna"
-          load={loadRelief}
-          description={description}
-          poster={poster}
-          className="sticky top-0 h-[42svh] w-full overflow-hidden lg:h-svh"
-        >
-          {/* ≥ 1024 px the readout lives in the entries column (the #pass-hold spacer), not on the canvas. */}
-          <SummitReadout variant="band" altitudeM={summit.altitudeM} place={summit.place} />
-          <StageLegend
-            place={phase.waypoint}
-            sourceNote={sourceNote}
-            hidden={phase.profile && !sourceNote}
-            lifted={phase.profile}
-          />
-          <ProfileOverlay shown={phase.profile}>{profile}</ProfileOverlay>
-        </StageSlot>
-      </div>
-
-      <ol
-        data-meander-list=""
-        className="relative col-[full-start/full-end] row-start-2 m-0 list-none border-t border-line bg-surface px-[var(--margin)] py-0 lg:col-[2/span_5] lg:border-t-0 lg:bg-transparent lg:px-0 lg:[html[data-motion=off]_&]:col-[2/span_10] lg:[html[data-lite='1']_&]:col-[2/span_10] max-lg:[&_a]:scroll-mt-[calc(42svh+1rem)] max-lg:[&_button]:scroll-mt-[calc(42svh+1rem)]"
-      >
-        {children}
+    <section id="meander" aria-label="The route" className="journal-grid relative z-[1] focus:outline-none">
+      <ol className="col-[content-start/content-end] m-0 list-none p-0 lg:col-[2/span_5]">
+        <OriginEntry slot={SLOTS.origin} />
+        <WorkEntry slot={SLOTS.work} />
+        <HowEntry slot={SLOTS.how} />
+        {STORY_CAPTIONS.map((c) => (
+          <StoryCaption key={c.id} head={c.head} text={c.text} at={CAPTION_SLOTS[c.id].at} slotVh={CAPTION_SLOTS[c.id].vh} />
+        ))}
+        <PassEntry slot={SLOTS.pass} />
+        <StoryNumeral kicker={NUMERAL_COPY.kicker} after={NUMERAL_COPY.after} span={[AT.numeralFrom, AT.numeralTo]} />
+        <AskEntry slot={SLOTS.ask} />
+        <WriteEntry slot={SLOTS.write} />
       </ol>
+      <div
+        aria-hidden="true"
+        data-story-end=""
+        className={`${styles.slot} col-[full-start/full-end] motion-stage`}
+        style={{ '--slot-h': '0vh' } as CSSVars}
+      />
     </section>
   );
 }
