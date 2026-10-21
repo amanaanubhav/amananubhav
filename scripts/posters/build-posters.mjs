@@ -2,13 +2,13 @@
 //
 // Runs d3-contour on the heightfields in public/data/terrain and projects stars from d3-celestial, then
 // regenerates the four generated modules with the export names and types of the wave-0 stubs:
-//   src/_pages/home/config/plan-sheet.generated.ts      PLAN_SHEET            (≤ 40 KB)
+//   src/_pages/home/config/plan-sheet.generated.ts      PLAN_SHEET            (≤ 60 KB; reads public/data/routes/annapurna-route.json)
 //   src/_pages/home/config/garhwal-sheet.generated.ts   GARHWAL_SHEET         (≤ 30 KB)
 //   src/_pages/stories/config/atlas.generated.ts        ATLAS_SHEET, ATLAS_BBOX, atlasPoint (≤ 60 KB)
 //   src/_pages/personal/config/sky-charts.generated.ts  WINTER_SKY, SKY_POSTER (≤ 30 KB for the module)
 // Coordinates are rounded to 1 decimal. Each sheet climbs a coarsening ladder until it fits its cap.
 // Flags: --preview=<dir> also writes standalone SVG previews (fixed preview colours) for visual QA;
-// --terrain=<dir> reads heightfields from another folder (e.g. a procedural test run); --dry writes no modules.
+// --route=<file> reads another public route file; --terrain=<dir> reads heightfields from another folder (e.g. a procedural test run); --dry writes no modules.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
@@ -18,6 +18,7 @@ import { r1, routePath } from './geometry.mjs';
 import { buildSkyModule } from './sky-charts.mjs';
 import { previewSheetSvg, previewStarSvg } from './preview.mjs';
 import { reportClearance } from './label-clearance.mjs';
+import { bandLayers, isothermLayers, legendCopy, markerLayer, overviewLabels, previewPlanSvg, readRoute, routeLayers } from './plan-sheet.mjs';
 import { GENERATED_HEADER, toTs, writeModule } from './ts-writer.mjs';
 
 const args = parseArgs(process.argv.slice(2));
@@ -26,11 +27,14 @@ const terrainDir = args.terrain ? resolve(String(args.terrain)) : TERRAIN_DIR;
 const dry = Boolean(args.dry);
 if (previewDir) mkdirSync(previewDir, { recursive: true });
 
-const { ANNAPURNA_ROUTE, ANNAPURNA_SIDE_TRIPS, getExpedition } = await importSource(
-  'src/entities/expedition/model/expeditions.ts',
-);
+const entity = await importSource('src/entities/expedition/model/expeditions.ts');
+const { getExpedition } = entity;
+// The publishable route (reconstructed day lines along mapped trails; no timestamps). --route=<file> overrides.
+const routeFile = args.route ? resolve(String(args.route)) : join(ROOT, 'public/data/routes/annapurna-route.json');
 
 const KB = 1000;
+/** The plan sheet carries bands, isotherms and the real route on top of the contours. */
+const PLAN_CAP = 60 * KB;
 const OUT = {
   plan: join(ROOT, 'src/_pages/home/config/plan-sheet.generated.ts'),
   garhwal: join(ROOT, 'src/_pages/home/config/garhwal-sheet.generated.ts'),
@@ -85,85 +89,95 @@ function sourceFields(field) {
 const sizes = [];
 
 /* ------------------------------------------------------------------------------------------------
- * G-01 Annapurna plan sheet
+ * G-01 Annapurna plan sheet (the home page's static map at tier 0 and with reduced motion)
  * --------------------------------------------------------------------------------------------- */
 {
   const sheet = SHEETS.annapurna;
   const projection = makeProjection(sheet);
   const field = readHeightfield(terrainDir, 'annapurna');
-  const exp = getExpedition('annapurna');
-  const at = (name) => node(projection, ANNAPURNA_ROUTE.concat(ANNAPURNA_SIDE_TRIPS.flat()).find((wp) => wp.name === name));
-  const thorong = at('Thorong La');
-  const tilicho = at('Tilicho Lake');
-  const besisahar = at('Besisahar');
-  const manang = at('Manang');
-  const muktinath = at('Muktinath');
-  const tilichoWp = ANNAPURNA_SIDE_TRIPS.flat().find((wp) => wp.name === 'Tilicho Lake');
-  const thorongWp = ANNAPURNA_ROUTE.find((wp) => wp.name === 'Thorong La');
-  const [graticuleX] = projection.project(84, 28.5);
-  const [, graticuleY] = projection.project(84, 28.5);
-
+  const route = readRoute(routeFile);
+  const [fx0, fy0] = projection.project(sheet.bbox[0], sheet.bbox[3]);
+  const [fx1, fy1] = projection.project(sheet.bbox[2], sheet.bbox[1]);
+  const { routes, road } = routeLayers(projection, route, entity, 0.7);
   const base = {
     id: 'annapurna',
     viewBox: sheet.viewBox,
-    routes: [
-      route(projection, 'main', ANNAPURNA_ROUTE, 'main'),
-      route(projection, 'ice-lake', ANNAPURNA_SIDE_TRIPS[0], 'side-trip'),
-      route(projection, 'tilicho', ANNAPURNA_SIDE_TRIPS[1], 'side-trip'),
-    ],
-    labels: [
-      // The pass triangle rises 3 units (the route still runs through it) so the "g" of Thorong clears
-      // the descent to Thorong Phedi on large plates.
-      { x: thorong.x, y: r1(thorong.y - 3), text: 'Thorong La', kind: 'pass', altitudeM: thorongWp.altitudeM, anchor: 'start', priority: 1 },
-      {
-        x: r1(tilicho.x - 30), y: r1(tilicho.y - 40), text: 'Tilicho Lake', kind: 'water',
-        altitudeM: tilichoWp.altitudeM, approx: tilichoWp.approx, anchor: 'start', priority: 1,
-      },
-      { ...pick(besisahar), text: 'Besisahar', kind: 'village', anchor: 'end', priority: 2 },
-      // Settlement labels draw their dot on (x, y) and set the name at a fixed 14 px, so a name hung
-      // below its dot (anchor 'middle') is crossed by any route that leaves downward. Both names run
-      // east instead, into the sector no route uses, with a few units of symbol displacement so the
-      // first letter clears the line at every plate size (0.3 to 1 px per unit; see labelClear below).
-      // Manang: the dot slides up the Ice Lake spur (NNE), clear of the main route's SE leg, and the
-      // name runs east between the two (the Tilicho spur runs west, Thorong Phedi north-west).
-      { ...along(manang, at('Ice Lake'), 6.5), text: 'Manang', kind: 'village', anchor: 'start', priority: 2 },
-      // Muktinath: the route arrives from the ESE and ends here; the dot rises 10 units off the line
-      // end (it still touches it at desktop scale) so the name runs east above the descent from the pass.
-      { x: muktinath.x, y: r1(muktinath.y - 10), text: 'Muktinath', kind: 'village', anchor: 'start', priority: 2 },
-      { x: 820, y: 764.4, text: `${exp.distanceKm} km, ${exp.days} days, ${exp.mode}`, kind: 'note', anchor: 'end', priority: 1 },
-      { x: r1(besisahar.x - 24), y: r1(besisahar.y + 50), text: `pack ${exp.packKg} kg`, kind: 'note', anchor: 'end', priority: 2 },
-    ],
-    graticule: [
-      { x: r1(graticuleX), text: fmtDeg(84, 'E', 'W') },
-      { y: r1(graticuleY), text: fmtDeg(28.5, 'N', 'S') },
-    ],
-    scaleBar: { x: 60, y: 1080, lengthPx: r1(10 * projection.pxPerKm), text: '10 km' },
+    frame: { x: r1(fx0), y: r1(fy0), w: r1(fx1 - fx0), h: r1(fy1 - fy0) },
+    routes,
+    road,
+    markers: markerLayer(projection, entity),
+    labels: overviewLabels(projection, entity),
+    scaleBar: { x: 60, y: 1180, lengthPx: r1(10 * projection.pxPerKm), text: '10 km' },
     northArrow: { x: 930, y: 80 },
-    sheetTitle: 'Annapurna Circuit. Sheet 1 of 7. Contours 100 m.',
-    ...sourceFields(field),
+    legend: legendCopy(entity),
+    source: field.meta.source === 'terrain-tiles' ? 'terrain-tiles' : 'procedural',
   };
-  const doc = [
+  const head = [
+    GENERATED_HEADER,
+    "import type { ContourSheetData, SheetLabel } from '@/shared/ui/map';",
+    '',
+    '/** A marker on the plan sheet (viewBox units). `approx`: the position itself is a best guess. */',
+    'export interface PlanSheetMarker {',
+    '  readonly x: number;',
+    '  readonly y: number;',
+    '  readonly name: string;',
+    "  readonly kind: 'stay' | 'pass-through' | 'landmark' | 'pass' | 'lake' | 'peak';",
+    '  readonly approx?: boolean;',
+    '}',
+    '',
+    '/** The plan sheet: a ContourSheetData (ContourSheet renders it as is) plus the static story-map layers. */',
+    'export interface PlanSheetData extends ContourSheetData {',
+    '  /** The relief rectangle inside the viewBox (feather or vignette its rim; nothing is drawn outside it). */',
+    '  readonly frame: { readonly x: number; readonly y: number; readonly w: number; readonly h: number };',
+    '  /** Areas at or above `m` metres, lowest first (paint in order, fill-rule evenodd); below the first: the frame. */',
+    '  readonly bands: readonly { readonly m: number; readonly d: string }[];',
+    '  /** Modelled isotherms: `c` °C sits at `m` metres (TEMPERATURE_MODEL). 0 °C bold, ±10 °C fine. */',
+    '  readonly isotherms: readonly { readonly c: number; readonly m: number; readonly d: string }[];',
+    '  /** The stretch done by road (Syange to Tal): thin, dotted, muted, never styled as walked. */',
+    '  readonly road: readonly { readonly id: string; readonly d: string; readonly lengthPx: number; readonly text: string }[];',
+    '  readonly markers: readonly PlanSheetMarker[];',
+    '  readonly labels: readonly SheetLabel[];',
+    '  readonly legend: {',
+    '    readonly title: string;',
+    '    readonly meta: string;',
+    '    readonly rampTicksM: readonly number[];',
+    '    readonly bandStepM: number;',
+    '    readonly isotherms: readonly { readonly c: number; readonly text: string }[];',
+    '    readonly altitudeNote: string;',
+    '    readonly temperatureNote: string;',
+    '    readonly keys: readonly { readonly id: string; readonly text: string }[];',
+    '  };',
+    '}',
+    '',
     '/**',
-    ' * G-01: Annapurna Circuit plan sheet (home hero plate, `#meander` poster, tier-0 entry plates).',
-    ` * Relief: ${field.meta.source === 'terrain-tiles' ? 'Terrain Tiles (SRTM)' : 'illustrative (procedural, seeded)'}; minor contours every 100 m, index every 500 m.`,
+    ' * G-01: Annapurna Circuit plan sheet, the home page\'s one static map at tier 0 and with reduced motion.',
+    ` * Relief: ${field.meta.source === 'terrain-tiles' ? 'heightfield annapurna.bin' : 'illustrative (procedural, seeded)'}; altitude bands and index contours every 500 m,`,
+    ' * no minor contours (a calm sheet), isotherms modelled from altitude (entities/expedition TEMPERATURE_MODEL).',
     ' * Projection: bbox west 83.75, south 28.15, east 84.45, north 28.90; equirectangular with cos(28.5°)',
-    ' * x-scaling, fitted and centred in a 1000 × 1250 viewBox. Routes are centripetal Catmull-Rom curves',
-    ' * through the entities/expedition waypoints (approximate coordinates, Q-41).',
+    ' * x-scaling, fitted and centred in a 1000 × 1250 viewBox. Routes: the reconstructed public route file',
+    ' * (public/data/routes/annapurna-route.json), walked main line, the by-road stretch and the four side trips',
+    ' * (Blue, Green, Ice, Tilicho) in walking order; markers and labels from entities/expedition.',
+    ' * No coordinates, credits, totals or dates are printed by this data.',
     ' */',
   ].join('\n');
+  const keys = ['id', 'viewBox', 'frame', 'bands', 'minor', 'index', 'water', 'isotherms', 'road', 'routes', 'markers', 'labels', 'scaleBar', 'northArrow', 'legend', 'source'];
   const result = fitToCap(
     (rung) => {
       const layers = contourLayers(field, projection, sheet.viewBox, { minorStep: 100, indexStep: 500, ...rung });
-      const data = { ...base, minor: layers.minor, index: layers.index, water: [] };
-      const text = `${GENERATED_HEADER}\nimport type { ContourSheetData } from '@/shared/ui/map';\n\n${doc}\nexport const PLAN_SHEET: ContourSheetData = ${toTs(order(data))};\n`;
+      const bands = bandLayers(field, projection, { sigma: rung.sigma, tolerance: rung.tolerance * 1.4, minArea: rung.minLength * 4 });
+      const isotherms = isothermLayers(field, projection, entity.TEMPERATURE_MODEL, { sigma: rung.sigma + 0.6, tolerance: rung.tolerance, minLength: rung.minLength * 1.5 });
+      // No minor contours: the static map stays calm (bands, index contours, isotherms, the route).
+      const data = { ...base, bands, minor: [], index: layers.index, water: [], isotherms };
+      const ordered = Object.fromEntries(keys.filter((k) => data[k] !== undefined).map((k) => [k, data[k]]));
+      const text = `${head}\nexport const PLAN_SHEET: PlanSheetData = ${toTs(ordered)};\n`;
       return { text, data, bytes: Buffer.byteLength(text), layers };
     },
     LADDER,
-    40 * KB,
+    PLAN_CAP,
   );
-  sizes.push(report('plan-sheet', OUT.plan, result, 40 * KB));
+  sizes.push(report('plan-sheet', OUT.plan, result, PLAN_CAP));
   reportClearance('plan-sheet', result.data);
-  if (previewDir) writeFileSync(join(previewDir, 'plan-sheet.svg'), previewSheetSvg(result.data));
+  if (previewDir) writeFileSync(join(previewDir, 'plan-sheet.svg'), previewPlanSvg(result.data));
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -345,12 +359,6 @@ for (const s of sizes) {
 
 function pick(n) {
   return { x: n.x, y: n.y };
-}
-
-/** The point `dist` viewBox units from `from` towards `to` (symbol displacement along a drawn line). */
-function along(from, to, dist) {
-  const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
-  return { x: r1(from.x + ((to.x - from.x) / len) * dist), y: r1(from.y + ((to.y - from.y) / len) * dist) };
 }
 
 /** Key order of the stub modules, so diffs against them stay readable. */
