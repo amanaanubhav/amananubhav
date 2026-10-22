@@ -25,7 +25,7 @@ html[data-motion='off']:not([data-boot-live]) .boot .alt { visibility: hidden; }
    width than that for the layer's travel (--wm, in viewport widths); a block of the base colour below hides the sky. */
 .boot .ly { position: absolute; left: 0; bottom: var(--b); height: var(--h);
   width: max(calc(var(--h) * var(--ar)), calc(100vw * var(--wm))); transform-origin: 50% 100%; will-change: transform; }
-.boot .ly > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.boot .ly > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; will-change: transform; }
 .boot .ly::after { content: ''; position: absolute; z-index: -1; left: 0; right: 0; top: calc(100% - 1px);
   height: 45svh; background: var(--base); }
 

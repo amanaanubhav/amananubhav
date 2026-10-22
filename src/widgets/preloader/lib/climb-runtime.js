@@ -6,8 +6,11 @@
  *
  * One clock drives everything: a segment {t0, d, f} maps time to p, and every layer and fade element plays WAAPI
  * keyframes sampled from it in time (every 25 ms, linear, explicit startTime), so the layers never drift apart and
- * a retime joins the old segment in value and velocity. Transform and opacity only (compositor); the one per-frame
- * main-thread write is the readout text.
+ * a retime joins the old segment in value and velocity. The clock starts in the first animation frame after the
+ * scene is in, at p 0, so the first painted frame is the journey's first. Transform and opacity only, and never two
+ * animations of one property on one element, so all of it stays on the compositor: the climb moves each .ly, the
+ * exit drops its svg children. The one per-frame main-thread write is the readout text; the summit reading is
+ * handed to a pre-scheduled clone, so it shows even while the main thread is blocked.
  *
  * window.__aaBoot = { ready(key), skip() }; ready() calls made before this script arrived are queued on
  * window.__aaBootQ (shared/lib/boot) and replayed here. html[data-boot] goes run -> exit -> done, and window
@@ -24,17 +27,16 @@
     if (!root) return;
     var M = /*@motion*/ {};
     // v2.5: END the curtain is gone (ms after navigation start), TJ the natural journey, HOLD the summit beat, EXIT,
-    // J_MIN the shortest journey, LATE / GONE the script start after which there is no climb / no scene.
-    var END = 5000, TJ = 2700, HOLD = 240, EXIT = 620, J_MIN = 1000, LATE = 3400, GONE = 4600, DEC = 0.7;
+    // J_MIN the shortest journey, LATE / GONE the script start after which there is no climb / no scene, DEC the
+    // share of J's time at which it reaches p 0.70, where fast mode decides.
+    var END = 5000, TJ = 2700, HOLD = 240, EXIT = 620, J_MIN = 1000, LATE = 3400, GONE = 4600, DEC = 0.597;
     // The journey's velocity: smoothstep ramps over the first 20 % and the last 38 % of its time, cruise between.
     var R1 = 0.2, R2 = 0.38, V = 1 / (1 - R1 / 2 - R2 / 2);
     var t1 = performance.now(), ti = t1, E = END;
     /*@ti*/
     function emit(ph) {
       if (ph !== 'climb') H.setAttribute('data-boot', ph);
-      try {
-        dispatchEvent(new CustomEvent('aa:boot', { detail: { phase: ph } }));
-      } catch (_e) {}
+      dispatchEvent(new CustomEvent('aa:boot', { detail: { phase: ph } }));
     }
     // The CSS failsafe already hid the curtain (this script arrived after 3 s), or the gate never ran it: finish
     // without ever showing, so the curtain cannot come back over a page the visitor is already reading.
@@ -48,28 +50,34 @@
       return;
     }
     H.setAttribute('data-boot-live', '');
-    var c = navigator.connection, reduced = H.getAttribute('data-motion') === 'off';
-    var mode = ti > GONE ? 'gone' : reduced ? 'reduced' : ti > LATE ? 'late' :
-      ti + TJ + HOLD + EXIT <= END && !(c && c.effectiveType === '3g') ? 'fast' : 'slow';
+    var c = navigator.connection;
+    // The mode for a start t ms after navigation start: picked when the script runs, and again in the first frame.
+    function pick(t) {
+      return t > GONE ? 'gone' : t > LATE ? 'late' :
+        t + TJ + HOLD + EXIT <= END && !(c && c.effectiveType === '3g') ? 'fast' : 'slow';
+    }
+    var mode = ti <= GONE && H.getAttribute('data-motion') === 'off' ? 'reduced' : pick(ti);
     var STEP = mode === 'slow' || H.getAttribute('data-lite') === '1' ? 33 : 25;
     var scn = root.querySelector('.scn'), L = [], O = [], S = M.stops, i, l;
     if (mode !== 'gone') scn.innerHTML = /*@scene*/ '';
     for (i = 0; i < M.layers.length; i++) {
       l = M.layers[i];
       l.el = root.querySelector(l.s);
-      if (l.el) L.push(l);
+      if (l.el) {
+        l.ch = [].slice.call(l.el.children);
+        L.push(l);
+      }
     }
     for (i = 0; i < M.fades.length; i++) {
       l = M.fades[i];
       l.els = [].slice.call(root.querySelectorAll(l.s));
       if (l.els.length) O.push(l);
     }
-    var num = root.querySelector('.alt-n .n'), day = root.querySelector('.alt-c .d');
-    var way = root.querySelector('.alt-c .w'), skip = root.querySelector('.skip'), hud = root.querySelector('.hud');
-    var nf = new Intl.NumberFormat('en'), tl = d.timeline, run = 0, phase = 'climb', ready = {}, need = { app: 1, fonts: 1 };
-    // xa / xe: the planned exit and end, read only by the preview's st() hook
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    var W, Hh, cur, ex, A = [], X = [], RF = [], raf = 0, xa = 0, xe = 0;
+    var num = root.querySelector('.alt-n .n'), skip = root.querySelector('.skip'), hud = root.querySelector('.hud');
+    var nf = new Intl.NumberFormat('en'), tl = d.timeline, run = 0, phase = 'pre', ready = {};
+    var need = { app: 1, fonts: 1 };
+    var W, Hh, cur, A = [], X = [], RF = [], raf = 0;
+    var p0 = mode === 'fast' || mode === 'slow' ? 0 : 1; // the scene's p until the clock starts
     var shown = M.alt[0], la = shown, lt = 0, cj = 0, ct = 0;
     if (location.pathname === '/') need.stage = 1;
 
@@ -83,24 +91,8 @@
       return v;
     }
     function altAt(p) {
-      var x = Math.min(50, Math.max(0, p * 50)), k = Math.min(49, x | 0);
+      var x = p * 50, k = Math.min(49, x | 0); // p is in [0, 1]
       return M.alt[k] + (M.alt[k + 1] - M.alt[k]) * (x - k);
-    }
-    // The increasing f's argument in [0, 1] where it reaches y.
-    function inv(f, y) {
-      for (var lo = 0, hi = 1, k = 0; k < 20; k++) {
-        var m = (lo + hi) / 2;
-        if (f(m) < y) lo = m;
-        else hi = m;
-      }
-      return lo;
-    }
-    // The exit's ease-in, cubic-bezier(.55,0,1,.45)
-    function bez(x) {
-      var t = inv(function (s) {
-        return s * (1.65 * (1 - s) * (1 - s) + 3 * (1 - s) * s + s * s);
-      }, x);
-      return t * t * (1.35 * (1 - t) + t);
     }
     function g(u) {
       return u * u * u * (1 - u / 2);
@@ -119,10 +111,15 @@
     function now() {
       return tl.currentTime;
     }
+    // A start time for work begun outside a frame, where the timeline's value is stale (0 before the first frame):
+    // max(timeline, performance.now()), which is always performance.now() (the timeline holds the last frame's time).
+    function clk() {
+      return performance.now();
+    }
 
     function measure() {
-      W = root.clientWidth || innerWidth; // the curtain's own width (a classic scrollbar stays beside it)
-      Hh = root.clientHeight || innerHeight;
+      W = root.clientWidth; // the curtain's own width (a classic scrollbar stays beside it)
+      Hh = root.clientHeight;
       for (var k = 0; k < L.length; k++) {
         var y = L[k], w = y.el.offsetWidth;
         if (y.sx) {
@@ -135,18 +132,17 @@
         }
       }
     }
-    function tf(y, q, dy) {
-      return 'translate3d(' + (y.x0 - q * y.tr).toFixed(1) + 'px,' + ((cv(y.ty, q) + dy) * Hh).toFixed(1) + 'px,0)' +
+    function tf(y, q) {
+      return 'translate3d(' + (y.x0 - q * y.tr).toFixed(1) + 'px,' + (cv(y.ty, q) * Hh).toFixed(1) + 'px,0)' +
         (y.sc ? ' scale(' + cv(y.sc, q).toFixed(4) + ')' : '');
     }
     function op(y, q) {
-      var v = cv(y.o, q);
-      return v < 0 ? 0 : v > 1 ? 1 : +v.toFixed(3);
+      return +cv(y.o, q).toFixed(3); // CSS clamps opacity to [0, 1]
     }
-    function caption(k) {
-      cj = k;
-      day.textContent = 'Day ' + S[k][1] + ', ';
-      way.textContent = S[k][2];
+    // Stop k's caption into the first readout in e (the live one, or the summit clone).
+    function cap(e, k) {
+      e.querySelector('.d').textContent = 'Day ' + S[k][1] + ', ';
+      e.querySelector('.w').textContent = S[k][2];
     }
     function stopAt(a) {
       for (var k = 0; k + 1 < S.length && S[k + 1][0] <= a; k++);
@@ -154,26 +150,27 @@
     }
     function setP(q) {
       var k, e;
-      for (k = 0; k < L.length; k++) L[k].el.style.transform = tf(L[k], q, 0);
+      for (k = 0; k < L.length; k++) L[k].el.style.transform = tf(L[k], q);
       for (k = 0; k < O.length; k++) for (e = 0; e < O[k].els.length; e++) O[k].els[e].style.opacity = op(O[k], q);
       shown = Math.round(altAt(q));
       num.textContent = nf.format(shown);
-      caption(stopAt(shown));
+      cap(hud, (cj = stopAt(shown)));
     }
 
+    // An animation from t0 on the timeline; with t0 0 it plays as soon as it can (the compositor picks the start).
     function go(el, kf, t0, o) {
       var a = el.animate(kf, o);
-      a.startTime = t0;
+      if (t0) a.startTime = t0;
       return a;
     }
-    // One segment on every layer and fade element: keyframes sampled in time, linear between them.
+
+    // One segment on every layer and fade element: keyframes sampled in time, linear between them. Fill both: a
+    // segment that starts a little ahead of the timeline already holds its first frame.
     function play(sg) {
-      var n = Math.max(1, Math.ceil(sg.d / STEP)), q = [], out = [], o = { duration: sg.d, fill: 'forwards' }, k, m, e, kf;
+      var n = Math.max(1, Math.ceil(sg.d / STEP)), q = [], out = [], o = { duration: sg.d, fill: 'both' }, k, m, e, kf;
       for (k = 0; k <= n; k++) q.push(sg.f(k / n));
       for (m = 0; m < L.length; m++) {
-        for (kf = [], k = 0; k <= n; k++) {
-          kf.push({ transform: tf(L[m], q[k], sg.D ? L[m].drop * sg.D(L.length - 1 - m, (k / n) * sg.d) : 0) });
-        }
+        for (kf = [], k = 0; k <= n; k++) kf.push({ transform: tf(L[m], q[k]) });
         out.push(go(L[m].el, kf, sg.t0, o));
       }
       for (m = 0; m < O.length; m++) {
@@ -184,6 +181,7 @@
     }
     function cancel(a) {
       for (var k = 0; k < a.length; k++) a[k].cancel();
+      return [];
     }
     function retime(sg) {
       var o = A;
@@ -191,9 +189,11 @@
       A = play(sg);
       cancel(o);
     }
-    // From the clock's value and velocity now to p1 at rest: a cubic Hermite with m0 <= 2 (monotone, no overshoot).
-    function herm(p1, dmax, drest) {
-      var T = now(), p0 = P(T), v0 = vel(T), dp = p1 - p0;
+    // From the clock's value and velocity at T (now) to p1 at rest: a cubic Hermite with m0 <= 2 (monotone, no
+    // overshoot; m0 = 2 at the full dmax is the skip's coast, p0 + dp s (2 - s)).
+    function herm(p1, dmax, drest, T) {
+      T = T || now();
+      var p0 = P(T), v0 = vel(T), dp = p1 - p0;
       var dd = v0 > 1e-5 ? Math.min(dmax, (2 * dp) / v0) : drest, m = (v0 * dd) / dp;
       retime({ t0: T, d: dd, f: function (s) {
         return p0 + dp * (m * s * (1 - s) * (1 - s) + s * s * (3 - 2 * s));
@@ -204,29 +204,36 @@
       var r = run;
       setTimeout(function () {
         if (r === run) fn();
-      }, Math.max(0, t - performance.now()));
+      }, t - performance.now()); // a negative delay runs at once
+    }
+    // The drops: each layer's svg children fall away (an ease-in), the front layer first and each farther one
+    // dur/15.5 later. On the children, so they never stack on the climb's own transform animation of the .ly.
+    function drops(t0, dur) {
+      var out = [], m, e, y, dl, px;
+      for (m = 0; m < L.length; m++) {
+        y = L[m];
+        dl = ((L.length - 1 - m) * dur) / 15.5;
+        px = (y.drop * Hh).toFixed(1); // inside the far layer's scale (1.07 at rest), a little longer there
+        for (e = 0; e < y.ch.length; e++) {
+          out.push(go(y.ch[e], [{ transform: 'none' }, { transform: 'translate3d(0,' + px + 'px,0)' }], t0,
+            { duration: dur - dl, delay: dl, easing: 'cubic-bezier(.55,0,1,.45)', fill: 'forwards' }));
+        }
+      }
+      return out;
     }
     // The exit, built as soon as it is known (a delayed start plays on time even through a long task). With drops,
-    // the land falls away, the front layer first and each farther one dur/15.5 later; without, the curtain fades.
+    // the land falls away while the climb's segment holds or coasts; without, the curtain fades.
     function plan(t0, dur, drop) {
-      xa = t0;
-      xe = t0 + dur;
       if (drop) {
-        ex = { t0: t0, d: dur, f: function (s) {
-          return P(t0 + s * dur);
-        }, D: function (j, t) {
-          var dl = (j * dur) / 15.5;
-          return bez((t - dl) / (dur - dl));
-        } };
-        X = play(ex);
-        RF.push(go(hud, [{ opacity: 1 }, { opacity: 0 }], t0, { duration: 200, fill: 'forwards' }));
+        X = drops(t0, dur);
+        RF.push(go(hud, [{ opacity: 1 }, { opacity: 0 }], t0, { duration: 200, fill: 'both' }));
       }
       var dl = drop ? dur * 0.194 : 0;
       var fade = go(root, [{ opacity: 1 }, { opacity: 0 }], t0,
         { duration: dur - dl, delay: dl, easing: 'cubic-bezier(.33,0,.2,1)', fill: 'forwards' });
       RF.push(fade);
       fade.finished.then(done, function () {});
-      if (t0 <= now() + 1) leave();
+      if (t0 <= clk() + 1) leave();
       else at(t0, leave);
     }
     function leave() {
@@ -271,7 +278,7 @@
       var k = stopAt(shown);
       if (k !== cj && (T - ct >= 160 || T >= cur.t0 + cur.d)) {
         ct = T;
-        caption(k);
+        cap(hud, (cj = k));
       }
       raf = requestAnimationFrame(tick);
     }
@@ -280,11 +287,20 @@
       for (var k in need) if (!ready[k]) return false;
       return true;
     }
-    // Fast mode, the plan is fixed: J (or the arrive) runs to the summit, the beat, then the exit.
+    // The plan is fixed: J (or the arrive) runs to the summit, the beat, then the exit. At the arrival a clone of the
+    // readout that already reads 5,416 m, Thorong La crossfades in on the compositor, whatever the main thread does.
     function fix() {
       phase = 'arrive';
       hideSkip();
-      plan(Math.max(now(), cur.t0 + cur.d) + HOLD, EXIT, 1);
+      var ta = Math.max(now(), cur.t0 + cur.d), al = hud.querySelector('.alt'), c = al.cloneNode(true);
+      var k = S.length - 1;
+      c.querySelector('.n').textContent = nf.format(S[k][0]);
+      cap(c, k);
+      c.style.opacity = 0;
+      hud.appendChild(c);
+      RF.push(go(c, [{ opacity: 0 }, { opacity: 1 }], ta, { duration: 160, fill: 'both' }),
+        go(al, [{ opacity: 1 }, { opacity: 0 }], ta, { duration: 160, fill: 'both' }));
+      plan(ta + HOLD, EXIT, 1); // last: an exit already due emits `exit` at once
     }
     // At p 0.70 and not ready: settle into High Camp (unless the decision ran too late for it), wait for the keys.
     function decide() {
@@ -309,7 +325,7 @@
     }
     function onReady(k) {
       ready[k] = 1;
-      if (!allReady()) return;
+      if (!allReady() || phase === 'pre') return;
       if (phase === 'climb' && mode === 'fast') fix();
       else if (phase === 'settle') arrive();
       else if (phase === 'wait' && performance.now() >= t1 + 600) out();
@@ -322,29 +338,26 @@
     }
     // Any input ends it at once: the clock coasts to a stop (360 ms at most) while a short exit runs.
     function doSkip() {
-      if (phase === 'exit' || phase === 'done' || phase === 'scrub') return;
+      if (phase === 'exit' || phase === 'done') return;
       run++;
-      cancel(X);
-      cancel(RF);
-      X = [];
-      RF = [];
-      var T = now();
-      if (cur && A.length) {
-        var p0 = P(T), v0 = Math.max(0, vel(T)), dp = Math.min(1 - p0, v0 * 180);
-        cur = { t0: T, d: v0 > 1e-5 ? Math.max(1, Math.min(360, (2 * dp) / v0)) : 1, f: function (s) {
-          return p0 + dp * s * (2 - s);
-        } };
-        cancel(A);
-        A = [];
+      X = cancel(X);
+      RF = cancel(RF);
+      var T = clk();
+      if (A.length) {
+        // coast to a stop in at most 360 ms (the + 1e-6 keeps dp above 0 at the summit)
+        herm(Math.min(1, P(T) + vel(T) * 180) + 1e-6, 360, 1, T);
         plan(T, 480, 1);
-      } else plan(T, 200, 0);
+      } else {
+        phase = 'arrive'; // also before the first frame: the climb never starts
+        plan(T, 200, 0);
+      }
     }
 
     // Input: any click, key (no modifier), wheel or touch skips; the page under the curtain does not move.
     function onKey(e) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       // the scroll keys (Space, Page*, Arrow*, Home, End), except Space on the Skip button itself
-      if (/^( |Spacebar|Page|Arrow|Home$|End$)/.test(e.key) && !(e.target === skip && e.key === ' ')) e.preventDefault();
+      if (/^( |Page|Arrow|Home$|End$)/.test(e.key) && !(e.target === skip && e.key === ' ')) e.preventDefault();
       doSkip();
     }
     function onScroll(e) {
@@ -352,26 +365,24 @@
       e.stopImmediatePropagation();
       doSkip();
     }
-    var LO = { capture: true, passive: false };
-    function unlisten() {
-      removeEventListener('keydown', onKey, true);
-      removeEventListener('wheel', onScroll, LO);
-      removeEventListener('touchmove', onScroll, LO);
+    // f is addEventListener or removeEventListener: capture, and not passive (wheel and touchmove are prevented)
+    function lis(f) {
+      var o = { capture: true, passive: false };
+      f('keydown', onKey, o);
+      f('wheel', onScroll, o);
+      f('touchmove', onScroll, o);
     }
-    addEventListener('keydown', onKey, true);
-    addEventListener('wheel', onScroll, LO);
-    addEventListener('touchmove', onScroll, LO);
+    function unlisten() {
+      lis(removeEventListener);
+    }
+    lis(addEventListener);
     root.addEventListener('click', doSkip);
-    // A resize rebuilds the running segments at the same timeline time.
+    // A resize rebuilds the running segment at the same timeline time.
     addEventListener('resize', function () {
-      if (phase === 'done' || phase === 'scrub' || !L.length) return;
+      if (phase === 'done') return;
       measure();
-      if (cur) {
-        var o = A.concat(X);
-        A = play(cur);
-        X = ex ? play(ex) : [];
-        cancel(o);
-      } else setP(1);
+      if (cur) retime(cur); // (drops already planned keep their lengths: the exit is at most 620 ms)
+      else setP(p0);
     });
     // Restored from bfcache while frozen mid-curtain: end at once.
     addEventListener('pageshow', function (e) {
@@ -381,24 +392,47 @@
     var api = { ready: onReady, skip: doSkip };
     /*@test*/
     window.__aaBoot = api;
-    emit('climb');
+    // Until the clock starts the scene waits at its first p, all but transparent, so its first raster (about 200 ms
+    // of GPU work on a laptop) starts behind the sky. A tab hidden before the first frame starts when shown, late,
+    // so it picks 'gone'.
     measure();
-    var T = now();
-    if (mode !== 'gone') go(scn, [{ opacity: 0 }, { opacity: 1 }], T, { duration: 200 });
-    if (mode === 'fast' || mode === 'slow') {
-      var jd = mode === 'fast' ? TJ : Math.min(TJ, Math.max(J_MIN, E - HOLD - EXIT - T));
-      retime({ t0: T, d: jd, f: J });
-      tick();
-      if (mode === 'slow') fix();
-      else at(T + inv(J, DEC) * TJ, decide);
-    } else if (mode === 'gone') {
-      phase = 'arrive';
-      plan(T, 200, 0);
-    } else {
-      setP(1);
-      if (mode === 'late') {
+    if (mode !== 'gone') {
+      setP(p0);
+      scn.style.opacity = 0.01;
+    }
+    requestAnimationFrame(begin);
+    function begin() {
+      if (phase !== 'pre') return;
+      var T = clk();
+      // A first frame that comes late (the main thread was busy) shortens the climb or skips it: the curtain still
+      // ends by E. A curtain gone by then never shows the scene.
+      if (mode !== 'reduced') mode = pick(T - t1 + ti);
+      // The fade-in and the climb's opening play as soon as they can: the compositor starts them together in its
+      // first frame with the scene rastered (one start time for all, as for any animations begun in one frame), and
+      // the clock adopts it (`climb`), so both are seen from their first frame.
+      if (mode !== 'gone') go(scn, [{ opacity: 1 }], 0, { duration: 200, fill: 'both' }); // from its .01
+      if (mode !== 'fast' && mode !== 'slow') return start(T);
+      retime({ t0: 0, d: mode === 'fast' ? TJ : Math.min(TJ, Math.max(J_MIN, E - HOLD - EXIT - T)), f: J });
+      cur.t0 = T; // until then
+      A[0].ready.then(function () {
+        if (phase === 'pre') start((cur.t0 = A[0].startTime), 1); // unless skipped meanwhile
+      }, function () {});
+    }
+    // The clock starts at T: the climb (up), or the summit frame and the fade.
+    function start(T, up) {
+      phase = 'climb';
+      emit('climb');
+      if (up) {
+        tick();
+        if (mode === 'slow' || allReady()) fix();
+        else at(T + DEC * TJ, decide);
+      } else if (mode !== 'reduced') {
         phase = 'arrive';
-        plan(T + 600, 300, 0);
+        if (mode === 'gone') plan(T, 200, 0);
+        else {
+          setP((p0 = 1)); // late: the summit frame, then a fade that ends by E
+          plan(Math.min(T + 600, E - 300), 300, 0); // late starts by GONE, so this is never before T
+        }
       } else {
         phase = 'wait';
         at(t1 + 600, function () {
@@ -407,11 +441,9 @@
         at(t1 + Math.min(2000, Math.max(E - t1, 600)), out);
       }
     }
-    if (d.fonts && d.fonts.ready) {
-      d.fonts.ready.then(function () {
-        onReady('fonts');
-      });
-    } else ready.fonts = 1;
+    d.fonts.ready.then(function () {
+      onReady('fonts');
+    });
     var q = window.__aaBootQ || [];
     for (i = 0; i < q.length; i++) onReady(q[i]);
     window.__aaBootQ = null;

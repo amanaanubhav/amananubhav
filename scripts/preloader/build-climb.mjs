@@ -135,8 +135,11 @@ function runtime(test, markup = scene.markup, motionJson = MOTION) {
         '/*@test*/',
         () =>
           'api.setP=function(q){run++;cancel(A);cancel(X);cancel(RF);A=[];X=[];RF=[];cancelAnimationFrame(raf);' +
-          'phase="scrub";unlisten();root.hidden=false;measure();setP(q)};' +
-          'api.st=function(){return{phase:phase,mode:mode,p:cur?P(now()):1,ti:ti,exitAt:xa,end:xe}};',
+          'phase="done";unlisten();root.hidden=false;scn.style.opacity="";measure();setP(q)};' + // done: inert
+          // the planned exit and end, from the root fade (its start, and its delay + duration)
+          'api.st=function(){var f=RF.filter(function(a){return a.effect.target===root})[0];' +
+          'return{phase:phase,mode:mode,p:cur?P(now()):1,ti:ti,exitAt:f?f.startTime:0,' +
+          'end:f?f.startTime+f.effect.getComputedTiming().endTime:0}};',
       );
   }
   if (src.includes('/*@scene*/') || src.includes('/*@motion*/')) throw new Error('runtime placeholders not replaced');
