@@ -1,6 +1,6 @@
 'use client';
 
-import { useBootDone } from '@/shared/lib/boot';
+import { useBootPhase } from '@/shared/lib/boot';
 import { lazyModule, useLazyModule } from '@/shared/lib/lazy';
 
 import { closeStory, useSelectedStory } from '../model/story-reader-store';
@@ -16,7 +16,8 @@ const readerChunk = lazyModule(() => import('./StoryReaderModal').then((m) => m.
  */
 export function StoryReaderHost() {
   const selectedStory = useSelectedStory();
-  const bootDone = useBootDone();
+  // Warmed once the curtain has gone, so the chunk never lands in its exit.
+  const bootDone = useBootPhase() === 'done';
   const renderStoryReader = useLazyModule(readerChunk, { needed: selectedStory !== null, warm: bootDone });
   if (!selectedStory || !renderStoryReader) return null;
   return renderStoryReader(selectedStory, closeStory);

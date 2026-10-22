@@ -5,6 +5,7 @@ import { flushSync } from 'react-dom';
 import { animate, AnimatePresence, motion, useMotionValue, type MotionStyle } from 'motion/react';
 
 import { MOTION } from '@/shared/config';
+import { useBootPhase } from '@/shared/lib/boot';
 import { useBodyScrollLock, useMediaQuery } from '@/shared/lib/dom';
 import { useIdlePreload } from '@/shared/lib/lazy';
 import { useMotionAllowed } from '@/shared/lib/motion-tier';
@@ -162,7 +163,8 @@ export function FloatingChat({ onOpenTerminal, onOpenVault }: FloatingChatProps)
   const windowId = useId();
   const isCompact = useMediaQuery('(max-width: 639px)');
   const motionOk = useMotionAllowed();
-  useIdlePreload(loadChatWindow, true);
+  // Mounted under the first-load curtain: the window's chunk waits until it has gone (and for the stage hold).
+  useIdlePreload(loadChatWindow, useBootPhase() === 'done');
   const [ChatWindow, setChatWindow] = useState<typeof ChatWindowComponent | null>(null);
 
   // The window mounts only once its chunk is here, so a close before then simply never shows it.

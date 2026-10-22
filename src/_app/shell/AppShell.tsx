@@ -45,15 +45,16 @@ function useThemeAttributeSync(isDark: boolean): void {
  * is body::before (z-grain), switched by `html[data-grain]`.
  *
  * The first-load curtain (the climb, widgets/preloader) is not part of React: RootLayout renders its
- * skeleton and a script runs it. The shell follows its phase: the chrome mounts and the stage runs once it
- * leaves, and on '/' the stage loads under it so the relief can rise as it clears (preloader design §6.1).
+ * skeleton and a script runs it. The shell follows its phase: the chrome is mounted but hidden under it, the stage
+ * runs once it leaves, and on '/' the stage loads under it so the relief can rise as it clears (preloader design §6.1).
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { isDark } = useTheme();
   const pathname = usePathname();
   const tier = useMotionTier();
   const isHome = pathname === ROUTES.home;
-  const booted = useBootPhase() !== 'run';
+  const bootPhase = useBootPhase();
+  const booted = bootPhase !== 'run';
   const isVaultOpen = useVaultOpen();
   const isTerminalOpen = useTerminalOpen();
   const isReading = useSelectedStory() !== null;
@@ -61,7 +62,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const saveData = useSyncExternalStore(noopSubscribe, readSaveData, serverSaveData);
 
   const isAdminRoute = pathname === ROUTES.adminChat;
-  const showChrome = booted && !isVaultOpen && !isTerminalOpen;
+  // The chrome stays mounted under the curtain (hidden by CSS while html[data-boot=run]), so nothing mounts at its
+  // exit and the fade and the rise keep the main thread to themselves.
+  const showChrome = !isVaultOpen && !isTerminalOpen;
   const grainEnabled = tier > 0 && !isAdminRoute && !saveData;
   // The home scene loads and compiles under the curtain (its entrance clock waits for boot); elsewhere the
   // stage waits until the curtain leaves.
@@ -70,11 +73,13 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Hydrated: the curtain may arrive (with the fonts and, on '/', the stage).
   useEffect(() => signalBootReady('app'), []);
 
+  // Once the curtain has gone (not at its exit, where the fade and the rise need every frame).
+  const bootGone = bootPhase === 'done';
   useEffect(() => {
-    if (!booted) return;
+    if (!bootGone) return;
     const frame = requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => cancelAnimationFrame(frame);
-  }, [booted]);
+  }, [bootGone]);
 
   useSmoothScrollRoot(tier > 0 && !isAdminRoute);
   useBodyScrollLock(isVaultOpen || isTerminalOpen);

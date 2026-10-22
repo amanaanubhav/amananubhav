@@ -173,8 +173,9 @@ export function Navbar() {
       // A pointer press inside the bar ends keyboard mode: the button keeps focus but no longer pins the bar.
       onPointerDown={() => setFocusWithin(false)}
       // A click-through band: only the glass takes pointer events. Its opacity stays with CSS (the §C.8 dim),
-      // so the motion values live on the glass below, never on this `data-chrome` root.
-      className="pointer-events-none fixed inset-x-0 top-0 z-navbar px-2 pt-2 min-[400px]:px-3 sm:px-4"
+      // so the motion values live on the glass below, never on this `data-chrome` root. Mounted under the first-load
+      // curtain (nothing mounts at its exit) and never visible or focusable until the climb leaves.
+      className="pointer-events-none fixed inset-x-0 top-0 z-navbar px-2 pt-2 min-[400px]:px-3 sm:px-4 [html[data-boot=run]_&]:invisible"
     >
       <motion.div
         initial={{ y: '-150%', opacity: 0, scale: 0.94 }}
