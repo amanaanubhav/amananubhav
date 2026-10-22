@@ -432,6 +432,15 @@
   outline: 2px solid rgb(var(--c-ink));
   outline-offset: 3px;
 }
+/* Start chat waiting on the server (time-limited by the model): no hover lift, a busy cursor. */
+.primary[aria-busy='true'] {
+  cursor: progress;
+  filter: none;
+}
+/* Start chat did not go through: the reason sits over the button, which reads Retry. */
+.footer .error {
+  margin-bottom: 8px;
+}
 
 /* ---------------------------------------------------------------- thread */
 

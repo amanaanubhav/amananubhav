@@ -62,7 +62,9 @@ interface ChatIntroFormProps {
  * `data-more`, which fades its lower edge (written straight to the DOM, so scrolling never re-renders).
  */
 export function ChatIntroForm({ chat, onOpenTerminal, onOpenVault }: ChatIntroFormProps) {
-  const { name, setName, email, setEmail, phone, setPhone, handleStartChat } = chat;
+  const { name, setName, email, setEmail, phone, setPhone, startState, handleStartChat } = chat;
+  const starting = startState === 'starting';
+  const stopped = startState === 'failed' || startState === 'offline';
   const uid = useId();
   const [errors, setErrors] = useState<FieldErrors>({});
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -184,9 +186,26 @@ export function ChatIntroForm({ chat, onOpenTerminal, onOpenVault }: ChatIntroFo
         </div>
       </div>
       <div className={styles.footer}>
-        <button type="submit" className={styles.primary}>
+        <div role="status">
+          {stopped ? (
+            <p className={styles.error}>
+              <CircleAlert aria-hidden="true" strokeWidth={1.75} />
+              {startState === 'offline' ? (
+                <span>You&apos;re offline. Retry when you&apos;re back.</span>
+              ) : (
+                <span>The chat didn&apos;t start. Check your connection, then retry.</span>
+              )}
+            </p>
+          ) : null}
+        </div>
+        <button
+          type="submit"
+          aria-disabled={starting || undefined}
+          aria-busy={starting || undefined}
+          className={styles.primary}
+        >
           <ChatPlane />
-          Start chat
+          {starting ? 'Starting' : stopped ? 'Retry' : 'Start chat'}
         </button>
       </div>
     </form>

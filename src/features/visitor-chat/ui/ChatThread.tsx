@@ -113,8 +113,10 @@ export function ChatThread({ chat, newSince, onOpenVault }: ChatThreadProps) {
   const unavailable = !CHAT_CONFIGURED || chat.hasDb === false;
 
   const serverIds = new Set(messages.map((m) => m.id));
-  // A pending message (no server time yet) is one of ours: it takes its local send time.
+  // A pending message (no server time yet) is one of ours: it takes its local send time, and shows "Not sent." once
+  // the model gives up on it (rejected, or past the time limit) even though Firestore still holds the local copy.
   const sentAt = new Map(outbox.map((m) => [m.id, m.createdAt]));
+  const failedIds = new Set(outbox.filter((m) => m.status === 'failed').map((m) => m.id));
   const items: Item[] = [
     ...messages.map((m): Item => {
       const at = messageTime(m);
@@ -123,7 +125,7 @@ export function ChatThread({ chat, newSince, onOpenVault }: ChatThreadProps) {
         text: m.text,
         fromVisitor: m.sender === 'visitor',
         at: at ?? sentAt.get(m.id) ?? openedAt,
-        status: at === null ? 'sending' : 'sent',
+        status: at !== null ? 'sent' : failedIds.has(m.id) ? 'failed' : 'sending',
         isNew: at === null || at > openedAt,
       };
     }),

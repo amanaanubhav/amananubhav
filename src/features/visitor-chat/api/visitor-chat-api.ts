@@ -66,13 +66,23 @@ export function newMessageId(chatId: string): string {
   return doc(messagesCollection(chatId)).id;
 }
 
-/** Saves the message under `id` (same path and fields as before), updates the parent thread, then emails the owner. */
-export async function sendVisitorMessage(
-  chatId: string,
-  text: string,
-  visitor: VisitorProfile,
-  id: string,
-): Promise<void> {
+/** Sends still waiting for the server, by message id. */
+const inFlight = new Map<string, Promise<void>>();
+
+/**
+ * Saves the message under `id` (same path and fields as before), updates the parent thread, then emails the owner.
+ * A second call for an id still in flight (Retry after the hook's time limit) returns the pending send instead of
+ * writing again, so a write that lands late is not doubled and the owner gets one email.
+ */
+export function sendVisitorMessage(chatId: string, text: string, visitor: VisitorProfile, id: string): Promise<void> {
+  const pending = inFlight.get(id);
+  if (pending) return pending;
+  const send = writeVisitorMessage(chatId, text, visitor, id).finally(() => inFlight.delete(id));
+  inFlight.set(id, send);
+  return send;
+}
+
+async function writeVisitorMessage(chatId: string, text: string, visitor: VisitorProfile, id: string): Promise<void> {
   await ensureAnonymousSession();
 
   // 1. Save message to chat history
