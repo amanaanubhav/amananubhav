@@ -1,10 +1,9 @@
 import { ChapterHeader } from '@/shared/ui/chapter-header';
 import { Log } from '@/shared/ui/journal';
 import { ResumeLink } from '@/shared/ui/resume-link';
-import { StatusChip } from '@/shared/ui/status-chip';
 
 import { HERO_COPY, HERO_LOG } from '../config/copy';
-import { ReadStoryButton } from './chapters/HomeActions';
+import { HeroStatusChip, ReadStoryButton } from './chapters/HomeActions';
 
 /**
  * `#home`, base camp (§G.1, design B0). Server-rendered and never animated from hidden: the h1 is the LCP
@@ -44,9 +43,7 @@ export function HeroSection() {
           <ReadStoryButton label={HERO_COPY.readStory} />
           <ResumeLink variant="secondary" />
           <span className="md:hidden">
-            <StatusChip tone="success" href={HERO_COPY.statusHref}>
-              {HERO_COPY.status}
-            </StatusChip>
+            <HeroStatusChip href={HERO_COPY.statusHref} label={HERO_COPY.status} />
           </span>
         </div>
 
@@ -58,11 +55,7 @@ export function HeroSection() {
               {
                 key: 'status',
                 mono: false,
-                value: (
-                  <StatusChip tone="success" href={HERO_COPY.statusHref}>
-                    {HERO_COPY.status}
-                  </StatusChip>
-                ),
+                value: <HeroStatusChip href={HERO_COPY.statusHref} label={HERO_COPY.status} />,
               },
             ]}
           />

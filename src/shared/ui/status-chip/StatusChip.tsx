@@ -13,6 +13,8 @@ export interface StatusChipProps {
   children: ReactNode;
   /** Makes the chip a link (internal paths use next/link; `#id` jumps go through scrollToTarget). */
   href?: string;
+  /** next/link prefetch for an internal `href` (e.g. `false` while the home stage holds the network). */
+  prefetch?: boolean;
   className?: string;
 }
 
@@ -32,7 +34,7 @@ const ICON: Record<StatusTone, string> = {
  * A quiet status line (§D.3): a 6 px dot (or a 14 px icon) in the tone color plus text in ink.
  * The text always carries the meaning; the color only repeats it.
  */
-export function StatusChip({ tone = 'neutral', icon: Icon, children, href, className }: StatusChipProps) {
+export function StatusChip({ tone = 'neutral', icon: Icon, children, href, prefetch, className }: StatusChipProps) {
   const mark = Icon ? (
     <Icon aria-hidden="true" focusable="false" className={cn('size-3.5 shrink-0', ICON[tone])} strokeWidth={2} />
   ) : (
@@ -71,7 +73,7 @@ export function StatusChip({ tone = 'neutral', icon: Icon, children, href, class
     );
   }
   return href.startsWith('/') && !href.startsWith('//') ? (
-    <Link href={href} className={linkClasses}>
+    <Link href={href} prefetch={prefetch} className={linkClasses}>
       {body}
     </Link>
   ) : (

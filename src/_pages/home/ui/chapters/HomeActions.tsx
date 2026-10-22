@@ -7,7 +7,9 @@ import { openStory } from '@/features/read-story';
 import { openVault } from '@/features/secure-vault';
 import type { Story } from '@/entities/story';
 import { scrollToTarget } from '@/shared/lib/smooth-scroll';
+import { useStageHold } from '@/shared/lib/stage-prefetch';
 import { Button, type ButtonVariant } from '@/shared/ui/button';
+import { StatusChip } from '@/shared/ui/status-chip';
 
 /*
  * The home page's client actions. Everything else on the page is server-rendered; these buttons are
@@ -87,5 +89,15 @@ export function ReadJournalEntryButton({ variant = 'text', label, story, classNa
     <Button variant={variant} icon={BookOpen} className={className} aria-haspopup="dialog" onClick={() => openStory(story)}>
       {label}
     </Button>
+  );
+}
+
+/** The hero's status chip: its /professional link keeps prefetch off while the stage holds the network. */
+export function HeroStatusChip({ href, label }: { href: string; label: string }) {
+  const hold = useStageHold();
+  return (
+    <StatusChip tone="success" href={href} prefetch={hold ? false : undefined}>
+      {label}
+    </StatusChip>
   );
 }
