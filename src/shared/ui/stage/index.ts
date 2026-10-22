@@ -1,6 +1,7 @@
 /*
  * The stage's DOM side (§C.5, §D.3). Nothing exported here imports three.js: StageRenderer and
- * ThemeUniforms (same folder) are reached only through the next/dynamic import in StageCanvas.
+ * ThemeUniforms (same folder) are reached only through the dynamic import in load-renderer.ts (StageCanvas,
+ * preloadStage, and early-kick.ts, the pre-hydration kick that next.config injects; never exported here).
  */
 export {
   emitSceneFrame,

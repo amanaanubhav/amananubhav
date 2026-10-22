@@ -7,17 +7,19 @@ import { useBootDone } from '@/shared/lib/boot';
 import { degradeStage, useMotionTier } from '@/shared/lib/motion-tier';
 
 import { onIdle } from './idle';
+import { loadRenderer } from './load-renderer';
 import { useStageEntries } from './registry';
 
-/* The three/R3F chunk. Never in an initial chunk: reached only through this dynamic import. */
-const StageRenderer = dynamic(() => import('./StageRenderer'), { ssr: false, loading: () => null });
+/* The three/R3F chunk. Never in an initial chunk: reached only through loadRenderer's dynamic import. */
+const StageRenderer = dynamic(loadRenderer, { ssr: false, loading: () => null });
 
 /**
  * Starts downloading the renderer chunk now (the same module StageCanvas loads), for a page that wants its
- * scene as early as possible (the home story's kick, load-in-3d §4). Rejects when the chunk fails to load.
+ * scene as early as possible (the home story's kick, load-in-3d §4). On a first load of '/' the pre-hydration
+ * kick (early-kick.ts, §10) has usually started it already; this joins that load. Rejects when the chunk fails.
  */
 export function preloadStage(): Promise<unknown> {
-  return import('./StageRenderer');
+  return loadRenderer();
 }
 
 /**
@@ -48,11 +50,11 @@ export interface StageCanvasProps {
 }
 
 /**
- * The one persistent canvas, owned by the shell (§C.5). Renders nothing until it is armed: boot
- * done, tier >= 1 and at least one scene registered, then an idle callback (or the next frame when a
- * registered scene is `eager`). Once armed it stays mounted across routes; it unmounts only when the
- * tier drops to 0 (context loss, degradeStage, the footer switch), and the posters stay for the rest
- * of the session.
+ * The one persistent canvas, owned by the shell (§C.5). Renders nothing until it is armed: tier >= 1
+ * and at least one scene registered, then an idle callback once boot is done, or the next frame when a
+ * registered scene is `eager` (the home relief, which loads under the first-load curtain). Once armed it
+ * stays mounted across routes; it unmounts only when the tier drops to 0 (context loss, degradeStage, the
+ * footer switch), and the posters stay for the rest of the session.
  */
 export function StageCanvas({ paused, isDark }: StageCanvasProps) {
   const tier = useMotionTier();
@@ -63,7 +65,7 @@ export function StageCanvas({ paused, isDark }: StageCanvasProps) {
   const [armed, setArmed] = useState(false);
 
   useEffect(() => {
-    if (armed || tier === 0 || !bootDone || sceneCount === 0) return;
+    if (armed || tier === 0 || !(bootDone || eager) || sceneCount === 0) return;
     if (eager) {
       const frame = requestAnimationFrame(() => setArmed(true));
       return () => cancelAnimationFrame(frame);

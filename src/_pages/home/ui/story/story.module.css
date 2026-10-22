@@ -323,7 +323,7 @@
   position: fixed;
   z-index: 30;
   right: 24px;
-  bottom: 84px;
+  bottom: var(--chat-stack); /* 12 px above the chat bead (chat design §3) */
   width: 262px;
   padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
@@ -339,7 +339,7 @@
 }
 
 /*
- * Desktop (design §13): bottom-right, stacked 12 px above the chat launcher (bottom 84 px), under the waypoint
+ * Desktop (design §13): bottom-right, stacked 12 px above the chat bead (`--chat-stack`), under the waypoint
  * rail, so it never sits on the route's start at Besisahar (the subject is framed left of it).
  */
 /* Shorter desktop screens: the rail's last ticks reach down to the legend's top, so it steps left of them. */
@@ -593,11 +593,15 @@
   .legend {
     left: 12px;
     right: 12px;
-    bottom: calc(72px + env(safe-area-inset-bottom));
+    bottom: var(--chat-stack);
     width: auto;
     padding: 8px 12px 7px;
     /* Near-opaque on phones: text scrolling under the bar must never show through it (a text-clip zone). */
     background: color-mix(in srgb, var(--ground) 94%, transparent);
+  }
+  /* Focus scrolls clear of the bar as well as of the chat bead under it (WCAG 2.4.11). */
+  :global(html):has(.legend) {
+    scroll-padding-bottom: calc(var(--chat-stack) + 96px);
   }
 
   .where,

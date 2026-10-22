@@ -36,6 +36,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   env: resolveClientEnv(),
   images: { formats: ['image/avif', 'image/webp'] },
+  // Runs before hydration on every full load: on '/' it starts the home stage's 3D chunk early (load-in-3d §10).
+  instrumentationClientInject: ['./src/shared/ui/stage/early-kick.ts'],
+  // The preloader's climb script (public/boot/climb.<hash>.js) is content-hashed by its generator.
+  async headers() {
+    const immutable = { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' };
+    return [{ source: '/boot/:path*', headers: [immutable] }];
+  },
 };
 
 export default nextConfig;

@@ -18,6 +18,7 @@ import { openVault } from '@/features/secure-vault';
 import { MOTION, ROUTES } from '@/shared/config';
 import { cn } from '@/shared/lib/cn';
 import { useReducedMotionPreference } from '@/shared/lib/motion-tier';
+import { useStageHold } from '@/shared/lib/stage-prefetch';
 import { scrollToTop } from '@/shared/lib/smooth-scroll';
 import { runThemeSweep, useTheme } from '@/shared/lib/theme';
 import { RidgeMark } from '@/shared/ui/ridge-mark';
@@ -113,6 +114,10 @@ export function Navbar() {
   const [forcedReduce] = useReducedMotionPreference();
   const osReduce = useReducedMotion() ?? false;
   const liquid = useLiquidHover(forcedReduce || osReduce, pathname);
+  // No link prefetch while the home stage holds the network for its 3D chunk (load-in-3d §10), and never for
+  // the current route. A flip re-mounts each link's prefetch, so links in view prefetch once it is released.
+  const held = useStageHold();
+  const prefetchFor = (href: string) => (held || href === pathname ? false : undefined);
 
   useMotionValueEvent(scrollY, 'change', (y) => {
     setCompact(isCompactScroll(y));
@@ -191,6 +196,7 @@ export function Navbar() {
 
         <Link
           href={ROUTES.home}
+          prefetch={prefetchFor(ROUTES.home)}
           data-liquid-target=""
           aria-label="Aman Anubhav, home"
           onClick={(event) => onLinkClick(event, ROUTES.home)}
@@ -217,6 +223,7 @@ export function Navbar() {
                 <li key={item.link}>
                   <Link
                     href={item.link}
+                    prefetch={prefetchFor(item.link)}
                     aria-current={current}
                     data-liquid-target=""
                     onClick={(event) => onLinkClick(event, item.link)}
