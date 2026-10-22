@@ -14,19 +14,19 @@ export interface NavItem {
 /**
  * Main navigation (§H.1). Routes unchanged; labels per Q-92: "Professional" is now "Work"; "Blogs" became "Field notes"
  * and is now "Journal" (the owner's rename; the route stays /stories).
- * Below 640 px the icons are the §H.1 set kept from the previous site (Home, Briefcase, FolderGit2, BookOpen);
- * each link's accessible name is the page name.
+ * Order per the owner (2026-10-22): Home, Work, Life, Journal. Below 640 px each item keeps its §H.1 icon from the
+ * previous site; each link's accessible name is the page name.
  * The project archive and the achievements archive are reached from Work, so they mark Work as current.
  */
 export const NAV_ITEMS: readonly NavItem[] = [
   { name: 'Home', link: ROUTES.home, icon: Home },
-  { name: 'Life', link: ROUTES.personal, icon: Briefcase },
   {
     name: 'Work',
     link: ROUTES.professional,
     icon: FolderGit2,
     section: [ROUTES.projectArchive, ROUTES.achievements],
   },
+  { name: 'Life', link: ROUTES.personal, icon: Briefcase },
   { name: 'Journal', link: ROUTES.stories, icon: BookOpen },
 ];
 
