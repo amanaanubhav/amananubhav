@@ -20,7 +20,7 @@ export interface ElevationProfileProps {
   variant?: ProfileVariant;
   /** Stroke draw when 30% in view (motion-gated). */
   draw?: 'once' | 'none';
-  /** 0..1: reveals the signal copy of the line with a clip (reader, preloader). Unset: inherited `--profile-progress`. */
+  /** 0..1: reveals the signal copy of the line with a clip (reader). Unset: inherited `--profile-progress`. */
   progress?: number;
   /** Waypoint name to mark with a signal ring. */
   highlight?: string;
@@ -41,7 +41,6 @@ const TYPE: Record<ProfileVariant, { label: number; axis: number }> = {
   compact: { label: 14, axis: 13 },
   strip: { label: 0, axis: 0 },
   cover: { label: 28, axis: 22 },
-  preloader: { label: 0, axis: 0 },
 };
 
 const STROKE_ROUTE: CSSProperties = {
@@ -193,9 +192,9 @@ export function ElevationProfile({
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const withData = showData ?? variant === 'full';
   const labelled = variant === 'full' || variant === 'compact';
-  // The strip (reader progress) and the preloader line span whatever box the caller gives them:
+  // The strip (reader progress) spans whatever box the caller gives it:
   // stretched, with non-scaling strokes and no shape markers (they would distort).
-  const stretch = variant === 'strip' || variant === 'preloader';
+  const stretch = variant === 'strip';
 
   // Spacing: forcing `even` drops distances; forcing `distance` without full data falls back to even.
   const source = spacing === 'even' ? points.map((p) => ({ ...p, distanceKm: undefined })) : points;

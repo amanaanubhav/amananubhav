@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { SITE, THEME_PALETTE } from '@/shared/config';
+import { BootCurtain } from '@/widgets/preloader';
 
 import { AppShell } from '../shell/AppShell';
 import { PrePaintScript } from '../shell/PrePaintScript';
@@ -25,6 +26,8 @@ export function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <GoogleTagManager gtmId={SITE.gtmId} />
       <body>
+        {/* The first-load curtain (the climb): first in <body>, shown only when the pre-paint gate runs it. */}
+        <BootCurtain />
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe

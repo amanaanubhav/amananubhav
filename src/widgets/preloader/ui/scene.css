@@ -1,0 +1,78 @@
+/*
+ * The climb's scene (docs/redesign/preloader/design.md §3.2, v2.3): every colour token, Night first and Day under
+ * html[data-theme=day], the scene's classes, and each layer box's variables (read by the generic .ly rule in
+ * boot.css). The markup comes from scripts/preloader/scene.mjs; plain fills there name their token directly
+ * (fill="var(--oak)"), so only strokes, opacities and blends need a rule here.
+ */
+.boot { --sky-lo-t: #121519; --sky-lo-b: #1B2421; --sky-sub-t: #131916; --sky-sub-b: #1E2B21;
+  --sky-hi-t: #0C0E1A; --sky-hi-b: #272C48; --star: #DEDEE2;
+  --far-snow: #AAB3C8; --far-rock: #262A39; --far-shade: #161A2C;
+  --hi-snow: #BCC4D4; --hi-rock: #34363F; --hi-shade: #14161F;
+  --dry: #383527; --dry-shade: #25231B; --dry-dot: #232619;
+  --gr: #213327; --gr-shade: #17251B; --gr-tree: #132017; --gr-terr: #30442F;
+  --gg: #1E3324; --gg-shade: #132218; --cliff: #2A332D; --gg-terr: #33462C; --fall: #A9B4C6;
+  --nA: #1C3020; --nB: #19291C; --n0: #16241A; --n1: #111D15; --n2: #2D2B21; --n3: #37342C; --n4: #434046;
+  --n5: #BCC4D5; --drift: #97A3C0; --rice: #2B4A2A; --paddy: #343C55; --river: #283047; --ripple: #9D8FBE;
+  --banana: #1A3420; --bamboo: #1C3521; --broad: #14281A; --roof: #1E1F25;
+  --oak: #122019; --wal: #15241A; --bloom: #CB7C75; --pine: #0D1912; --jun: #272A1D;
+  --rock: #4A474B; --rockh: #5F5C62; --house: #2A2A2F; --lamp: #CDB37C; --chorten: #8C8C93;
+  --yak: #151517; --wall: #3A383C;
+  --f1: #9D8FBE; --f2: #DEDEE2; --f3: #CB7C75; --f4: #8FB89B; --f5: #CDB37C;
+  --glow: #CB7C75; --b-ink: #DEDEE2; --b-muted: #A3A7B0; --halo: #121519; }
+html[data-theme='day'] .boot { --sky-lo-t: #DCE3D6; --sky-lo-b: #EEF0E4; --sky-sub-t: #DCE6D2; --sky-sub-b: #EEF2E2;
+  --sky-hi-t: #98B4D2; --sky-hi-b: #E3EBF2; --star: transparent;
+  --far-snow: #F7F9FB; --far-rock: #8D98AC; --far-shade: #9EAFC6;
+  --hi-snow: #F2F5F8; --hi-rock: #8A877F; --hi-shade: #4E5361;
+  --dry: #A69C79; --dry-shade: #7E7559; --dry-dot: #6E6A47;
+  --gr: #5E7C4E; --gr-shade: #45613D; --gr-tree: #3A5634; --gr-terr: #8FA36C;
+  --gg: #678D4C; --gg-shade: #4A6B3B; --cliff: #7D8A72; --gg-terr: #A9AF6A; --fall: #F5F8F7;
+  --nA: #5F8A45; --nB: #557A41; --n0: #4E6E40; --n1: #3B5934; --n2: #8C8160; --n3: #958B74; --n4: #8F8A84;
+  --n5: #F5F7F9; --drift: #B5C6DA; --rice: #8DB85E; --paddy: #BCD3CB; --river: #8FB2B6; --ripple: #EAF2F0;
+  --banana: #4F8B3E; --bamboo: #6A9548; --broad: #3E6936; --roof: #5E6E7E;
+  --oak: #3D5D35; --wal: #4A6937; --bloom: #A63B09; --pine: #2B462F; --jun: #666846;
+  --rock: #8A857D; --rockh: #A6A197; --house: #6A6157; --lamp: #3B3833; --chorten: #F3F0E8;
+  --yak: #2E2B28; --wall: #7C766D;
+  --f1: #2C5F86; --f2: #FFFFFF; --f3: #A63B09; --f4: #2E6B33; --f5: #B08A1E;
+  --glow: #D9876B; --b-ink: #1B1E1C; --b-muted: #50564F; --halo: #E3EBF2; }
+
+/* Layer boxes, back to front: base colour, height, bottom, viewBox ratio, minimum width in viewport widths. */
+.boot .ly-far { --base: var(--far-rock); --h: 46svh; --b: 22svh; --ar: 1800 / 420; --wm: 1.08;
+  transform: translateY(20svh); }
+.boot .ly-high { --base: var(--hi-rock); --h: 34svh; --b: 19svh; --ar: 2200 / 320; --wm: 1.2;
+  transform: translateY(42svh); }
+.boot .ly-dry { --base: var(--dry); --h: 30svh; --b: 12svh; --ar: 2200 / 300; --wm: 1.32;
+  transform: translateY(34svh); }
+.boot .ly-green { --base: var(--gr); --h: 40svh; --b: 3svh; --ar: 2400 / 300; --wm: 1.47;
+  transform: translateY(16svh); }
+.boot .ly-gorge { --base: var(--gg); --h: 50svh; --b: 4svh; --ar: 2000 / 320; --wm: 1.62; }
+.boot .ly-near { --h: 32svh; --b: -1px; --ar: 3400 / 240; --wm: 1.05; }
+.boot .ly-near::after { display: none; }
+@media (max-aspect-ratio: 1/1) {
+  .boot .ly-near { --h: 22svh; }
+  .boot .ly-far { --h: 40svh; --b: 24svh; }
+  .boot .ly-green { --h: 44svh; }
+  .boot .ly-gorge { --h: 46svh; --b: 6svh; }
+}
+
+.boot .stars { position: absolute; left: 0; top: 0; width: 100%; height: 46%; opacity: 0; fill: none;
+  stroke: var(--star); stroke-linecap: round; stroke-width: 1.4; }
+.boot .stars .big { stroke-width: 2.4; }
+.boot .glow { opacity: 0; }
+/* Shade multiplies: blue-grey on snow, darker on rock (a plain fill would lighten Day's rock). */
+.boot .far-shade { fill: var(--far-shade); opacity: .55; mix-blend-mode: multiply; }
+.boot .hi-shade { fill: var(--hi-shade); opacity: .42; mix-blend-mode: multiply; }
+.boot .sh { opacity: .6; } .boot .tr { opacity: .55; } html[data-theme='day'] .boot .tr { opacity: .7; }
+.boot .c-yak { fill: var(--yak); stroke: var(--yak); stroke-width: 1.2; }
+.boot .trek { fill: var(--n4); stroke: var(--n4); } .boot .trek-lit { fill: var(--glow); stroke: var(--glow); }
+.boot .c-bloom, .boot .dry-dot, .boot .flag-line, .boot .rim, .boot .ripple, .boot .tuft, .boot .scree, .boot .deck,
+.boot .cable, .boot .glow-rim { fill: none; stroke-linecap: round; }
+.boot .c-bloom { stroke: var(--bloom); stroke-width: 2.6; }
+.boot .dry-dot { stroke: var(--dry-dot); stroke-width: 4.5; }
+.boot .flag-line { stroke: var(--b-muted); stroke-width: .6; opacity: .8; }
+.boot .rim { stroke: var(--f2); stroke-opacity: .12; stroke-width: 2; }
+.boot .ripple { stroke: var(--ripple); stroke-opacity: .35; stroke-width: 1.2; }
+.boot .tuft { stroke: var(--f2); stroke-opacity: .14; }
+.boot .scree { stroke: var(--f2); stroke-opacity: .16; stroke-width: 2.2; }
+.boot .deck { stroke: var(--house); stroke-width: 2.2; } .boot .cable { stroke: var(--b-muted); stroke-width: .7; }
+.boot .glow-rim { stroke: var(--glow); stroke-width: 2.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.boot .glow-rim.crest { stroke-width: 2.6; }

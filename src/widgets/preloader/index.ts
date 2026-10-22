@@ -1,2 +1,2 @@
-export { Preloader } from './ui/Preloader';
-export type { PreloaderProps } from './ui/Preloader';
+export { BOOT_GATE_SCRIPT } from './lib/boot-gate';
+export { BootCurtain } from './ui/BootCurtain';

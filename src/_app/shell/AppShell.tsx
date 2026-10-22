@@ -1,22 +1,14 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-  useSyncExternalStore,
-  type MouseEvent,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useLayoutEffect, useSyncExternalStore, type MouseEvent, type ReactNode } from 'react';
 
 import { closeTerminal, openTerminal, TerminalOverlay, useTerminalOpen } from '@/features/ai-terminal';
 import { StoryReaderHost, useSelectedStory } from '@/features/read-story';
 import { closeVault, openVault, SecureVault, useVaultOpen } from '@/features/secure-vault';
 import { FloatingChat } from '@/features/visitor-chat';
 import { ROUTES, THEME_PALETTE } from '@/shared/config';
-import { markBootDone } from '@/shared/lib/boot';
+import { signalBootReady, useBootPhase } from '@/shared/lib/boot';
 import { useChromeProximity } from '@/shared/lib/chrome';
 import { cn } from '@/shared/lib/cn';
 import { useBodyScrollLock } from '@/shared/lib/dom';
@@ -27,7 +19,6 @@ import { useTheme } from '@/shared/lib/theme';
 import { StageCanvas } from '@/shared/ui/stage';
 import { Footer } from '@/widgets/footer';
 import { Navbar } from '@/widgets/navbar';
-import { Preloader } from '@/widgets/preloader';
 
 import { RouteScrollSync } from './RouteScrollSync';
 import { ThemeEdge } from './ThemeEdge';
@@ -48,19 +39,21 @@ function useThemeAttributeSync(isDark: boolean): void {
 }
 
 /**
- * The app shell (§C.9). DOM order and overlay gating are unchanged from the legacy layout:
- * preloader?, story reader (outside the .dark wrapper), then the themed wrapper with the skip link,
- * the stage canvas, vault?, terminal, navbar?, the single <main>, footer, chat? and the
- * theme-sweep edge. The paper grain is body::before (z-grain), switched by `html[data-grain]`.
+ * The app shell (§C.9). DOM order and overlay gating are unchanged from the legacy layout: story
+ * reader (outside the .dark wrapper), then the themed wrapper with the skip link, the stage canvas,
+ * vault?, terminal, navbar?, the single <main>, footer, chat? and the theme-sweep edge. The paper grain
+ * is body::before (z-grain), switched by `html[data-grain]`.
+ *
+ * The first-load curtain (the climb, widgets/preloader) is not part of React: RootLayout renders its
+ * skeleton and a script runs it. The shell follows its phase: the chrome mounts and the stage runs once it
+ * leaves, and on '/' the stage loads under it so the relief can rise as it clears (preloader design §6.1).
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { isDark } = useTheme();
   const pathname = usePathname();
   const tier = useMotionTier();
-  // The home page's arrival is its story map (design §14, R5): no preloader (and its elevation profile) on
-  // '/'. Boot is done from the first render there, so the stage and the poster's route draw never wait.
   const isHome = pathname === ROUTES.home;
-  const [loading, setLoading] = useState(!isHome);
+  const booted = useBootPhase() !== 'run';
   const isVaultOpen = useVaultOpen();
   const isTerminalOpen = useTerminalOpen();
   const isReading = useSelectedStory() !== null;
@@ -68,26 +61,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   const saveData = useSyncExternalStore(noopSubscribe, readSaveData, serverSaveData);
 
   const isAdminRoute = pathname === ROUTES.adminChat;
-  const showChrome = !loading && !isVaultOpen && !isTerminalOpen;
+  const showChrome = booted && !isVaultOpen && !isTerminalOpen;
   const grainEnabled = tier > 0 && !isAdminRoute && !saveData;
-  const stagePaused = loading || isVaultOpen || isTerminalOpen || isReading || scrollLocked;
+  // The home scene loads and compiles under the curtain (its entrance clock waits for boot); elsewhere the
+  // stage waits until the curtain leaves.
+  const stagePaused = (!booted && !isHome) || isVaultOpen || isTerminalOpen || isReading || scrollLocked;
 
-  const finishBoot = useCallback(() => {
-    setLoading(false);
-    markBootDone();
-    requestAnimationFrame(() => ScrollTrigger.refresh());
-  }, []);
+  // Hydrated: the curtain may arrive (with the fonts and, on '/', the stage).
+  useEffect(() => signalBootReady('app'), []);
 
   useEffect(() => {
-    if (isHome) {
-      markBootDone();
-      requestAnimationFrame(() => ScrollTrigger.refresh());
-    }
-  }, [isHome]);
+    if (!booted) return;
+    const frame = requestAnimationFrame(() => ScrollTrigger.refresh());
+    return () => cancelAnimationFrame(frame);
+  }, [booted]);
 
   useSmoothScrollRoot(tier > 0 && !isAdminRoute);
   useBodyScrollLock(isVaultOpen || isTerminalOpen);
-  useBodyScrollLock(loading); // the preloader holds the page still
   useThemeAttributeSync(isDark);
   useChromeProximity();
 
@@ -116,8 +106,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <>
-      {loading && <Preloader onComplete={finishBoot} />}
-
       <StoryReaderHost />
 
       <div className={cn('min-h-screen', isDark && 'dark')}>
@@ -150,7 +138,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Footer />
           </div>
         </div>
-        {showChrome && (
+        {/* The chat is on every public page; /admin-chat is his own inbox. */}
+        {showChrome && !isAdminRoute && (
           <div className="contents" inert={isReading}>
             <FloatingChat onOpenTerminal={openTerminal} onOpenVault={openVault} />
           </div>

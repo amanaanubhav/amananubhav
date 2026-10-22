@@ -4,6 +4,7 @@ import { useFrame, useThree, type RootState } from '@react-three/fiber';
 import { useEffect, useRef, useState } from 'react';
 import { Group, PerspectiveCamera, Vector3, type Mesh } from 'three';
 
+import { isBootDone } from '@/shared/lib/boot';
 import { takePrefetched } from '@/shared/lib/stage-prefetch';
 import {
   emitSceneFrame,
@@ -529,9 +530,11 @@ function stepStory(
   const { head, tan, cam, tgt, dir, v, q } = scratch;
   const now = performance.now();
   const dt = Math.min(0.1, Math.max(0, delta));
-  // The entrance clock starts on the frame after the first drawn one (that frame carries the uploads);
-  // a long frame slows the rise instead of making it jump.
-  if (r.rendered) r.e += Math.min(dt, 1 / 30);
+  // The entrance clock starts on the frame after the first drawn one (that frame carries the uploads), and
+  // never under the first-load curtain: until it leaves, the scene draws ground-identical frames only, so
+  // the relief rises as the land falls away (preloader design §6.1). A long frame slows the rise instead of
+  // making it jump.
+  if (r.rendered && isBootDone()) r.e += Math.min(dt, 1 / 30);
   const w = size.width;
   const h = size.height;
   const mob = w <= STORY_MOBILE_MAX_WIDTH;

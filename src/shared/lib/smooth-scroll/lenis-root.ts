@@ -72,7 +72,7 @@ function subscribeLock(callback: () => void): () => void {
 const getLockSnapshot = () => lockCount > 0;
 const getLockServerSnapshot = () => false;
 
-/** True while any overlay or the preloader holds a scroll lock (the stage pauses, §C.3). */
+/** True while any overlay holds a scroll lock (the stage pauses, §C.3). */
 export function useScrollLocked(): boolean {
   return useSyncExternalStore(subscribeLock, getLockSnapshot, getLockServerSnapshot);
 }

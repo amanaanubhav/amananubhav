@@ -1,0 +1,64 @@
+/*
+ * The climb to Thorong La (docs/redesign/preloader/design.md §3, §4, v2 C.3): the curtain itself. The curtain is
+ * display:none unless the pre-paint gate set html[data-boot=run] (no JS, a later load in the session, /admin, Save-Data:
+ * never shown). The colour tokens, the scene's classes and the layer boxes' variables are in scene.css; this file holds
+ * the gate and failsafe, the container, the generic layer box, the sky, the HUD and Skip.
+ */
+.boot { display: none; }
+html[data-boot='run'] .boot, html[data-boot='exit'] .boot { display: block; }
+/* Failsafe: a climb script that never starts (blocked, offline, an error) cannot hold the page. */
+html[data-boot='run']:not([data-boot-live]) .boot { animation: boot-failsafe 0s 3s forwards; }
+@keyframes boot-failsafe { to { visibility: hidden; } }
+/* Reduced motion arrives at 5,416 m: the skeleton's Besisahar readout never shows. */
+html[data-motion='off']:not([data-boot-live]) .boot .alt { visibility: hidden; }
+
+.boot { position: fixed; inset: 0; z-index: 120; overflow: hidden; contain: strict; cursor: default;
+  background: var(--sky-lo-b); color: var(--b-ink); }
+
+/* The sky: the high-valley base, the lush low valley over it (fades out first), the deep high sky (fades in). */
+.boot .sky, .boot .scn { position: absolute; inset: 0; }
+.boot .sky-lo { background: linear-gradient(var(--sky-lo-t), var(--sky-lo-b) 72%); }
+.boot .sky-sub { background: linear-gradient(var(--sky-sub-t), var(--sky-sub-b) 72%); }
+.boot .sky-hi { background: linear-gradient(var(--sky-hi-t), var(--sky-hi-b) 74%); opacity: 0; }
+
+/* Layers: bottom-anchored boxes at their viewBox ratio, stretched a little where a wide, short viewport needs more
+   width than that for the layer's travel (--wm, in viewport widths); a block of the base colour below hides the sky. */
+.boot .ly { position: absolute; left: 0; bottom: var(--b); height: var(--h);
+  width: max(calc(var(--h) * var(--ar)), calc(100vw * var(--wm))); transform-origin: 50% 100%; will-change: transform; }
+.boot .ly > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.boot .ly::after { content: ''; position: absolute; z-index: -1; left: 0; right: 0; top: calc(100% - 1px);
+  height: 45svh; background: var(--base); }
+
+/* HUD: the readout and caption are SVG text (never an LCP candidate), haloed against the far wall. */
+.boot .hud { position: absolute; inset: 0; pointer-events: none; padding: max(20px, 3.2svh) clamp(16px, 4vw, 56px); }
+.boot .top { display: flex; justify-content: space-between; gap: 16px; color: var(--b-muted);
+  font: 400 14px/1.3 var(--font-ui), system-ui, sans-serif; }
+.boot .who { display: inline-flex; align-items: center; gap: 10px; color: var(--b-ink);
+  font: italic 400 16px/1 var(--font-text), Georgia, serif; }
+.boot .who svg { width: 40px; height: 20px; }
+.boot .alt { position: absolute; left: clamp(16px, 4vw, 56px); top: clamp(72px, 14svh, 150px);
+  width: calc(100% - 32px); }
+.boot .alt svg { display: block; width: 100%; overflow: visible; paint-order: stroke; stroke: var(--halo);
+  stroke-opacity: .72; stroke-linejoin: round; }
+.boot .alt-n { height: .74em; font: 750 clamp(64px, 11.5vw, 172px)/1 var(--font-display), 'Arial Narrow', sans-serif;
+  font-variation-settings: 'wdth' 75; letter-spacing: -.01em; font-variant-numeric: tabular-nums; fill: var(--b-ink);
+  stroke-width: .06em; }
+.boot .alt-n .u { font: 400 .2em var(--font-data), ui-monospace, monospace; fill: var(--b-muted);
+  font-variation-settings: normal; letter-spacing: 0; }
+.boot .alt-c { margin-top: clamp(10px, 1.6svh, 18px); height: 28px; fill: var(--b-muted); stroke-width: 5px;
+  font: italic 400 clamp(16px, 1.5vw, 20px)/1 var(--font-text), Georgia, serif; }
+.boot .alt-c .d { font: 400 .8em var(--font-data), ui-monospace, monospace; }
+.boot .alt-c .w { fill: var(--b-ink); }
+.boot .skip { position: absolute; right: clamp(16px, 4vw, 56px); bottom: max(16px, 3svh); z-index: 2; opacity: 0;
+  visibility: hidden; transition: opacity .24s, visibility 0s .24s;
+  font: 500 14px/1 var(--font-ui), system-ui, sans-serif;
+  color: var(--b-ink); background: color-mix(in srgb, var(--sky-lo-t) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--b-ink) 28%, transparent); border-radius: 999px; padding: 10px 16px;
+  cursor: pointer; }
+.boot .skip.on { opacity: 1; visibility: visible; transition: opacity .24s; }
+.boot .skip:focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
+.boot .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  margin: 0; }
+html[data-lite='1'] .boot .tx, html[data-lite='1'] .boot .stars { display: none; }
+@media (forced-colors: active) { .boot { display: none !important; } }
+@media print { .boot { display: none !important; } }

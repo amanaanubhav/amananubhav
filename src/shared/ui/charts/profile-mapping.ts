@@ -13,7 +13,7 @@ export interface ProfilePoint {
   kind?: 'trailhead' | 'camp' | 'village' | 'pass' | 'summit' | 'lake' | 'side-trip';
 }
 
-export type ProfileVariant = 'full' | 'compact' | 'strip' | 'cover' | 'preloader';
+export type ProfileVariant = 'full' | 'compact' | 'strip' | 'cover';
 
 export interface ProfileBox {
   width: number;
@@ -34,8 +34,6 @@ export const PROFILE_BOX: Readonly<Record<ProfileVariant, ProfileBox>> = {
   strip: { width: 960, height: 160, pad: { t: 14, r: 10, b: 12, l: 10 } },
   /** 3:2, fills a pending story-cover plate; the high point is named in the top band. */
   cover: { width: 600, height: 400, pad: { t: 112, r: 36, b: 44, l: 36 } },
-  /** 4:1 line only, driven by `--profile-progress`. */
-  preloader: { width: 480, height: 120, pad: { t: 10, r: 6, b: 10, l: 6 } },
 };
 
 /** Waypoints that carry an altitude, in route order. */
