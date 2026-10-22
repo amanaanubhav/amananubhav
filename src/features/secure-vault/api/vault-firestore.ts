@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, serverTimestamp, updateDoc, where,
+  addDoc, collection, deleteDoc, doc, getDocs, getDocsFromServer, onSnapshot, query, serverTimestamp, updateDoc, where,
   type Firestore, type QuerySnapshot, type Unsubscribe,
 } from 'firebase/firestore';
 
@@ -42,9 +42,13 @@ function afterSession(attach: () => Unsubscribe): Unsubscribe {
 const usersCol = () => collection(db(), 'artifacts', VAULT_APP_ID, 'public', 'data', 'vault_users');
 const chainCol = () => collection(db(), 'artifacts', VAULT_APP_ID, 'public', 'data', 'vault_chain');
 
+/**
+ * Read from the server only: a cached answer while offline is an empty snapshot, which would pass the uniqueness
+ * check or report "User not found." Offline this rejects with code `unavailable` instead.
+ */
 export async function findUsersByUsername(username: string): Promise<QuerySnapshot> {
   await ensureAnonymousSession();
-  return getDocs(query(usersCol(), where('username', '==', username)));
+  return getDocsFromServer(query(usersCol(), where('username', '==', username)));
 }
 
 /** Writes a vault_users doc; createdAt is stamped server-side (legacy key order kept). */

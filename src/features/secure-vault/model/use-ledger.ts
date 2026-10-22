@@ -7,6 +7,7 @@ import {
   subscribeToChain, subscribeToVaultUsers, updateVaultUserStatus,
 } from '../api/vault-firestore';
 import { ADMIN_CHANNEL_SALT, ADMIN_CHANNEL_SECRET } from '../config/vault';
+import { VaultTimeoutError, withVaultTimeout } from '../lib/time-limit';
 import { computeHash, decryptData, deriveKey, encryptData } from '../lib/webcrypto';
 import type {
   DecryptSource, LedgerBlock, VaultPayload, VaultSessionUser, VaultUser, VaultUserStatus, VaultView,
@@ -33,6 +34,11 @@ export interface Ledger {
   deleteUser: (id: string) => Promise<void>;
   nukeChain: () => Promise<void>;
 }
+
+const BLOCK_FAILED = 'Failed to commit block.';
+/** A send past the time limit: Firestore keeps the write queued (the block shows as Pending) and retries it itself. */
+const BLOCK_QUEUED =
+  'Vault unreachable. Your block is queued and commits when the connection returns; keep this tab open.';
 
 /** Realtime ledger + admin user directory sync and the block/user actions (legacy SecureContact.jsx). */
 export function useLedger({ view, currentUser, userKey, adminKey, setError }: UseLedgerArgs): Ledger {
@@ -95,7 +101,10 @@ export function useLedger({ view, currentUser, userKey, adminKey, setError }: Us
 
     const messageToCommit = msgInput;
     setMsgInput('');
+    /** On a definite failure the message goes back into the composer, unless the visitor has typed a new one. */
+    const restoreMessage = () => setMsgInput((current) => current || messageToCommit);
 
+    let write: Promise<void> | null = null;
     try {
       const index = chain.length;
       const previousHash = index === 0 ? '0' : chain[index - 1].hash;
@@ -109,8 +118,20 @@ export function useLedger({ view, currentUser, userKey, adminKey, setError }: Us
 
       const hash = await computeHash(`${index}${previousHash}${userPayload}`);
 
-      await addChainBlock({ index, previousHash, userPayload, adminPayload, hash, sender });
-    } catch (err) { console.error(err); setError('Failed to commit block.'); }
+      write = addChainBlock({ index, previousHash, userPayload, adminPayload, hash, sender });
+      await withVaultTimeout(write);
+    } catch (err) {
+      if (err instanceof VaultTimeoutError && write) {
+        // Not lost and not retried here (that would add a second block): settle the line when the late outcome lands.
+        setError(BLOCK_QUEUED);
+        write.then(
+          () => setError((current) => (current === BLOCK_QUEUED ? '' : current)),
+          (lateErr: unknown) => { console.error(lateErr); setError(BLOCK_FAILED); restoreMessage(); },
+        );
+        return;
+      }
+      console.error(err); setError(BLOCK_FAILED); restoreMessage();
+    }
   };
 
   // --- ADMIN ACTIONS (Delete/Block) ---

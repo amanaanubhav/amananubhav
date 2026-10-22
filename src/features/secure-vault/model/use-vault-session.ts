@@ -1,17 +1,32 @@
 'use client';
 
-import { useEffect, useState, type Dispatch, type SetStateAction, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction, type SyntheticEvent } from 'react';
 
 import { isAdminPasscode } from '@/shared/config';
 
 import { createVaultUser, findUsersByUsername, startVaultSession } from '../api/vault-firestore';
 import { ADMIN_CHANNEL_SALT, ADMIN_CHANNEL_SECRET, ADMIN_USERNAME } from '../config/vault';
+import { isVaultUnreachable, VAULT_UNREACHABLE, VaultTimeoutError, withVaultTimeout } from '../lib/time-limit';
 import { computeHash, deriveKey } from '../lib/webcrypto';
 import type {
   LoginForm, RegisterForm, VaultSessionUser, VaultTab, VaultUserDoc, VaultView,
 } from './vault-types';
 
-const errorMessage = (err: unknown): string => (err instanceof Error ? err.message : String(err));
+/** An unreachable backend (time limit or Firestore `unavailable`) reads as one line; anything else as before. */
+const errorMessage = (err: unknown): string => {
+  if (isVaultUnreachable(err)) return VAULT_UNREACHABLE;
+  return err instanceof Error ? err.message : String(err);
+};
+
+/**
+ * A registration write that ran past the time limit. Firestore cannot cancel it, so it may still land: a retry for
+ * the same username waits on this write instead of adding a second user doc with that name.
+ */
+interface PendingRegistration {
+  username: string;
+  passwordHash: string;
+  write: Promise<void>;
+}
 
 /** Every registration field is required, in the form's order (labels match RegisterPanel). */
 const REGISTER_FIELDS: readonly { key: keyof RegisterForm; label: string }[] = [
@@ -72,6 +87,7 @@ export function useVaultSession(): VaultSession {
   });
   const [loginForm, setLoginForm] = useState<LoginForm>({ username: '', password: '' });
   const [activeTab, setActiveTab] = useState<VaultTab>('ledger');
+  const pendingRegistration = useRef<PendingRegistration | null>(null);
 
   // Opening the vault is a first use of Firebase: start the shared anonymous session on mount.
   useEffect(() => {
@@ -104,27 +120,47 @@ export function useVaultSession(): VaultSession {
 
     setLoading(true); setError('');
 
+    const { username } = regForm;
     try {
-      const snap = await findUsersByUsername(regForm.username);
-      if (!snap.empty) throw new Error('Username taken.');
-
+      // Each network wait is time-limited (VAULT_NETWORK_TIMEOUT_MS): past it the error shows and the form is kept.
       const passwordHash = await computeHash(regForm.password);
+      const pending = pendingRegistration.current?.username === username ? pendingRegistration.current : null;
 
-      await createVaultUser({
-        username: regForm.username,
-        fullName: regForm.fullName,
-        org: regForm.org,
-        email: regForm.email,
-        phone: regForm.phone,
-        passwordHash,
-        role: 'user',
-        status: 'active',
-      });
+      if (pending) {
+        // Retry after a timed-out write: wait on it again. Landed with another passphrase, the name is taken.
+        await withVaultTimeout(pending.write);
+        if (pending.passwordHash !== passwordHash) throw new Error('Username taken.');
+      } else {
+        const snap = await withVaultTimeout(findUsersByUsername(username));
+        if (!snap.empty) throw new Error('Username taken.');
 
+        const write = createVaultUser({
+          username,
+          fullName: regForm.fullName,
+          org: regForm.org,
+          email: regForm.email,
+          phone: regForm.phone,
+          passwordHash,
+          role: 'user',
+          status: 'active',
+        });
+        // Handled here so a write left behind by the time limit never surfaces as an unhandled rejection.
+        write.catch(() => undefined);
+        pendingRegistration.current = { username, passwordHash, write };
+        await withVaultTimeout(write);
+      }
+
+      pendingRegistration.current = null;
       setLoginForm({ username: regForm.username, password: '' });
       setSuccessMsg('Identity Generated Successfully. Please Authenticate.');
       switchView('login');
-    } catch (err) { setError(errorMessage(err)); }
+    } catch (err) {
+      // Only a timed-out write can still land; any other outcome settles it, so the next try starts from the server.
+      if (!(err instanceof VaultTimeoutError) && pendingRegistration.current?.username === username) {
+        pendingRegistration.current = null;
+      }
+      setError(errorMessage(err));
+    }
     setLoading(false);
   };
 
@@ -145,7 +181,8 @@ export function useVaultSession(): VaultSession {
       }
 
       // USER LOGIN
-      const snap = await findUsersByUsername(loginForm.username);
+      // Time-limited: a late answer after the limit is ignored and the next submit asks again.
+      const snap = await withVaultTimeout(findUsersByUsername(loginForm.username));
 
       if (snap.empty) throw new Error('User not found.');
 
