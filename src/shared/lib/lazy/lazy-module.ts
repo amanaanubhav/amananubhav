@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { STAGE_HOLD_ATTR } from '@/shared/lib/stage-prefetch';
+
 /**
  * A module loaded once, on demand, through a dynamic `import()`, so its code stays out of every route's
  * initial scripts (§J.2). After it resolves, `get()` returns it synchronously.
@@ -30,13 +32,34 @@ export function lazyModule<T>(factory: () => Promise<T>): LazyModule<T> {
   };
 }
 
-function onIdle(callback: () => void, timeoutMs: number): () => void {
+function whenIdle(callback: () => void, timeoutMs: number, fallbackMs: number): () => void {
   if (typeof window.requestIdleCallback === 'function') {
-    const handle = window.requestIdleCallback(callback, { timeout: timeoutMs });
+    const handle = window.requestIdleCallback(() => callback(), { timeout: timeoutMs });
     return () => window.cancelIdleCallback(handle);
   }
-  const handle = window.setTimeout(callback, 200);
+  const handle = window.setTimeout(callback, fallbackMs);
   return () => window.clearTimeout(handle);
+}
+
+/**
+ * Runs `callback` once the browser is idle (`timeoutMs` at the latest; `fallbackMs` where there is no
+ * `requestIdleCallback`). While `html[data-stage-hold]` is set (a first load of '/', load-in-3d §10) the wait
+ * starts only once the hold is released, so idle fetches never compete with the three chunk. Returns a cancel.
+ */
+export function onIdle(callback: () => void, timeoutMs: number, fallbackMs = 200): () => void {
+  const root = document.documentElement;
+  if (!root.hasAttribute(STAGE_HOLD_ATTR)) return whenIdle(callback, timeoutMs, fallbackMs);
+  let cancelIdle: (() => void) | null = null;
+  const observer = new MutationObserver(() => {
+    if (root.hasAttribute(STAGE_HOLD_ATTR)) return;
+    observer.disconnect();
+    cancelIdle = whenIdle(callback, timeoutMs, fallbackMs);
+  });
+  observer.observe(root, { attributes: true, attributeFilter: [STAGE_HOLD_ATTR] });
+  return () => {
+    observer.disconnect();
+    cancelIdle?.();
+  };
 }
 
 /**

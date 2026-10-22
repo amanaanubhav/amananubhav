@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+
+import { onIdle } from '@/shared/lib/lazy';
+
 import { ChatUplinkError, streamChatReply } from '../api/stream-chat-reply';
 import { loadOfflineKnowledge, preloadOfflineKnowledge } from '../lib/load-offline-knowledge';
 import { formatHistory, matchLocalCommand, resolveOfflineReply } from '../lib/resolve-offline-reply';
@@ -92,14 +95,7 @@ export function useTerminalSession(isOpen: boolean) {
     if (isOpen) preloadOfflineKnowledge();
   }, [isOpen]);
 
-  useEffect(() => {
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(preloadOfflineKnowledge, { timeout: IDLE_PRELOAD_TIMEOUT_MS });
-      return () => window.cancelIdleCallback(id);
-    }
-    const timer = window.setTimeout(preloadOfflineKnowledge, IDLE_PRELOAD_TIMEOUT_MS);
-    return () => window.clearTimeout(timer);
-  }, []);
+  useEffect(() => onIdle(preloadOfflineKnowledge, IDLE_PRELOAD_TIMEOUT_MS, IDLE_PRELOAD_TIMEOUT_MS), []);
 
   // A dropped connection that comes back sends questions to the live model again.
   useEffect(() => {
