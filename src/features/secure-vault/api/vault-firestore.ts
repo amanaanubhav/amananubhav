@@ -21,8 +21,8 @@ const db = (): Firestore => getDb() as Firestore;
 export const hasVaultDb = (): boolean => getDb() !== null;
 
 /**
- * The vault chunk loads Firebase on open, which may be before the shell's idle sign-in (§J.2): every read and
- * write below first waits for the shared anonymous session (it never rejects, so errors surface as before).
+ * Nothing signs in at boot: opening the vault is a first use of Firebase (§J.2). Every read and write below first
+ * waits for the shared anonymous session (it never rejects, so errors surface as before).
  */
 export const startVaultSession = (): Promise<void> => ensureAnonymousSession();
 

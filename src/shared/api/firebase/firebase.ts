@@ -38,10 +38,11 @@ export function getFirebaseAuth(): Auth | null {
 }
 
 /**
- * Signs the visitor in anonymously (legacy App.jsx behaviour), once per page: every caller shares one promise, so
- * Firestore writers and listeners can await it before they start. It never rejects: when Firebase is not configured
- * it resolves at once, and a failed sign-in is logged (as before) and retried by the next call, so callers keep
- * their own error handling. Firebase returns the persisted anonymous user instead of creating a new one.
+ * Signs the visitor in anonymously, on demand and once per page: nothing calls it at boot. The chat (stored session,
+ * Start chat, Send), the Vault and the admin inbox await it before their first Firestore read, write or listener,
+ * and every caller shares one in-flight promise. It never rejects: when Firebase is not configured it resolves at
+ * once, and a failed sign-in is logged and retried by the next call, so the Firestore call that follows fails into
+ * the caller's own offline or error state. Firebase returns the persisted anonymous user instead of a new one.
  */
 export function ensureAnonymousSession(): Promise<void> {
   if (session) return session;

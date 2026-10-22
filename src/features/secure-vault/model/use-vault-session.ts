@@ -73,7 +73,7 @@ export function useVaultSession(): VaultSession {
   const [loginForm, setLoginForm] = useState<LoginForm>({ username: '', password: '' });
   const [activeTab, setActiveTab] = useState<VaultTab>('ledger');
 
-  // Opening the vault is a first use of Firebase: start the anonymous session now if the shell has not yet.
+  // Opening the vault is a first use of Firebase: start the shared anonymous session on mount.
   useEffect(() => {
     void startVaultSession();
   }, []);
