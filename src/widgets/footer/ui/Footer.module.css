@@ -22,7 +22,8 @@
 @media (min-width: 1024px) {
   .root {
     padding-top: 5rem;
-    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    /* the last links stay clear of the chat bead in the corner (chat design §3) */
+    padding-bottom: calc(max(1.5rem, var(--chat-clearance)) + env(safe-area-inset-bottom, 0px));
   }
 }
 

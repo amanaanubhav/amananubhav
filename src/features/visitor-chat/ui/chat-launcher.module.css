@@ -1,0 +1,292 @@
+/*
+ * The chat bead (chat design §3): one round button of the navbar's liquid glass in the corner of every page,
+ * carrying the Ridge Dart. The glass values are copied from widgets/navbar (FSD: no import of a widget), so keep
+ * them in step by hand. Colours come only from the generated tokens (`--c-*` triplets).
+ */
+
+/* The draggable dock. `--drag-bottom` is where a drag left it; the bead never sinks below its gutter or rises
+   into the 72 px navbar strip, whatever the viewport does later. */
+.dock {
+  --gap: 16px;
+  --bead: 48px;
+  position: fixed;
+  z-index: 60; /* Z_INDEX.chat */
+  right: calc(var(--gap) + env(safe-area-inset-right, 0px));
+  bottom: max(
+    calc(var(--gap) + env(safe-area-inset-bottom, 0px)),
+    min(var(--drag-bottom, 0px), calc(100dvh - 72px - var(--bead)))
+  );
+  touch-action: none;
+}
+@media (min-width: 640px) {
+  .dock {
+    --gap: 20px;
+    --bead: 52px;
+  }
+}
+@media (min-width: 1024px) {
+  .dock {
+    --gap: 24px;
+  }
+}
+.dock[data-side='left'] {
+  right: auto;
+  left: calc(var(--gap) + env(safe-area-inset-left, 0px));
+}
+/* Server-rendered under the first-load curtain: never visible or focusable until the climb leaves. */
+:global(html[data-boot='run']) .dock {
+  visibility: hidden;
+}
+
+.glass {
+  --tint: 0.88; /* surface opacity: the ink icon holds 4.5:1 even over a pure white backdrop (navbar value) */
+  --rim: rgb(var(--c-ink) / 0.13);
+  --spec: rgb(var(--c-ink) / 0.16);
+  --shade: rgb(var(--c-ground-sky) / 0.7);
+  --caustic: rgb(var(--c-water) / 0.12);
+  isolation: isolate;
+  background-color: rgb(var(--c-surface) / var(--tint));
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid var(--rim);
+  box-shadow:
+    inset 0 1px 0 0 var(--spec),
+    0 14px 32px -16px var(--shade),
+    0 2px 8px -4px var(--shade);
+}
+:global(:root[data-theme='day']) .glass {
+  --tint: 0.84; /* and over a pure black one in Day */
+  --rim: rgb(var(--c-ink) / 0.11);
+  --spec: rgb(var(--c-surface) / 0.95);
+  --shade: rgb(var(--c-ink) / 0.2);
+  --caustic: rgb(var(--c-water) / 0.07);
+}
+/* The wet top of the glass and the violet caustic along its foot. */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, var(--spec) 0%, transparent 55%),
+    radial-gradient(70% 120% at 50% 130%, var(--caustic), transparent 70%);
+  opacity: 0.45;
+}
+
+.bead {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--bead);
+  height: var(--bead);
+  margin: 0;
+  padding: 0;
+  border-radius: 9999px;
+  color: rgb(var(--c-ink));
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--dur-hover) var(--ease-settle),
+    box-shadow var(--dur-hover) var(--ease-settle),
+    background-color 160ms var(--ease-settle);
+}
+.bead:focus-visible {
+  outline: 2px solid rgb(var(--c-signal));
+  outline-offset: 3px;
+}
+.bead[aria-expanded='true'] {
+  background-color: rgb(var(--c-surface-2) / var(--tint));
+}
+
+.icon {
+  grid-area: 1 / 1;
+  width: 20px;
+  height: 20px;
+  transition:
+    opacity 160ms var(--ease-settle),
+    transform 160ms var(--ease-settle);
+}
+@media (min-width: 640px) {
+  .icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+.icon :global(.plane) {
+  transition: transform var(--dur-hover) var(--ease-settle);
+}
+.close {
+  opacity: 0;
+  transform: rotate(-45deg);
+}
+.bead[aria-expanded='true'] .planeIcon {
+  opacity: 0;
+  transform: rotate(45deg);
+}
+.bead[aria-expanded='true'] .close {
+  opacity: 1;
+  transform: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bead:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 0 var(--spec),
+      0 18px 36px -14px var(--shade),
+      0 3px 10px -4px var(--shade);
+  }
+  .bead:hover :global(.plane) {
+    transform: translate(1.5px, -1.5px);
+  }
+}
+.bead:active {
+  transform: scale(0.94);
+  transition-duration: var(--dur-micro);
+}
+.dock[data-dragging] .bead {
+  cursor: grabbing;
+}
+
+/* Unread: a 10 px signal dot in a 2 px ground ring at the top right. It fades in; it never pulses. */
+.dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: rgb(var(--c-signal));
+  border: 2px solid rgb(var(--c-ground));
+  opacity: 0;
+  transition: opacity 150ms linear;
+  pointer-events: none;
+}
+.bead[data-unread] .dot {
+  opacity: 1;
+}
+
+/* The name as a glass pill beside the bead: after 400 ms of hover, at once on keyboard focus. */
+.tip {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 10px);
+  padding: 9px 12px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  font:
+    600 13px/1 var(--font-ui),
+    system-ui,
+    sans-serif;
+  color: rgb(var(--c-ink));
+  opacity: 0;
+  transform: translate(4px, -50%);
+  pointer-events: none;
+  transition:
+    opacity 160ms linear,
+    transform 160ms var(--ease-settle);
+}
+.dock[data-side='left'] .tip {
+  right: auto;
+  left: calc(100% + 10px);
+  transform: translate(-4px, -50%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dock:not([data-dragging]) .bead:hover + .tip {
+    opacity: 1;
+    transform: translate(0, -50%);
+    transition-delay: 400ms;
+  }
+}
+.dock:not([data-dragging]) .bead:focus-visible + .tip {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.bead[aria-expanded='true'] + .tip {
+  display: none;
+}
+
+/* Reduced motion (the OS setting, or the footer switch): no lift, press or plane drift; the icons cross-fade. */
+@media (prefers-reduced-motion: reduce) {
+  .bead,
+  .bead:hover,
+  .bead:active,
+  .icon,
+  .bead:hover :global(.plane) {
+    transform: none;
+  }
+  .bead,
+  .icon,
+  .tip {
+    transition: opacity 150ms linear;
+  }
+  .dot {
+    transition: none;
+  }
+}
+:global(html[data-motion='off']) .bead,
+:global(html[data-motion='off']) .bead:hover,
+:global(html[data-motion='off']) .bead:active,
+:global(html[data-motion='off']) .icon,
+:global(html[data-motion='off']) .bead:hover :global(.plane) {
+  transform: none;
+}
+:global(html[data-motion='off']) .bead,
+:global(html[data-motion='off']) .icon,
+:global(html[data-motion='off']) .tip {
+  transition: opacity 150ms linear;
+}
+:global(html[data-motion='off']) .dot {
+  transition: none;
+}
+
+/* Opaque where the glass would hurt legibility, is unsupported, or costs too much (lite devices). */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    --tint: 1 !important;
+  }
+}
+:global(html[data-lite='1']) .glass {
+  --tint: 1 !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    --tint: 1 !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass::before {
+    display: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .glass {
+    --tint: 1 !important;
+  }
+}
+@media (forced-colors: active) {
+  .glass {
+    background: Canvas;
+    border: 1px solid ButtonText;
+    color: ButtonText;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  .glass::before {
+    display: none;
+  }
+  .bead:focus-visible {
+    outline-color: Highlight;
+  }
+  .dot {
+    forced-color-adjust: none;
+    background: Highlight;
+    border-color: Canvas;
+  }
+}

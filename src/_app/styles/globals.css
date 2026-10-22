@@ -79,9 +79,16 @@
   --dur-overlay: 450ms; --dur-overlay-out: 300ms; --dur-reveal: 800ms;
   --dur-theme: 700ms; --dur-hero: 2400ms;
 
+  /* The chat bead's corner (chat design §3): `--chat-stack` is the bead's top plus 12 px, where fixed chrome above
+     it (the home legend) and the desktop window stop; `--chat-clearance` keeps in-flow content clear of it. */
+  --chat-stack: calc(76px + env(safe-area-inset-bottom, 0px));
+  --chat-clearance: 88px;
+
   /* Primary button hover (§B.10): lighter on Night, darker on Day */
   --btn-hover-filter: brightness(1.06);
 }
+@media (min-width: 640px) { :root { --chat-stack: 84px; --chat-clearance: 96px; } }
+@media (min-width: 1024px) { :root { --chat-stack: 88px; } }
 :root[data-theme='day'] {
   --bg-primary-rgb: 238, 240, 234;
   --card-bg-rgb: 249, 250, 246;
@@ -92,7 +99,7 @@
 
 html { background: var(--ground); color: var(--ink); scrollbar-gutter: stable; -webkit-text-size-adjust: 100%;
   scroll-padding-top: 72px; }                       /* focus never lands under the 56 px navbar (WCAG 2.4.11) */
-@media (max-width: 1023px) { html { scroll-padding-bottom: 80px; } }   /* nor under the section chip or chat launcher */
+html { scroll-padding-bottom: var(--chat-clearance); }   /* nor under the section chip or the chat bead (2.4.11) */
 html { scrollbar-color: var(--line-strong) var(--ground); -webkit-tap-highlight-color: rgb(var(--c-signal) / 0.16); }
 body { margin: 0; background: var(--ground); font-family: var(--font-text), Georgia, serif; overflow-x: clip; }
 ::selection { background: var(--signal); color: var(--on-signal); }
