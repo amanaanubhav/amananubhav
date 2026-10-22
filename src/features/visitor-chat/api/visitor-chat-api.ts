@@ -1,6 +1,6 @@
-import { addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 
-import type { VisitorProfile } from '@/entities/chat-thread';
+import type { ChatThreadDoc, VisitorProfile } from '@/entities/chat-thread';
 import { messagesCollection, threadDoc } from '@/entities/chat-thread/index.firestore';
 import { ensureAnonymousSession, getDb } from '@/shared/api';
 
@@ -11,12 +11,33 @@ import { notifyOwner } from './notify-owner';
  * session, Start chat, Send), so it stays out of every route's initial JS (§J.2).
  */
 
-export { subscribeToMessages, subscribeToThread } from '@/entities/chat-thread/index.firestore';
+export { subscribeToMessages } from '@/entities/chat-thread/index.firestore';
 export { ensureAnonymousSession };
 
 /** False when Firebase is not configured (the hook's legacy `getDb()` guard). */
 export function hasChatDb(): boolean {
   return getDb() !== null;
+}
+
+/**
+ * The visitor's thread document. `confirmed` is true only for a snapshot the server answered (not the offline
+ * cache), so a missing thread is acted on only when the server says so. Metadata changes are included: a cache miss
+ * later confirmed by the server arrives as a metadata-only change. No-op when Firestore is not configured.
+ */
+export function subscribeToThread(
+  chatId: string,
+  cb: (state: { exists: boolean; isBlocked: boolean; confirmed: boolean }) => void,
+): () => void {
+  if (!getDb()) return () => {};
+  return onSnapshot(
+    threadDoc(chatId),
+    { includeMetadataChanges: true },
+    (snap) => {
+      const data = snap.exists() ? (snap.data() as ChatThreadDoc) : null;
+      cb({ exists: data !== null, isBlocked: data?.isBlocked ?? false, confirmed: !snap.metadata.fromCache });
+    },
+    (error) => console.error('Error watching chat:', error),
+  );
 }
 
 /**
@@ -37,16 +58,25 @@ export async function startThread(id: string, { name, email, phone }: VisitorPro
   );
 }
 
-/** Saves the message, updates the parent thread, then emails the owner. */
+/**
+ * A new message's document id, made on the client (as `addDoc` does), so the thread can match its optimistic
+ * bubble to the listener's copy and mark that one bubble failed if the write is rejected.
+ */
+export function newMessageId(chatId: string): string {
+  return doc(messagesCollection(chatId)).id;
+}
+
+/** Saves the message under `id` (same path and fields as before), updates the parent thread, then emails the owner. */
 export async function sendVisitorMessage(
   chatId: string,
   text: string,
   visitor: VisitorProfile,
+  id: string,
 ): Promise<void> {
   await ensureAnonymousSession();
 
   // 1. Save message to chat history
-  await addDoc(messagesCollection(chatId), {
+  await setDoc(doc(messagesCollection(chatId), id), {
     text: text,
     sender: 'visitor',
     timestamp: serverTimestamp(),

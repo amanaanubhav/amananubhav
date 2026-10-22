@@ -64,7 +64,7 @@ export function useVisitorSession() {
     writeStoredSession({ ...profile, id });
   }, []);
 
-  /** Thread was deleted by the admin: forget everything. */
+  /** Thread was deleted by the admin (only once the server confirms it is gone): forget everything. */
   const resetSession = useCallback(() => {
     removeStoredSession();
     setVisitor(null);
