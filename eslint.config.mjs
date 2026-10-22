@@ -23,5 +23,6 @@ export default defineConfig([
     '.playwright/**',
     '.playwright-cli/**',
     '.vercel/**',
+    'public/boot/**', // generated, minified (npm run gen:preloader)
   ]),
 ]);

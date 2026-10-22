@@ -16,7 +16,8 @@
     "gen:posters": "node scripts/posters/build-posters.mjs",
     "gen:brand": "node scripts/brand/build-brand.mjs",
     "gen:photos": "node scripts/photos/build-duotones.mjs",
-    "gen:all": "npm run gen:terrain && npm run gen:sky && npm run gen:posters && npm run gen:brand && npm run gen:photos"
+    "gen:preloader": "node scripts/preloader/build-climb.mjs",
+    "gen:all": "npm run gen:terrain && npm run gen:sky && npm run gen:posters && npm run gen:brand && npm run gen:photos && npm run gen:preloader"
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.75",
