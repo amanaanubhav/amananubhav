@@ -1,55 +1,64 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import Image from 'next/image';
 import { Lock, SquareTerminal, X } from 'lucide-react';
-import { motion, useIsPresent } from 'motion/react';
+import { motion, useDragControls, useIsPresent, type HTMLMotionProps, type PanInfo } from 'motion/react';
 
 import { getMedia, MOTION } from '@/shared/config';
 import { cn } from '@/shared/lib/cn';
-import { useEscapeKey, useFocusTrap } from '@/shared/lib/dom';
+import { useFocusTrap } from '@/shared/lib/dom';
 import { useMotionAllowed } from '@/shared/lib/motion-tier';
-import { IconButton } from '@/shared/ui/button';
+import { RIDGE_PATH, RIDGE_START, RIDGE_SUMMIT } from '@/shared/ui/ridge-mark';
 
 import type { VisitorChatState } from '../model/use-visitor-chat';
 import { ChatIntroForm } from './ChatIntroForm';
 import { ChatThread } from './ChatThread';
+import type { Placement } from './FloatingChat';
+import styles from './chat-window.module.css';
 import { useInertOutside } from './use-inert-outside';
 
 interface ChatWindowProps {
   id: string;
   chat: VisitorChatState;
-  /** Below 640 px the window is a bottom sheet. */
+  /** Below 640 px the window is a modal floating sheet. */
   isCompact: boolean;
-  /** Desktop placement next to the (draggable) launcher, height capped to the free space; ignored on the sheet. */
-  placement: { top: number; right: number; height: number } | null;
-  /** Closes and returns focus to the launcher. */
+  /** Desktop placement beside the (draggable) bead, height capped to the free space; ignored on the sheet. */
+  placement: Placement | null;
+  /** Aman's replies after this (epoch ms) get the NEW divider. */
+  newSince: number | null;
+  /** Closes and returns focus to the bead. */
   onClose: () => void;
   /** Close the window, then open the overlay (the shell hides the chat while it is open). */
   onOpenTerminal: () => void;
   onOpenVault: () => void;
 }
 
+/** The ridge mark's path, run out to both edges of the rule. */
+const RULE_PATH = `M0 ${RIDGE_START.y} ${RIDGE_PATH.slice(1)}h1.5`;
+const RULE_WIDTH = 45.5;
+const SUMMIT_LEFT = `${((RIDGE_SUMMIT.x / RULE_WIDTH) * 100).toFixed(2)}%`;
+/** A sheet dragged down this far, or flung this fast, closes. */
+const SHEET_CLOSE_OFFSET = 120;
+const SHEET_CLOSE_VELOCITY = 500;
+
 function OwnerAvatar() {
   const avatar = getMedia('M-ORIGIN-01');
   const src = avatar.status === 'existing' ? (avatar.src ?? avatar.path) : undefined;
   return (
-    <span className="relative block size-10 shrink-0 overflow-hidden rounded-control border border-line bg-surface-2">
+    <span className={styles.avatar}>
       {src ? (
         <Image
           src={src}
           alt=""
-          width={40}
-          height={40}
-          sizes="40px"
-          className="photo-grade size-full object-cover"
+          width={36}
+          height={36}
+          sizes="36px"
+          className="photo-grade"
           style={{ objectPosition: avatar.objectPosition }}
         />
       ) : (
-        <span
-          aria-hidden="true"
-          className="flex size-full items-center justify-center font-display text-caption font-semibold text-ink-muted"
-        >
+        <span aria-hidden="true" className={styles.initials}>
           AA
         </span>
       )}
@@ -57,70 +66,152 @@ function OwnerAvatar() {
   );
 }
 
-/**
- * Fallback height cap before the launcher is measured: the top at 72 px (CHAT_WINDOW_TOP_MIN), the bottom above
- * the launcher (88 px). A literal so Tailwind sees it; the measured placement sets an exact height.
- */
-const DESKTOP_MAX_H = 'max-h-[calc(100dvh-160px)]';
+function HeaderButton({ label, onClick, className, children }: {
+  label: string;
+  onClick: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      // The overlays return focus here; this window is gone by then, so it lands on the bead.
+      data-return-focus="chat-launcher"
+      onClick={onClick}
+      className={cn(styles.iconButton, className)}
+    >
+      {children}
+    </button>
+  );
+}
 
 /**
- * The chat window (§H.6). Desktop: a non-modal 384 × 520 dialog beside the launcher, its height capped so the
- * top stays clear of the navbar and the bottom clear of the launcher. Below 640 px: an 80dvh bottom sheet that
- * holds the page still (the launcher takes the scroll lock), so it is modal there: `aria-modal`, a scrim, a
- * focus trap and everything else inert, or Tab would walk into the hidden page. Focus moves in on open,
- * Escape closes, and focus goes back to the launcher on close (the launcher handles that).
+ * The chat window (chat design §4). Desktop: a non-modal 380 × 572 glass dialog that grows out of the bead as a
+ * clip-path circle, its height capped so the top stays clear of the navbar and the bottom clear of the bead.
+ * Below 640 px: a floating sheet on the visual viewport that holds the page still, so it is modal there:
+ * `aria-modal`, a scrim, a focus trap and everything else inert. Focus moves in on open; FloatingChat owns Escape
+ * (only when the window is the topmost layer) and hands focus back to the bead on close.
  */
-export function ChatWindow({ id, chat, isCompact, placement, onClose, onOpenTerminal, onOpenVault }: ChatWindowProps) {
+export function ChatWindow({
+  id,
+  chat,
+  isCompact,
+  placement,
+  newSince,
+  onClose,
+  onOpenTerminal,
+  onOpenVault,
+}: ChatWindowProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const compactAtOpen = useRef(isCompact);
-  // While the exit animation runs the window is on its way out: no trap, no inert page, no Escape.
+  const dragControls = useDragControls();
+  // While the exit animation runs the window is on its way out: no trap, no inert page.
   const isPresent = useIsPresent();
   const isModal = isCompact && isPresent;
   const hasVisitor = chat.visitor !== null;
-  // Tier 0 (OS setting, footer switch, lite devices): a 150 ms opacity fade instead of the spring (§C.4).
+  // Tier 0 (OS setting, footer switch, lite devices): a 150 ms cross-fade instead of the reveal (§C.4).
   const motionOk = useMotionAllowed();
-  const fade = { duration: 0.15 };
-  const panelMotion = motionOk
-    ? {
-        initial: { opacity: 0, y: isCompact ? 24 : 12 },
-        animate: { opacity: 1, y: 0, transition: MOTION.spring },
-        exit: {
-          opacity: 0,
-          y: isCompact ? 16 : 8,
-          transition: {
-            duration: MOTION.dur.overlayOut * 0.65,
-            ease: MOTION.bezier.depart,
-          },
-        },
-      }
-    : {
-        initial: { opacity: 0 },
-        animate: { opacity: 1, transition: fade },
-        exit: { opacity: 0, transition: fade },
-      };
+  const fade = { duration: 0.15, ease: 'linear' } as const;
 
-  useEscapeKey(() => onClose(), isPresent);
-  // The sheet: Tab stays inside and the page behind is inert. The launcher returns focus itself.
+  // The sheet: Tab stays inside and the page behind is inert. The bead returns focus itself.
   useFocusTrap(rootRef, isModal, { initialFocus: rootRef, returnFocus: false });
   useInertOutside(rootRef, isModal);
 
-  // Focus moves into the dialog on open: the first field on desktop; the dialog itself on the sheet,
-  // so the phone keyboard does not cover half the sheet before the visitor has read it.
+  // Focus moves in once the content has arrived: the first field or the composer on desktop; the dialog itself
+  // on the sheet, so the phone keyboard does not cover half of it before the visitor has read it.
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const frame = requestAnimationFrame(() => {
-      if (root.contains(document.activeElement)) return;
-      const field = compactAtOpen.current ? null : root.querySelector<HTMLElement>('[data-autofocus]:not(:disabled)');
-      (field ?? root).focus({ preventScroll: true });
-    });
-    return () => cancelAnimationFrame(frame);
+    const timer = window.setTimeout(
+      () => {
+        if (root.contains(document.activeElement)) return;
+        const field = compactAtOpen.current ? null : root.querySelector<HTMLElement>('[data-autofocus]:not(:disabled)');
+        (field ?? root).focus({ preventScroll: true });
+      },
+      motionOk ? 180 : 0,
+    );
+    return () => window.clearTimeout(timer);
+    // Once, on open: later steps (intro to thread) move focus themselves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const placementStyle: CSSProperties | undefined =
-    !isCompact && placement
-      ? { top: placement.top, right: placement.right, bottom: 'auto', height: placement.height, maxHeight: 'none' }
-      : undefined;
+  // The sheet sits on the visual viewport: its height follows it and its bottom rides on the phone keyboard.
+  useEffect(() => {
+    const root = rootRef.current;
+    const viewport = window.visualViewport;
+    if (!isCompact || !root || !viewport) return;
+    const sync = () => {
+      root.style.setProperty('--vvh', `${viewport.height}px`);
+      root.style.setProperty('--kb', `${Math.max(0, window.innerHeight - viewport.offsetTop - viewport.height)}px`);
+    };
+    sync();
+    viewport.addEventListener('resize', sync);
+    viewport.addEventListener('scroll', sync);
+    return () => {
+      viewport.removeEventListener('resize', sync);
+      viewport.removeEventListener('scroll', sync);
+    };
+  }, [isCompact]);
+
+  const desktop = !isCompact && placement !== null ? placement : null;
+  const placementStyle: CSSProperties | undefined = desktop
+    ? {
+        top: desktop.top,
+        left: desktop.left,
+        height: desktop.height,
+        width: desktop.width,
+        right: 'auto',
+        bottom: 'auto',
+        maxHeight: 'none',
+      }
+    : undefined;
+
+  let shellMotion: Pick<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'exit'>;
+  let contentMotion: Pick<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'exit'> | undefined;
+  if (!motionOk) {
+    shellMotion = {
+      initial: { opacity: 0 },
+      animate: { opacity: 1, transition: fade },
+      exit: { opacity: 0, transition: fade },
+    };
+  } else if (isCompact || !desktop) {
+    shellMotion = {
+      initial: { opacity: 0, y: 24 },
+      animate: { opacity: 1, y: 0, transition: MOTION.spring },
+      exit: { opacity: 0, y: 24, transition: { duration: 0.22, ease: MOTION.bezier.depart } },
+    };
+  } else {
+    // A circle grown from the bead's centre; `none` once open, so the float shadow is not clipped.
+    const { originX: ox, originY: oy, width: w, height: h } = desktop;
+    const radius = Math.ceil(Math.hypot(Math.max(ox, w - ox), Math.max(oy, h - oy))) + 4;
+    const small = `circle(26px at ${ox}px ${oy}px)`;
+    const large = `circle(${radius}px at ${ox}px ${oy}px)`;
+    shellMotion = {
+      initial: { clipPath: small, opacity: 0 },
+      animate: {
+        clipPath: large,
+        opacity: 1,
+        transition: { clipPath: MOTION.spring, opacity: { duration: 0.12, ease: 'linear' } },
+        transitionEnd: { clipPath: 'none' },
+      },
+      exit: {
+        clipPath: [large, small],
+        opacity: 0,
+        transition: { duration: 0.24, ease: MOTION.bezier.depart },
+      },
+    };
+    contentMotion = {
+      initial: { opacity: 0, y: 6 },
+      animate: { opacity: 1, y: 0, transition: { duration: 0.2, delay: 0.14, ease: MOTION.bezier.settle } },
+      exit: { opacity: 0, transition: { duration: 0.1, ease: 'linear' } },
+    };
+  }
+
+  const onSheetDragEnd = (_event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => {
+    if (info.offset.y > SHEET_CLOSE_OFFSET || info.velocity.y > SHEET_CLOSE_VELOCITY) onClose();
+  };
 
   return (
     <>
@@ -128,7 +219,7 @@ export function ChatWindow({ id, chat, isCompact, placement, onClose, onOpenTerm
         <motion.div
           aria-hidden="true"
           data-modal-keep=""
-          className="fixed inset-0 z-chat-window bg-ground/80"
+          className={styles.scrim}
           onClick={onClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: fade }}
@@ -142,49 +233,54 @@ export function ChatWindow({ id, chat, isCompact, placement, onClose, onOpenTerm
         aria-label="Chat with Aman"
         aria-modal={isModal ? true : undefined}
         tabIndex={-1}
-        {...panelMotion}
+        data-step={hasVisitor ? 'thread' : 'intro'}
+        {...shellMotion}
+        drag={isCompact ? 'y' : false}
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 1 }}
+        onDragEnd={onSheetDragEnd}
         style={placementStyle}
-        className={cn(
-          'fixed z-chat-window flex flex-col overflow-hidden border border-line bg-surface text-ink shadow-float focus:outline-none',
-          isCompact
-            ? 'inset-x-0 bottom-0 h-[80dvh] rounded-t-panel border-b-0 pb-[env(safe-area-inset-bottom)]'
-            : cn(
-                'bottom-[88px] right-6 h-[520px] w-[384px] max-w-[calc(100vw-32px)] origin-bottom-right rounded-panel',
-                DESKTOP_MAX_H,
-              ),
-        )}
+        className={cn(styles.window, isCompact ? styles.sheet : styles.panel)}
       >
-        {/* A plain div, not <header>: inside the dialog it would read as a second banner landmark. */}
-        <div className="flex shrink-0 items-start gap-2.5 border-b border-line py-3 pl-3 pr-1">
-          <OwnerAvatar />
-          <div className="min-w-0 flex-1 pt-px">
-            <h2 className="m-0 font-display text-ui font-semibold leading-5 text-ink">Aman Anubhav</h2>
-            <p className="m-0 mt-0.5 truncate font-body text-[13px] leading-[18px] text-ink-muted">
-              I usually reply within a day.
-            </p>
+        <motion.div className={styles.inner} {...contentMotion}>
+          {isCompact ? (
+            <div aria-hidden="true" className={styles.grab} onPointerDown={(e) => dragControls.start(e)} />
+          ) : null}
+          {/* A plain div, not <header>: inside the dialog it would read as a second banner landmark. */}
+          <div className={styles.header}>
+            <OwnerAvatar />
+            <div className={styles.who}>
+              <h2 className={styles.name}>Aman Anubhav</h2>
+              <p className={styles.sub}>I usually reply within a day.</p>
+            </div>
+            <div className={styles.actions}>
+              <HeaderButton label="Open the AI terminal" onClick={onOpenTerminal} className={styles.external}>
+                <SquareTerminal aria-hidden="true" strokeWidth={1.75} />
+              </HeaderButton>
+              <HeaderButton label="Open the Vault" onClick={onOpenVault} className={styles.external}>
+                <Lock aria-hidden="true" strokeWidth={1.75} />
+              </HeaderButton>
+              <HeaderButton label="Close chat" onClick={onClose}>
+                <X aria-hidden="true" strokeWidth={1.75} />
+              </HeaderButton>
+            </div>
           </div>
-          <div className="flex shrink-0 items-center">
-            <IconButton
-              label="Open the AI terminal"
-              icon={SquareTerminal}
-              size={40}
-              data-return-focus="chat-terminal"
-              onClick={onOpenTerminal}
-            />
-            <IconButton
-              label="Open the Vault"
-              icon={Lock}
-              size={40}
-              data-return-focus="chat-vault"
-              onClick={onOpenVault}
-            />
-            <IconButton label="Close chat" icon={X} size={40} onClick={onClose} />
+          <div aria-hidden="true" className={styles.rule}>
+            <svg viewBox={`0 0 ${RULE_WIDTH} 16`} preserveAspectRatio="none" focusable="false">
+              <path d={RULE_PATH} />
+            </svg>
+            <i className={styles.summit} style={{ left: SUMMIT_LEFT }} />
           </div>
-        </div>
 
-        {hasVisitor ? <ChatThread chat={chat} /> : <ChatIntroForm chat={chat} />}
+          {hasVisitor ? (
+            <ChatThread chat={chat} newSince={newSince} onOpenVault={onOpenVault} />
+          ) : (
+            <ChatIntroForm chat={chat} onOpenTerminal={onOpenTerminal} onOpenVault={onOpenVault} />
+          )}
+        </motion.div>
       </motion.div>
     </>
   );
 }
-

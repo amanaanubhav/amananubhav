@@ -1,13 +1,11 @@
 'use client';
 
-import { useId, useState, type FormEvent, type ReactNode } from 'react';
-import { CircleX } from 'lucide-react';
-
-import { cn } from '@/shared/lib/cn';
-import { Button } from '@/shared/ui/button';
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { CircleAlert, Lock, SquareTerminal } from 'lucide-react';
 
 import type { VisitorChatState } from '../model/use-visitor-chat';
-import { FIELD_CLASSES } from './field-classes';
+import { ChatPlane } from './ChatPlane';
+import styles from './chat-window.module.css';
 
 type FieldKey = 'name' | 'email' | 'phone';
 type FieldErrors = Partial<Record<FieldKey, string>>;
@@ -34,14 +32,14 @@ interface FieldProps {
 function Field({ id, label, error, children }: FieldProps) {
   const errorId = `${id}-error`;
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="font-body text-ui font-medium text-ink">
+    <div className={styles.field}>
+      <label htmlFor={id} className={styles.label}>
         {label}
       </label>
       {children(error ? errorId : undefined)}
       {error ? (
-        <p id={errorId} className="flex items-start gap-1.5 font-body text-caption text-error">
-          <CircleX aria-hidden="true" className="mt-[0.2em] size-4 shrink-0" strokeWidth={1.75} />
+        <p id={errorId} className={styles.error}>
+          <CircleAlert aria-hidden="true" strokeWidth={1.75} />
           <span>{error}</span>
         </p>
       ) : null}
@@ -51,18 +49,42 @@ function Field({ id, label, error, children }: FieldProps) {
 
 interface ChatIntroFormProps {
   chat: VisitorChatState;
+  onOpenTerminal: () => void;
+  onOpenVault: () => void;
 }
 
 /**
- * The intro step (§H.6): who is writing, before the thread opens. Fields, their state and the submit handler
- * are the model's (`useVisitorChat`); this UI only adds visible labels, autocomplete and inline errors, then
- * hands the same submit event to `handleStartChat`. The fields scroll inside the window when it is short;
- * **Start chat** sits in a fixed row under them, so it is never cut off.
+ * The intro step (chat design §4): who is writing, before the thread opens. Fields, their state and the submit
+ * handler are the model's (`useVisitorChat`); this UI adds visible labels, autocomplete and inline errors, then
+ * hands the same submit event to `handleStartChat`. "Other ways in" names the terminal and the Vault in words
+ * (the header hides their icons on this step). The fields scroll inside the window when it is short; **Start chat**
+ * sits in a fixed row under them, so it is never cut off. While content continues below the fold the body carries
+ * `data-more`, which fades its lower edge (written straight to the DOM, so scrolling never re-renders).
  */
-export function ChatIntroForm({ chat }: ChatIntroFormProps) {
+export function ChatIntroForm({ chat, onOpenTerminal, onOpenVault }: ChatIntroFormProps) {
   const { name, setName, email, setEmail, phone, setPhone, handleStartChat } = chat;
   const uid = useId();
   const [errors, setErrors] = useState<FieldErrors>({});
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Scroll hint: recompute on scroll and whenever the body or any child changes size (inline errors, the window's
+  // placement height, the sheet's --vvh, a font swap reflowing the copy).
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+    const update = () => {
+      body.toggleAttribute('data-more', body.scrollTop + body.clientHeight < body.scrollHeight - 1);
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(body);
+    for (const child of Array.from(body.children)) observer.observe(child);
+    body.addEventListener('scroll', update, { passive: true });
+    update();
+    return () => {
+      observer.disconnect();
+      body.removeEventListener('scroll', update);
+    };
+  }, []);
 
   const clearError = (key: FieldKey) => {
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
@@ -82,14 +104,10 @@ export function ChatIntroForm({ chat }: ChatIntroFormProps) {
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex min-h-0 flex-1 flex-col" aria-label="Start a chat">
-      <div
-        className="scroll-pane flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-5 pb-4 pt-4"
-        data-lenis-prevent
-      >
-        <p className="m-0 font-body text-ui text-ink [text-wrap:pretty]">
-          I usually reply within a day. Leave your email so the reply can find you.
-        </p>
+    <form onSubmit={onSubmit} noValidate className={styles.form} aria-label="Start a chat">
+      <div ref={bodyRef} className={styles.body} data-lenis-prevent>
+        <p className={styles.say}>Say hello.</p>
+        <p className={styles.lead}>Leave your email so the reply can find you.</p>
         <Field id={`${uid}-name`} label="Your name" error={errors.name}>
           {(describedBy) => (
             <input
@@ -106,7 +124,7 @@ export function ChatIntroForm({ chat }: ChatIntroFormProps) {
               }}
               aria-invalid={errors.name ? true : undefined}
               aria-describedby={describedBy}
-              className={FIELD_CLASSES}
+              className={styles.input}
             />
           )}
         </Field>
@@ -127,7 +145,7 @@ export function ChatIntroForm({ chat }: ChatIntroFormProps) {
               }}
               aria-invalid={errors.email ? true : undefined}
               aria-describedby={describedBy}
-              className={FIELD_CLASSES}
+              className={styles.input}
             />
           )}
         </Field>
@@ -147,15 +165,29 @@ export function ChatIntroForm({ chat }: ChatIntroFormProps) {
               }}
               aria-invalid={errors.phone ? true : undefined}
               aria-describedby={describedBy}
-              className={cn(FIELD_CLASSES, 'tabular')}
+              className={`${styles.input} tabular`}
             />
           )}
         </Field>
+        <div className={styles.ways}>
+          <p>Other ways in</p>
+          <div className={styles.wayLinks}>
+            <button type="button" data-return-focus="chat-launcher" onClick={onOpenTerminal} className={styles.link}>
+              <SquareTerminal aria-hidden="true" strokeWidth={1.75} />
+              Ask the AI terminal
+            </button>
+            <button type="button" data-return-focus="chat-launcher" onClick={onOpenVault} className={styles.link}>
+              <Lock aria-hidden="true" strokeWidth={1.75} />
+              Send privately via the Vault
+            </button>
+          </div>
+        </div>
       </div>
-      <div className="shrink-0 border-t border-line px-5 py-3">
-        <Button type="submit" variant="primary" className="w-full">
+      <div className={styles.footer}>
+        <button type="submit" className={styles.primary}>
+          <ChatPlane />
           Start chat
-        </Button>
+        </button>
       </div>
     </form>
   );
