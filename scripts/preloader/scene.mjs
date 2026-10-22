@@ -163,36 +163,62 @@ export function buildScene({ ridge: RIDGE, trekker: TREK, route = { start: 760, 
   // waterfall dropping from a notch in the right wall's skyline.
   const nG = noise();
   const FALL = 1050;
+  // Each outer wall rises to a broad crest toward the frame's edge and has a shoulder on the way down into the V.
+  const bump = (x, c, w) => Math.exp(-(((x - c) / w) ** 2));
   const gTop = (x) => {
     let y;
-    if (x < 845) y = 36 + 16 * fbm(nG, x / 90) + (270 - 36) * Math.pow(sstep(330, 845, x), 1.3);
-    else y = 46 + 14 * fbm(nG, x / 80 + 40) + (270 - 46) * Math.pow(1 - sstep(845, 1090, x), 0.85);
-    y -= 34 * Math.exp(-(((x - 640) / 70) ** 2)); // the terraced spur
-    y += 22 * Math.exp(-(((x - FALL) / 13) ** 2)); // the waterfall's notch
+    if (x < 845) {
+      y = 62 + 30 * fbm(nG, x / 170) - 50 * bump(x, 110, 190) + 12 * bump(x, 300, 50) +
+        (270 - 62) * Math.pow(sstep(360, 845, x), 1.3);
+    } else {
+      y = 74 + 28 * fbm(nG, x / 160 + 40) - 60 * bump(x, 1330, 170) - 46 * bump(x, 1800, 230) +
+        14 * bump(x, 1560, 70) + (270 - 74) * Math.pow(1 - sstep(845, 1110, x), 0.85);
+    }
+    y -= 34 * bump(x, 640, 70); // the terraced spur
+    y += 22 * bump(x, FALL, 13); // the waterfall's notch
     return y - 4 * Math.abs(nG(x / 6 + 900)); // canopy lumps along the skyline
   };
   const ggSky = [];
   for (let x = 0; x <= 2000; x += 10) ggSky.push([x, gTop(x)]);
   const ggShape = closedTo(ggSky, 330);
-  const ggShade = line([
-    ...ggSky.filter(([x]) => x >= 350 && x <= 852),
-    [852, 330], [700, 330], [560, 230], [610, 150], [470, 110], [400, 70],
-  ]) + 'Z';
-  // Canopy: two overlapping crown patterns of different tiles (so the repeat never lines up), lumpy masses.
-  const canopyTile = (id, w, h, n, rMin, rMax, paint, rot) => {
+  // The left wall's inner face in shade: under the skyline down to a ragged edge that follows the slope, fading in
+  // from the crest and out toward the foot of the V (a gradient, so neither end shows an edge).
+  const shadeLo = [];
+  for (let x = 852; x >= 350; x -= 18) {
+    const u = (x - 350) / 502;
+    const dep = (250 * u ** 1.7 + 16 * fbm(nG, x / 34 + 70) * Math.sin(Math.PI * u)) * (1 - sstep(760, 852, x));
+    shadeLo.push([x, Math.min(330, gTop(x) + 4 + dep)]); // back up to the skyline at the V: no edge at its foot
+  }
+  const ggShade = line([...ggSky.filter(([x]) => x >= 350 && x <= 852), ...shadeLo]) + 'Z';
+  const gradShade =
+    '<linearGradient id="gS" gradientUnits="userSpaceOnUse" x1="380" y1="60" x2="860" y2="290">' +
+    '<stop stop-color="var(--gg-shade)" stop-opacity="0"/>' +
+    '<stop offset=".6" stop-color="var(--gg-shade)" stop-opacity=".6"/>' +
+    '<stop offset="1" stop-color="var(--gg-shade)" stop-opacity=".25"/></linearGradient>';
+  // Canopy: two overlapping crown patterns of different tiles (so the repeat never lines up). A crown is a lumpy
+  // cluster of two or three overlapping circles, low in contrast, so the slope reads as forest, not dots.
+  const canopyTile = (id, w, h, n, rMin, rMax, paint, rot, lumps = 1) => {
     let d = '';
     for (let k = 0; k < n; k++) {
       const c = [R(rr(0, w)), R(rr(0, h)), R(rr(rMin, rMax))];
-      for (const dx of [-w, 0, w]) for (const dy of [-h, 0, h]) {
-        const [x, y, r] = [c[0] + dx, c[1] + dy, c[2]];
-        if (x + r > 0 && x - r < w && y + r > 0 && y - r < h) d += circ([x, y, r]);
+      const parts = [c];
+      // the lumps come from the crown's own numbers (no extra draws, so the random stream stays as it was)
+      for (let j = 1; j < (lumps > 1 ? lumps + (c[0] % 2) : 1); j++) {
+        const a = c[0] * 1.7 + c[1] * 2.3 + j * 2.1;
+        parts.push([R(c[0] + c[2] * 0.75 * Math.cos(a)), R(c[1] + c[2] * 0.45 * Math.sin(a)), R(c[2] * (0.62 + 0.1 * j))]);
+      }
+      for (const [px, py, r] of parts) {
+        for (const dx of [-w, 0, w]) for (const dy of [-h, 0, h]) {
+          const [x, y] = [px + dx, py + dy];
+          if (x + r > 0 && x - r < w && y + r > 0 && y - r < h) d += circ([x, y, r]);
+        }
       }
     }
     return `<pattern id="${id}" width="${w}" height="${h}" patternUnits="userSpaceOnUse"` +
       ` patternTransform="rotate(${rot})">` +
       `<path ${paint} d="${d}"/></pattern>`;
   };
-  const gC = canopyTile('gC', 104, 62, 10, 4, 10, 'fill="var(--nB)" fill-opacity=".8"', 14);
+  const gC = canopyTile('gC', 104, 62, 8, 4, 7.5, 'fill="var(--nB)" fill-opacity=".3"', 14, 2);
   const gD = canopyTile('gD', 71, 45, 6, 3, 6, 'fill="var(--f2)" fill-opacity=".05"', -27);
   // Cliff bands: ragged slanted strips of exposed rock; the waterfall's own cliff under the notch.
   const cliff = (x0, x1, y0, y1, th) => {
@@ -207,7 +233,18 @@ export function buildScene({ ridge: RIDGE, trekker: TREK, route = { start: 760, 
   const fTop = gTop(FALL) + 2;
   const ggCliff =
     cliff(FALL - 12, FALL + 15, fTop - 2, fTop + 5, 44) + cliff(950, 985, 196, 214, 16) + cliff(470, 500, 104, 124, 13);
-  const ggTerr = terraces(gTop, 640, 62, { n: 4, d0: 9, th: 2.4, stats: stats.terr });
+  // The terraced spur: short level treads stepping down the slope, each a light tread tapered at both ends over a
+  // darker riser (contours on a near-level shelf stay nearly flat seen from across the valley).
+  let ggTerr = '', ggRiser = '';
+  for (let k = 0; k < 4; k++) {
+    const y = R(gTop(640) + 9 + k * 10.5), th = 3, m = rr(0.42, 0.58);
+    let xr = 640;
+    while (gTop(xr + 2) < y - 5) xr += 2; // the tread ends where the slope drops below it
+    const xl = R(xr - rr(34, 56) + k * 3), a = R((xr - xl) * m), b = xr - xl - a;
+    // relative: a lens from the left tip over the crown to the right tip and back under it, then the riser below
+    ggTerr += `M${xl} ${y}q${a} -1 ${a + b} 1q-${b} ${th} -${a + b - 4} 0z`;
+    ggRiser += `M${xl + 3} ${y + 2}q${a - 3} 2 ${a + b - 4} -1q-${b} ${th + 2} -${a + b - 8} 1z`;
+  }
   // The waterfall: three strands from the notch, widening as they fall, and the spray at the foot.
   const fBot = fTop + 112;
   let fall = '';
@@ -221,6 +258,7 @@ export function buildScene({ ridge: RIDGE, trekker: TREK, route = { start: 760, 
   const spray = [[-6, 0, 7], [6, -3, 6], [-1, -8, 5]].map(([dx, dy, r]) => circ([FALL + dx, R(fBot + dy), r])).join('');
 
   /* ---------------------------------------------------------------- NEAR strip (3400 x 240): the trail */
+  reseed(1255393907); // pinned: the trail keeps its layout whatever the layers behind it draw
   const nNear = noise();
   const CREST = NEAR.summitX, S = 11, SUM = 56, RX0 = CREST - 23 * S, RY0 = SUM - 2.5 * S; // the ridge-mark crest
   const crestPts = RIDGE.map(([x, y]) => [RX0 + x * S, RY0 + y * S]);
@@ -461,7 +499,7 @@ export function buildScene({ ridge: RIDGE, trekker: TREK, route = { start: 760, 
     `<svg width="0" height="0" style="position:absolute"><defs>${symbols}` +
     `<path id="mF" d="${line(farSky)}V424H0Z" vector-effect="non-scaling-stroke"/>` +
     `<path id="sV" d="${ggShape}"/><path id="sG" d="${nearShape}"/>` +
-    `${gradNear}${gradGlow}${gradHaze}${gC}${gD}</defs></svg>`;
+    `${gradNear}${gradGlow}${gradHaze}${gradShade}${gC}${gD}</defs></svg>`;
   const far =
     svg(
       '0 0 1800 420',
@@ -485,8 +523,8 @@ export function buildScene({ ridge: RIDGE, trekker: TREK, route = { start: 760, 
   const gorge = svg(
     '0 0 2000 320',
     '<use href="#sV" fill="var(--gg)"/><use href="#sV" fill="url(#gC)"/><use href="#sV" fill="url(#gD)"/>' +
-      path('gg-shade', ggShade) + path('c-cliff', ggCliff) +
-      path('gg-terr', ggTerr.d) + path('c-fall', fall) + path('spray', spray),
+      `<path fill="url(#gS)" d="${ggShade}"/>` + path('c-cliff', ggCliff) + path('gg-shade', ggRiser.replace(/ -/g, '-')) +
+      path('gg-terr', ggTerr.replace(/ -/g, '-')) + path('c-fall', fall) + path('spray', spray),
   );
   const near =
     svg(
