@@ -38,7 +38,7 @@ export interface XYZ {
   z: number;
 }
 
-/** A polyline along the route: points, length along it, terrain metres and a style (0 walked, 2 jeep). */
+/** A polyline along the route: points, length along it, terrain metres and a style (0 walked, 2 not walked). */
 export interface Strip {
   readonly n: number;
   readonly x: Float32Array;

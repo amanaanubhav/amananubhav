@@ -29,7 +29,7 @@ export interface StoryThemeColors {
   /** Side-trip branches and lake discs; the lighter tone is for lake label text. */
   readonly branch: Hex;
   readonly branchText: Hex;
-  /** The jeep stretch (dotted, not walked). */
+  /** A main stretch not walked (dotted); none at present. */
   readonly jeep: Hex;
   /** Isotherms: +10 °C hairline, 0 °C, -10 °C; the cold wash below 0 °C. */
   readonly isoWarm: Hex;

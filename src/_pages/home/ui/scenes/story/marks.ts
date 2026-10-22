@@ -1,6 +1,6 @@
 /*
  * The story map's curated marks (design §8.1, sign-off defaults of R39): the places he stopped at or
- * walked through, the four lakes, eight peaks, the altitude ticks and the jeep note. Ids are the
+ * walked through, the four lakes, eight peaks and the altitude ticks. Ids are the
  * route dataset's waypoint ids. Altitudes and the temperature model are read from entities/expedition
  * (R44, one source of facts): commonly cited values, approximate (shown with "~"), never a DEM sample.
  * No coordinates and no dates live here.
@@ -135,7 +135,6 @@ export const STORY_MARKS: readonly StoryMarkDef[] = [
   { id: 'tick-4000', name: '4,000 m', kind: 'tick', altM: null, level: 4000 },
   { id: 'tick-freeze', name: '0 °C, modelled', kind: 'tick', altM: null, level: 'freeze' },
   { id: 'tick-5000', name: '5,000 m', kind: 'tick', altM: null, level: 5000 },
-  { id: 'jeep', name: 'by jeep, not walked', kind: 'note', altM: null, seg: 'jeep' },
   { id: 'head', name: '', kind: 'head', altM: null },
 ];
 

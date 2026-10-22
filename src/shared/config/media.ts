@@ -334,7 +334,7 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
   'M-HERO-01': {
     chapter: 'home', kind: 'svg', status: 'generated', ratio: '4:5',
     path: 'src/_pages/home/config/plan-sheet.generated.ts', generator: 'G-01 + scene relief-annapurna',
-    subject: 'The home story map: the Annapurna plan sheet (altitude bands, modelled isotherms, the walked route, the jeep stretch and the four side trips) and the relief scene, built from the heightfield and the reconstructed route.',
+    subject: 'The home story map: the Annapurna plan sheet (altitude bands, modelled isotherms, the walked route and the four side trips) and the relief scene, built from the heightfield and the reconstructed route.',
     short: 'map of the Annapurna Circuit',
     alt: 'Map of the Annapurna Circuit with my 250 km route from Besisahar over Thorong La, 5,416 m, to Muktinath, and the side trips to Blue, Green, Ice and Tilicho Lake.',
     usedIn: ['/#home (story map: arrival poster, tier 0 and reduced-motion static map)'],

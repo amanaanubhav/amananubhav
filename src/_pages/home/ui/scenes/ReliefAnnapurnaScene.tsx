@@ -72,8 +72,8 @@ import {
 /*
  * `relief-annapurna`: the home page's one storytelling map (design pass 3). A full-bleed relief of
  * the Annapurna massif; the page writes `progress = s / S_END` and the scene walks his route on it:
- * the camera flies the storyboard keys, the line draws as traversed (main circuit, the jeep stretch
- * dotted, four side trips out and back), the elevation fill and the modelled temperature layers sit
+ * the camera flies the storyboard keys, the line draws as traversed (main circuit, four side trips
+ * out and back), the elevation fill and the modelled temperature layers sit
  * on the terrain the whole time, and the map recedes softly under every text block the page lists.
  * Three draw calls (terrain, ribbon, markers). Labels are DOM, placed by the page from the frame
  * this scene emits (screen positions, priorities, the head readout).
@@ -191,17 +191,11 @@ function buildStory(hf: LoadedHeightfield, route: RouteData, u: StoryUniforms, t
       } else at(strip, r.l);
       m.sAt = a.s0 + a.len * (r.l / strip.total);
       m.sTrip = a.s0;
-    } else if (def.seg && def.kind !== 'note') {
+    } else if (def.seg) {
       const [l0, l1] = main.segs[def.seg];
       const r = stripNearest(main, ...wp(def.id), l0, l1);
       at(main, r.l);
       m.sAt = sAtMain(model, r.l);
-    } else if (def.kind === 'note') {
-      const [l0, l1] = main.segs.jeep;
-      at(main, (l0 + l1) / 2);
-      const act = acts.find((a) => a.main === 'jeep') ?? acts[0];
-      m.sAt = act.s0;
-      m.s1 = act.s1 + 25;
     } else if (def.kind === 'peak') {
       // Snap to the heightfield's highest sample nearby (the summit, not the waypoint's rounding).
       const [x0, z0] = wp(def.id);

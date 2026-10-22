@@ -553,11 +553,6 @@
   border-top: 1.5px dashed color-mix(in srgb, var(--signal-line) 70%, transparent);
 }
 
-.kJeep {
-  height: 0;
-  border-top: 2px dotted var(--ink-muted);
-}
-
 .kSide {
   height: 3px;
   border-radius: 2px;

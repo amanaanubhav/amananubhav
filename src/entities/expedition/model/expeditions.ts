@@ -5,7 +5,7 @@ import type { Expedition, ExpeditionId, ExpeditionStats, Peak, SideTrip, Tempera
 
 // ------------------------------------------------------------------ Annapurna
 // April–May 2026, 14 days: 12 recorded days plus two rest days at Mungji (Days 6 and 8). The route is rebuilt
-// from his recorded days along mapped trails (no GPX yet, Q-100); Syange to Tal was by road, not walked.
+// from his recorded days along mapped trails (no GPX yet, Q-100); Syange to Tal was walked but not recorded.
 // Altitudes are the site's or commonly cited figures, approximate (~), never raw terrain samples; Mungji has
 // none until Aman confirms one. Positions come from OpenStreetMap place nodes, for drawing only (never printed).
 
@@ -15,7 +15,7 @@ const BHULBHULE: Waypoint = { name: 'Bhulbhule', kind: 'village', stop: 'pass-th
 const NGADI: Waypoint = { name: 'Ngadi', kind: 'camp', stop: 'stay', day: 1, nights: 1, altitudeM: 930, approx: true, lat: 28.3146, lon: 84.4019, source: 'commonly-cited' };
 const BAHUNDANDA: Waypoint = { name: 'Bahundanda', kind: 'village', stop: 'pass-through', day: 2, altitudeM: 1310, approx: true, lat: 28.3431, lon: 84.4063, source: 'commonly-cited' };
 const SYANGE: Waypoint = { name: 'Syange', kind: 'camp', stop: 'stay', day: 2, nights: 1, altitudeM: 1100, approx: true, lat: 28.3873, lon: 84.4021, source: 'commonly-cited' };
-/** Reached by road from Syange (the route's jeep stretch, drawn as not walked). */
+/** Walked from Syange on Day 3 (not recorded; drawn along the valley through Jagat and Chamje). */
 const TAL: Waypoint = { name: 'Tal', kind: 'village', stop: 'pass-through', day: 3, altitudeM: 1700, approx: true, lat: 28.4686, lon: 84.3737, source: 'commonly-cited' };
 const DHARAPANI: Waypoint = { name: 'Dharapani', kind: 'village', stop: 'pass-through', day: 3, altitudeM: 1860, approx: true, lat: 28.519, lon: 84.3584, source: 'commonly-cited' };
 const DANAGYU: Waypoint = { name: 'Danagyu', kind: 'village', stop: 'pass-through', day: 3, altitudeM: 2300, approx: true, lat: 28.5331, lon: 84.325, source: 'commonly-cited' };

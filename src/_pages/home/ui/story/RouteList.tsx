@@ -9,7 +9,6 @@ const ORDER: readonly (string | { readonly text: string })[] = [
   'ngadi-khola',
   'bahundanda',
   'syange',
-  { text: MAP_COPY.byJeep },
   'tal',
   'dharapani',
   'danagyu',

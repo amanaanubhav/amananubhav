@@ -328,7 +328,7 @@ const TREK_ENTRIES: readonly OfflineEntry[] = [
     text: t(
       '>> ANNAPURNA CIRCUIT',
       'Manang and Mustang, Nepal. April–May 2026, solo and self-supported: 14 days, 250 km, an 18 kg pack.',
-      '- Route: Besisahar ~760 m, Ngadi, Syange, by road to Tal, Timang ~2,750 m, Chame ~2,670 m, Dhikur Pokhari ~3,060 m, Pisang, Mungji, Manang ~3,540 m, Khangsar, Shri Kharka ~4,060 m, Yak Kharka, Churi Ledar ~4,200 m, Thorong High Camp ~4,880 m, Thorong La 5,416 m, Muktinath ~3,760 m',
+      '- Route: Besisahar ~760 m, Ngadi, Syange, Tal, Timang ~2,750 m, Chame ~2,670 m, Dhikur Pokhari ~3,060 m, Pisang, Mungji, Manang ~3,540 m, Khangsar, Shri Kharka ~4,060 m, Yak Kharka, Churi Ledar ~4,200 m, Thorong High Camp ~4,880 m, Thorong La 5,416 m, Muktinath ~3,760 m',
       '- Side trips: Blue Lake and Green Lake from Mungji on a rest day, Ice Lake (Kicho Tal) as an acclimatisation climb, then Tilicho Lake at about 4,919 m from Shri Kharka, one of the highest lakes in the world',
       '"I\'m capable of more than I plan for, if I plan well."',
     ),

@@ -89,7 +89,7 @@ const sizes = [];
     labels: overviewLabels(projection, entity),
     scaleBar: { x: 60, y: 1180, lengthPx: r1(10 * projection.pxPerKm), text: '10 km' },
     northArrow: { x: 930, y: 80 },
-    legend: legendCopy(entity),
+    legend: legendCopy(entity, road),
     source: field.meta.source === 'terrain-tiles' ? 'terrain-tiles' : 'procedural',
   };
   const head = [
@@ -113,7 +113,7 @@ const sizes = [];
     '  readonly bands: readonly { readonly m: number; readonly d: string }[];',
     '  /** Modelled isotherms: `c` °C sits at `m` metres (TEMPERATURE_MODEL). 0 °C bold, ±10 °C fine. */',
     '  readonly isotherms: readonly { readonly c: number; readonly m: number; readonly d: string }[];',
-    '  /** The stretch done by road (Syange to Tal): thin, dotted, muted, never styled as walked. */',
+    '  /** Main stretches he did not walk (none at present): thin, dotted, muted, never styled as walked. */',
     '  readonly road: readonly { readonly id: string; readonly d: string; readonly lengthPx: number; readonly text: string }[];',
     '  readonly markers: readonly PlanSheetMarker[];',
     '  readonly labels: readonly SheetLabel[];',
@@ -135,7 +135,7 @@ const sizes = [];
     ' * no minor contours (a calm sheet), isotherms modelled from altitude (entities/expedition TEMPERATURE_MODEL).',
     ' * Projection: bbox west 83.75, south 28.15, east 84.45, north 28.90; equirectangular with cos(28.5°)',
     ' * x-scaling, fitted and centred in a 1000 × 1250 viewBox. Routes: the reconstructed public route file',
-    ' * (public/data/routes/annapurna-route.json), walked main line, the by-road stretch and the four side trips',
+    ' * (public/data/routes/annapurna-route.json), walked main line, any stretch not walked and the four side trips',
     ' * (Blue, Green, Ice, Tilicho) in walking order; markers and labels from entities/expedition.',
     ' * No coordinates, credits, totals or dates are printed by this data.',
     ' */',

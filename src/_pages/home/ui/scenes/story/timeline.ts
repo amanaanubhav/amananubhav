@@ -30,7 +30,7 @@ export interface StoryActDef {
 export const STORY_ACTS: readonly StoryActDef[] = [
   { len: 100, main: 'd1', day: 1, place: 'Besisahar to Ngadi' },
   { len: 85, main: 'd2', day: 2, place: 'Bahundanda, Syange' },
-  { len: 35, main: 'jeep', day: 3, place: 'Syange to Tal, by jeep' },
+  { len: 35, main: 'syange-tal', day: 3, place: 'Syange to Tal' },
   { len: 85, main: 'd3', day: 3, place: 'Dharapani, Timang' },
   { len: 90, main: 'd4', day: 4, place: 'Chame, Dhikur Pokhari' },
   { len: 85, main: 'd5', day: 5, place: 'Pisang, Humde, Mungji' },
@@ -56,11 +56,11 @@ export const STORY_ACTS: readonly StoryActDef[] = [
   { len: 60, hold: true, day: 14, place: '', overview: true, dissolve: true },
 ];
 
-/** Main-line segments in walking order (the jeep stretch and the inferred gaps included). */
+/** Main-line segments in walking order (the unrecorded stretches included). */
 export const STORY_MAIN_SEGMENTS = [
   'd1',
   'd2',
-  'jeep',
+  'syange-tal',
   'd3',
   'd4',
   'd5',

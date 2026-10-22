@@ -3,7 +3,7 @@
 //
 // One sheet, everything on it at once: hypsometric band fills (500 m, the story map's elevation colour),
 // index and minor contours, modelled isotherms (the temperature overlay as lines), the whole walked route from
-// the reconstructed public route file, the by-road stretch, the four side-trip branches in walking order,
+// the reconstructed public route file, any stretch he did not walk, the four side-trip branches in walking order,
 // markers, the overview labels and the legend copy. Nothing here is a credit or a coordinate: no graticule
 // values, no attribution line, no dates (month and year only).
 import { readFileSync } from 'node:fs';
@@ -119,7 +119,8 @@ const node = (projection, wp) => {
 };
 
 /**
- * The route layers: `main` (every walked main segment, in walking order), `road` (the stretch he did not walk),
+ * The route layers: `main` (every walked main segment, in walking order), `road` (main stretches marked
+ * `walked: false` in the route file; none at present),
  * and one `side-trip` route per branch (Blue, Green, Ice, Tilicho), each from its branch point.
  */
 export function routeLayers(projection, route, entity, tolerance) {
@@ -140,7 +141,7 @@ export function routeLayers(projection, route, entity, tolerance) {
   ];
   return {
     routes,
-    road: road.map(({ d, length }) => ({ id: 'by-road', d, lengthPx: Math.round(length), text: 'by jeep, not walked' })),
+    road: road.map(({ d, length }) => ({ id: 'by-road', d, lengthPx: Math.round(length), text: 'not walked' })),
   };
 }
 
@@ -208,8 +209,8 @@ export function overviewLabels(projection, entity) {
   ].map(({ name: _name, ...l }) => l);
 }
 
-/** Legend copy for the static map (no credits, no totals; honesty notes stay). */
-export function legendCopy(entity) {
+/** Legend copy for the static map (no credits, no totals; honesty notes stay). `road`: the not-walked layer. */
+export function legendCopy(entity, road = []) {
   const { getExpedition, TEMPERATURE_MODEL: t } = entity;
   const exp = getExpedition('annapurna');
   const sign = (c) => (c > 0 ? `+${c}` : c < 0 ? `−${-c}` : '0');
@@ -223,7 +224,7 @@ export function legendCopy(entity) {
     temperatureNote: `Lines: temperature on an ${t.season} day, modelled from altitude, not measured.`,
     keys: [
       { id: 'walked', text: 'Walked' },
-      { id: 'road', text: 'By jeep, not walked' },
+      ...(road.length ? [{ id: 'road', text: 'Not walked' }] : []),
       { id: 'side-trip', text: 'Side trip' },
       { id: 'stay', text: 'Overnight stop' },
       { id: 'lake', text: 'Lake (Blue and Green: approximate)' },

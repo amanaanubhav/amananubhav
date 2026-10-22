@@ -181,7 +181,6 @@ export const MAP_COPY = {
   routeListLabel: 'The route, in walking order',
   sideTrip: 'side trip',
   approxPosition: 'approximate position',
-  byJeep: 'Syange to Tal by jeep, not walked',
   /** The sheet's title and description when it is the static map (tier 0) or the arrival poster. */
   sheetTitle: 'Annapurna Circuit, the whole route',
   sheetDesc:
@@ -227,7 +226,6 @@ export const LEGEND_COPY = {
   keys: [
     { id: 'walked', style: 'kRoute', text: 'Walked' },
     { id: 'ahead', style: 'kGhost', text: 'To walk' },
-    { id: 'jeep', style: 'kJeep', text: 'By jeep' },
     { id: 'side', style: 'kSide', text: 'Side trip' },
     { id: 'lake', style: 'kLake', text: 'Lake' },
     { id: 'peak', style: 'kPeak', text: 'Peak' },
