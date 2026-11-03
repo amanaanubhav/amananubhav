@@ -13,8 +13,15 @@ import { OpenTerminalButton, SecureContactButton } from './HomeActions';
 
 /**
  * `#next`, the next base camp (§G.1, [S-EPILOGUE]): home's one full remote ask, on plain ground. It
- * carries no map: the story map has dissolved into the ground before it arrives (one map per page).
+ * carries no map: the story map has dissolved into the ground before it arrives (one map per page; the dissolve
+ * ends as its top reaches the viewport bottom, Meander's END).
  * After the trip (`status === 'done'`) the headline turns into "Last seen" and the journal entry links in.
+ *
+ * Spacing (SYS-4, M-05): the dissolve is the seam above it, so it opens with one block space; it is the last section
+ * before the footer, so it has no bottom padding (the footer's seam is the only one).
+ *
+ * Ink: the log and the trail lift muted ink to ink, and both paragraphs are ink (running text never takes the muted
+ * role).
  *
  * Grid (≥ 1024 px; content col n is grid track n + 1): log cols 1-2, copy cols 3-8, then the actions and
  * the overlap band across cols 3-10, so the rail never covers the band's rows. The h2 keeps the default
@@ -32,7 +39,7 @@ export function NextSection() {
     <section
       id="next"
       aria-labelledby="next-title"
-      className="journal-grid relative z-[1] pb-[calc(8rem+72px)] pt-32 lg:pb-48 lg:pt-48"
+      className="journal-grid relative z-[1] pb-0 pt-block"
     >
       <div className="col-[content-start/content-end] lg:col-[4/span_6] lg:row-start-1">
         <ChapterHeader as="h2" id="next-title">
@@ -40,7 +47,7 @@ export function NextSection() {
         </ChapterHeader>
       </div>
 
-      <div className="col-[content-start/content-end] mt-4 lg:col-[2/span_2] lg:row-[1/span_2] lg:mt-0 lg:self-start lg:pt-2">
+      <div className="col-[content-start/content-end] mt-4 lg:col-[2/span_2] lg:row-[1/span_2] lg:mt-0 lg:self-start lg:pt-2 [&_.text-ink-muted]:text-ink">
         <Log
           label="Field log: next"
           items={[
@@ -50,12 +57,12 @@ export function NextSection() {
             { key: 'then', value: NEXT_COPY.then, mono: false },
           ]}
         />
-        <Trail items={NEXT_TRAIL} label="Trail: next" className="mt-6" />
+        <Trail items={NEXT_TRAIL} label="Trail: next" summitTone="bronze" className="mt-6" />
       </div>
 
       <div className="col-[content-start/content-end] mt-6 lg:col-[4/span_6] lg:row-start-2 lg:mt-8">
         <p className="text-body m-0 max-w-[60ch] text-ink [text-wrap:pretty]">{NEXT_COPY.body}</p>
-        <p className="text-body m-0 mt-4 max-w-[60ch] text-ink-muted [text-wrap:pretty]">{NEXT_COPY.remote}</p>
+        <p className="text-body m-0 mt-4 max-w-[60ch] text-ink [text-wrap:pretty]">{NEXT_COPY.remote}</p>
       </div>
 
       {/* One row (§G.1): under the copy, cols 3-10, so the three actions never wrap from 1024 px. */}

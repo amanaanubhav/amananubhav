@@ -19,7 +19,8 @@ import type { StoryUniforms } from './story-uniforms';
  * isotherms / frost / cold wash, contours, hillshade, aerial fog, the feathered sheet rim and the
  * recede, all in one pass, no textures), the route ribbon (main line + four side trips in one
  * mesh, revealed by `uDrawMain` / `uDrawTrip`), and the instanced markers (villages, pass, lakes,
- * peaks, ticks and the head). Colours are uniforms fed from STORY_PALETTE / THEME_PALETTE.
+ * peaks, ticks and the head). Colours are uniforms fed from STORY_PALETTE (= the generated STORY_THEME)
+ * and THEME_PALETTE: no colour is written here.
  */
 
 /*
@@ -436,7 +437,7 @@ uniform vec3 uPaper;
 uniform vec3 uInk;
 uniform vec3 uSignal;
 uniform vec3 uHeadC;
-uniform vec3 uBranch;
+uniform vec3 uLake;
 uniform float uTime;
 uniform float uPulse;
 uniform float uFade;
@@ -473,7 +474,8 @@ void main() {
     c = mix(mix(uPaper, uSignal, disc(r, 0.82) - disc(r, 0.64)), uSignal, disc(r, 0.36));
     a = disc(r, 0.96);
   } else if (vKind < 3.5) {
-    c = mix(uPaper, uBranch, disc(r, 0.7));
+    // A lake: a water disc in a ground rim (the palette's lake colour, never the side-trip violet).
+    c = mix(uPaper, uLake, disc(r, 0.7));
     a = disc(r, 0.95);
   } else if (vKind < 4.5) {
     float d = sdTri(vUv - vec2(0.0, -0.1), 0.6);

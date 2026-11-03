@@ -92,7 +92,7 @@ export function RouteEntry({ id, extras, slot }: RouteEntryProps) {
         <div data-recede="" className="mt-6 lg:col-[3/span_3] lg:row-start-2 lg:mt-8">
           <p className="text-body m-0 max-w-[42ch] text-ink [text-wrap:pretty]">{point.description}</p>
           {trail && trail.length > 0 ? (
-            <Trail items={trail} label={`Trail: ${point.title}`} className="mt-6 max-w-[42ch]" />
+            <Trail items={trail} label={`Trail: ${point.title}`} summitTone="bronze" className="mt-6 max-w-[42ch]" />
           ) : null}
           {extras ? <div className="mt-8 flex flex-col items-start gap-6">{extras}</div> : null}
         </div>

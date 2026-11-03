@@ -11,7 +11,6 @@ import { preloadStage, useStageScene } from '@/shared/ui/stage';
 import { useStoryDriver } from '../../lib/story-driver';
 import { getPhase, getServerPhase, subscribePhase } from '../../lib/story-scroll';
 import { STORY_DATA_PREFETCH } from '../scenes/story/frame';
-import { STORY_HUE_VARS } from './palette-vars';
 import styles from './story.module.css';
 import { StoryLabels } from './StoryLabels';
 
@@ -138,7 +137,6 @@ export function StoryStage({ poster }: StoryStageProps) {
       data-stage-prefetch={DATA_LIST}
       data-gone={staged && phase.gone ? '' : undefined}
       className={`stage-slot ${styles.stage}`}
-      style={STORY_HUE_VARS}
     >
       {hydrated && !isStatic ? null : (
         <div className={styles.poster} data-stage-poster="">

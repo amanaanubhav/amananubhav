@@ -96,7 +96,7 @@ export function ReadJournalEntryButton({ variant = 'text', label, story, classNa
 export function HeroStatusChip({ href, label }: { href: string; label: string }) {
   const hold = useStageHold();
   return (
-    <StatusChip tone="success" href={href} prefetch={hold ? false : undefined}>
+    <StatusChip tone="live" href={href} prefetch={hold ? false : undefined}>
       {label}
     </StatusChip>
   );

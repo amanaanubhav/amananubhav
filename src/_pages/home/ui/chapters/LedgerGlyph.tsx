@@ -38,7 +38,7 @@ export function LedgerGlyph({ className }: { className?: string }) {
                 height={SIZE}
                 rx={2}
                 strokeWidth={1.25}
-                className="fill-surface stroke-current"
+                className="fill-accent-2-soft stroke-accent-2"
                 vectorEffect="non-scaling-stroke"
               />
               <text
@@ -58,10 +58,10 @@ export function LedgerGlyph({ className }: { className?: string }) {
                     d={`M${x - GAP} ${PAD + SIZE / 2}H${x - 6}`}
                     fill="none"
                     strokeWidth={1.25}
-                    className="stroke-line-strong"
+                    className="stroke-accent-2"
                     vectorEffect="non-scaling-stroke"
                   />
-                  <path d={`M${x - 7} ${PAD + SIZE / 2 - 4}L${x} ${PAD + SIZE / 2}L${x - 7} ${PAD + SIZE / 2 + 4}Z`} className="fill-line-strong" />
+                  <path d={`M${x - 7} ${PAD + SIZE / 2 - 4}L${x} ${PAD + SIZE / 2}L${x - 7} ${PAD + SIZE / 2 + 4}Z`} className="fill-accent-2" />
                 </g>
               ) : null}
             </g>

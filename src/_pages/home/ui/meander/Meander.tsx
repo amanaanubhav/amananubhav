@@ -45,11 +45,18 @@ const CAPTION_SLOTS = { day6: SLOTS.day6, day7: SLOTS.day7, days910: SLOTS.days9
  * text box the map recedes softly, and it comes back once the text has passed. The section takes focus
  * (tabindex -1, set by the hero's "Read my story") so the next Tab starts in the route.
  *
- * `data-story-end` (after entry 6) is where the dissolve ends: #next starts on plain ground.
+ * The grid opts out of the rail reserve (`data-rail-overlay`): its right side is map space by design and no
+ * story text reaches past content col 6. `data-story-end` (after entry 6) is where the dissolve ends: #next
+ * starts on plain ground.
  */
 export function Meander() {
   return (
-    <section id="meander" aria-label="The route" className="journal-grid relative z-[1] focus:outline-none">
+    <section
+      id="meander"
+      aria-label="The route"
+      data-rail-overlay=""
+      className="journal-grid relative z-[1] focus:outline-none"
+    >
       <ol className="col-[content-start/content-end] m-0 list-none p-0 lg:col-[2/span_5]">
         <OriginEntry slot={SLOTS.origin} />
         <WorkEntry slot={SLOTS.work} />

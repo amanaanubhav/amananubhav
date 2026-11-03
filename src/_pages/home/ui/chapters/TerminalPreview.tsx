@@ -7,19 +7,19 @@ import { TERMINAL_PREVIEW } from '../../config/copy';
 export function TerminalPreview({ className }: { className?: string }) {
   return (
     <figure className={className} aria-label="Terminal preview">
-      <div className="overflow-hidden rounded-panel border border-line bg-surface/70 backdrop-blur-md">
-        <div className="border-b border-line px-4 py-2">
+      <div className="panel-steel overflow-hidden rounded-panel border border-line bg-surface/heavy backdrop-blur-md">
+        <div className="border-b border-line px-4 py-2 [border-image:linear-gradient(90deg,var(--gradient-alpenglow))_1] contrast-more:[border-image:none]">
           <span className="font-data text-caption text-ink-muted">{TERMINAL_PREVIEW.title}</span>
         </div>
         <div className="space-y-1 px-4 py-3 font-data text-caption text-ink">
           <p className="m-0">
-            <span aria-hidden="true" className="mr-2 text-signal">
+            <span aria-hidden="true" className="mr-2 text-action">
               &gt;
             </span>
             <span className="sr-only">You type: </span>
             {TERMINAL_PREVIEW.prompt}
           </p>
-          <p className="m-0 text-ink-muted [text-wrap:pretty]">
+          <p className="m-0 text-ink [text-wrap:pretty]">
             <span className="sr-only">It answers: </span>
             {TERMINAL_PREVIEW.reply}
           </p>

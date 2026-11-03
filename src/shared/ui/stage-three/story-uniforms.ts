@@ -21,10 +21,21 @@ const color = (hex: string) => {
   return c;
 };
 
-type ColorKey = 'head' | 'branch' | 'jeep' | 'isoWarm' | 'isoZero' | 'isoCold' | 'coldTint' | 'fog' | 'fogCold';
+type ColorKey =
+  | 'head'
+  | 'branch'
+  | 'lake'
+  | 'jeep'
+  | 'isoWarm'
+  | 'isoZero'
+  | 'isoCold'
+  | 'coldTint'
+  | 'fog'
+  | 'fogCold';
 const COLOR_KEYS: readonly ColorKey[] = [
   'head',
   'branch',
+  'lake',
   'jeep',
   'isoWarm',
   'isoZero',
@@ -54,7 +65,10 @@ export function createStoryUniforms() {
   return {
     ...stageUniforms,
     uHeadC: c('head'),
+    /** Side trips only (`map-branch`). */
     uBranch: c('branch'),
+    /** Lake discs (`map-lake`). */
+    uLake: c('lake'),
     uJeep: c('jeep'),
     uIsoWarm: c('isoWarm'),
     uIsoZero: c('isoZero'),
@@ -149,11 +163,12 @@ export type StoryUniforms = ReturnType<typeof createStoryUniforms>;
 
 /**
  * Blends the story colours between Night and Day by `day` (the tweened `uDay`), and the fog toward
- * its cold tone by `cold` (0..1, with the head's altitude). Cheap: about 25 colour lerps.
+ * its cold tone by `cold` (0..1, with the head's altitude). Cheap: about 26 colour lerps.
  */
 export function applyStoryTheme(u: StoryUniforms, day: number, cold: number): void {
   u.uHeadC.value.lerpColors(NIGHT.named.head, DAY.named.head, day);
   u.uBranch.value.lerpColors(NIGHT.named.branch, DAY.named.branch, day);
+  u.uLake.value.lerpColors(NIGHT.named.lake, DAY.named.lake, day);
   u.uJeep.value.lerpColors(NIGHT.named.jeep, DAY.named.jeep, day);
   u.uIsoWarm.value.lerpColors(NIGHT.named.isoWarm, DAY.named.isoWarm, day);
   u.uIsoZero.value.lerpColors(NIGHT.named.isoZero, DAY.named.isoZero, day);

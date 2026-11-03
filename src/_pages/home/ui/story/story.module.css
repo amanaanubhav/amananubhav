@@ -1,7 +1,7 @@
 /*
  * The home story map: the fixed full-bleed stage (the 3D canvas or the static sheet, one map), its DOM
- * labels and the legend chrome (design §3, §8, §12, §13). Colours are theme tokens; the few map-only hues (the 0 °C
- * teal, the lightened lake ink) are local custom properties per theme.
+ * labels and the legend chrome (design §3, §8, §12, §13). Colours are theme tokens; the map-only hues (the 0 °C
+ * teal, the lake label ink, the line key) are the palette's `--map-*` family, which follows the theme by itself.
  */
 
 .stage {
@@ -11,28 +11,6 @@
   pointer-events: none;
   overflow: hidden;
   contain: strict;
-}
-
-/*
- * Map-only hues (the 0 °C teal, the fine -10 °C line, the +10 °C hairline, the lake label ink) come from
- * STORY_PALETTE as inline custom properties (--story-*-night / --story-*-day) on the stage and the legend.
- */
-.stage,
-.legend {
-  --story-cold: var(--story-cold-night);
-  --story-cold-fine: var(--story-cold-fine-night);
-  --story-warm-line: var(--story-warm-night);
-  --story-lake-ink: var(--story-lake-night);
-  --story-halo: rgb(var(--c-ground) / 0.9);
-}
-
-:global(html[data-theme='day']) .stage,
-:global(html[data-theme='day']) .legend {
-  --story-cold: var(--story-cold-day);
-  --story-cold-fine: var(--story-cold-fine-day);
-  --story-warm-line: var(--story-warm-day);
-  --story-lake-ink: var(--story-lake-day);
-  --story-halo: rgb(var(--c-ground) / 0.92);
 }
 
 /* The map has melted into the ground: hidden, so the renderer idles (the slot is no longer intersecting). */
@@ -87,6 +65,7 @@
   aspect-ratio: 4 / 5;
   left: calc(63.5vw - 36svh);
   /* R29: the relief feathers into the ground on every side (no sheet edge), clear of the route's ends. */
+  /* palette-allow: mask luminance only, never painted */
   mask-image:
     linear-gradient(to right, transparent, #000 9%, #000 91%, transparent),
     linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
@@ -133,8 +112,8 @@
   pointer-events: none;
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--ground) 84%, transparent) 0,
-    color-mix(in srgb, var(--ground) 84%, transparent) min(46vw, 640px),
+    rgb(var(--c-ground) / var(--alpha-glass)) 0,
+    rgb(var(--c-ground) / var(--alpha-glass)) min(46vw, 640px),
     transparent min(60vw, 840px)
   );
 }
@@ -143,7 +122,7 @@
   .stage[data-static]::after,
   :global(html:not([data-motion='on'])) .stage::after,
   :global(html:not([data-lite='0'])) .stage::after {
-    background: color-mix(in srgb, var(--ground) 80%, transparent);
+    background: rgb(var(--c-ground) / var(--alpha-scrim));
   }
 }
 
@@ -165,6 +144,7 @@
     visibility 0s linear 240ms;
 }
 
+/* Fine type straight on the map: no halo, stroke or glow behind the glyphs (R12 bans zero-offset glows). */
 .lbl {
   position: absolute;
   left: 0;
@@ -177,10 +157,6 @@
   color: var(--ink);
   opacity: 0;
   transition: opacity 240ms ease-out;
-  text-shadow:
-    0 0 2px var(--story-halo),
-    0 0 5px var(--story-halo),
-    0 0 9px var(--story-halo);
   will-change: transform, opacity;
 }
 
@@ -214,7 +190,7 @@
   font:
     400 11px/1 var(--font-data),
     monospace;
-  color: var(--story-cold);
+  color: var(--map-iso-zero);
   font-variant-numeric: tabular-nums;
 }
 
@@ -252,7 +228,7 @@
   font:
     italic 450 13.5px/1 var(--font-text),
     serif;
-  color: var(--story-lake-ink);
+  color: var(--map-lake-text);
 }
 
 .lbl[data-role='peak'] {
@@ -281,7 +257,7 @@
 }
 
 .lbl[data-role='tick'][data-freeze] .n {
-  color: var(--story-cold);
+  color: var(--map-iso-zero);
 }
 
 .lbl[data-role='note'] .n {
@@ -299,7 +275,7 @@
   font:
     500 12px/1 var(--font-data),
     monospace;
-  color: var(--signal);
+  color: var(--map-head);
   font-variant-numeric: tabular-nums;
 }
 
@@ -308,7 +284,7 @@
 }
 
 .lbl[data-here] .n {
-  color: var(--signal);
+  color: var(--map-head);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -326,11 +302,7 @@
   bottom: var(--chat-stack); /* 12 px above the chat bead (chat design §3) */
   width: 262px;
   padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--ground) 74%, transparent);
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
-  backdrop-filter: blur(12px) saturate(1.1);
+  border-radius: 14px; /* the material (fill, rim, blur) is the shared `.glass-chrome glass-legend` on the aside */
   font:
     400 11px/1.3 var(--font-display),
     sans-serif;
@@ -349,6 +321,13 @@
   }
 }
 
+/* Below 1024 px the legend lives in the dock bar instead (C-01): the Key control and its sheet, StoryLegend. */
+@media (max-width: 1023.98px) {
+  .legend {
+    display: none;
+  }
+}
+
 .legend[data-hidden] {
   opacity: 0;
   pointer-events: none;
@@ -356,12 +335,6 @@
   transition:
     opacity 300ms ease-out,
     visibility 0s 300ms;
-}
-
-@media (forced-colors: active) {
-  .legend {
-    background: Canvas;
-  }
 }
 
 .where {
@@ -375,7 +348,7 @@
   font:
     500 11px/1 var(--font-data),
     monospace;
-  color: var(--signal);
+  color: var(--ink);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -397,7 +370,7 @@
 .switch {
   display: inline-flex;
   padding: 2px;
-  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border: 1px solid rgb(var(--c-ink) / var(--alpha-spec));
   border-radius: 999px;
 }
 
@@ -415,8 +388,15 @@
 }
 
 .switch button[aria-pressed='true'] {
-  background: var(--ink);
+  background: var(--ink-muted);
   color: var(--ground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .switch button:not([aria-pressed='true']):hover {
+    background: var(--hover-wash);
+    color: var(--ink);
+  }
 }
 
 .more {
@@ -429,20 +409,26 @@
     sans-serif;
   color: var(--ink-muted);
   text-decoration: underline;
+  text-decoration-color: var(--link-muted-underline);
   text-underline-offset: 3px;
   cursor: pointer;
 }
 
+.more:hover,
+.more:focus-visible,
+.more[aria-expanded='true'] {
+  color: var(--ink);
+  /* the story's own legend control keeps its signal underline: Update 1.1 R0 moved --link-underline to the action
+     tier site-wide, and the home story is off limits (APPLICATION-V2 R0, "Untouched") */
+  text-decoration-color: var(--signal);
+}
+
+/* The ramp itself is set inline (StoryLegend) from the palette's `--map-hypso-*` / `--map-temp-*` stops. */
 .bar {
   height: 8px;
   border-radius: 2px;
-  background: var(--ramp-night);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
+  box-shadow: inset 0 0 0 1px rgb(var(--c-ink) / var(--alpha-rim));
   transition: background 120ms linear;
-}
-
-:global(html[data-theme='day']) .bar {
-  background: var(--ramp-day);
 }
 
 .ticks {
@@ -492,21 +478,21 @@
 .line {
   width: 16px;
   height: 0;
-  border-top: 2px solid var(--story-cold);
+  border-top: 2px solid var(--map-iso-zero);
 }
 
 .lineWarm {
-  border-top: 1px solid var(--story-warm-line);
+  border-top: 1px solid var(--map-iso-warm);
 }
 
 .lineCold {
-  border-top: 1px solid var(--story-cold-fine);
+  border-top: 1px solid var(--map-iso-cold);
 }
 
 .frost {
   width: 14px;
   height: 10px;
-  background: radial-gradient(circle, var(--story-cold) 0 1px, transparent 1.4px) 0 0 / 4px 4px;
+  background: radial-gradient(circle, var(--map-iso-zero) 0 1px, transparent 1.4px) 0 0 / 4px 4px;
 }
 
 .note {
@@ -517,13 +503,20 @@
   color: var(--ink-muted);
 }
 
+/* Day: the 10.5 px iso captions and the note rendered 3.8-3.96:1 on the light glass (anti-aliasing thins the muted
+   ink at this size), so they take full ink there. Night measures clean and keeps the muted role. */
+:global(html[data-theme='day']) .iso,
+:global(html[data-theme='day']) .note {
+  color: var(--ink);
+}
+
 .keys {
   display: grid;
   grid-template-columns: repeat(3, auto);
   gap: 6px 10px;
   margin: 9px 0 0;
   padding: 9px 0 0;
-  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-top: 1px solid rgb(var(--c-ink) / var(--alpha-rim));
   list-style: none;
   color: var(--ink-muted);
 }
@@ -545,25 +538,25 @@
 .kRoute {
   height: 4px;
   border-radius: 2px;
-  background: var(--signal-line);
+  background: var(--map-route);
 }
 
 .kGhost {
   height: 0;
-  border-top: 1.5px dashed color-mix(in srgb, var(--signal-line) 70%, transparent);
+  border-top: 1.5px dashed rgb(var(--c-map-route) / var(--alpha-heavy));
 }
 
 .kSide {
   height: 3px;
   border-radius: 2px;
-  background: var(--water);
+  background: var(--map-branch);
 }
 
 .kLake {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--water);
+  background: var(--map-lake);
   box-shadow: 0 0 0 1.5px var(--ground);
 }
 
@@ -583,32 +576,119 @@
   color: var(--ink-muted);
 }
 
-/* Phones: a bottom bar above the section chip and the chat launcher. */
-@media (max-width: 760px) {
-  .legend {
-    left: 12px;
-    right: 12px;
-    bottom: var(--chat-stack);
-    width: auto;
-    padding: 8px 12px 7px;
-    /* Near-opaque on phones: text scrolling under the bar must never show through it (a text-clip zone). */
-    background: color-mix(in srgb, var(--ground) 94%, transparent);
-  }
-  /* Focus scrolls clear of the bar as well as of the chat bead under it (WCAG 2.4.11). */
-  :global(html):has(.legend) {
-    scroll-padding-bottom: calc(var(--chat-stack) + 96px);
-  }
+/* ---------------------------------------------------------------- the legend in the dock (< 1024 px, C-01) */
 
-  .where,
-  .row {
-    margin-bottom: 6px;
-  }
+/* The Key control's swatch: the active fill's ramp, the legend in miniature. A graphic, never text. */
+.keySwatch {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(var(--c-ink) / var(--alpha-rim));
+}
 
-  .legend:not([data-open]) .iso,
-  .legend:not([data-open]) .ticks,
-  .legend:not([data-open]) .note {
-    display: none;
+/*
+ * The Key sheet's body (the glass is the sheet's own `.glass-chrome glass-sheet`). It reuses the legend's parts and
+ * keeps the dock's own type: ink at 11 px and up, the day led by the route's tick.
+ */
+.sheetBody {
+  padding: 10px 12px 12px;
+  font:
+    400 12px/1.4 var(--font-display),
+    sans-serif;
+  color: var(--ink);
+}
+
+.sheetBody .where {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.sheetBody .day {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+}
+
+.sheetBody .day::before {
+  content: '';
+  flex: none;
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--map-route);
+}
+
+.sheetBody .place {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.sheetBody .row {
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* The Key sheet is a touch surface: each layer button is a full 44 px target. */
+.sheetBody .switch button {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 12px;
+  transition:
+    background-color var(--dur-hover) var(--ease-settle),
+    color var(--dur-hover) var(--ease-settle);
+}
+
+.sheetBody .switch button:not([aria-pressed='true']) {
+  color: var(--ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sheetBody .switch button:not([aria-pressed='true']):hover {
+    background: var(--hover-wash);
   }
+}
+
+.sheetBody .ticks {
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.sheetBody .iso {
+  gap: 4px 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.sheetBody .note {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.sheetBody .keys {
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, auto));
+  justify-content: start;
+  gap: 7px 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  color: var(--ink);
+}
+
+.sheetBody .kPeak {
+  border-bottom-color: var(--ink);
+}
+
+.sheetBody .honesty {
+  margin-top: 9px;
+  font-size: 11px;
+  color: var(--ink);
+  text-wrap: pretty;
 }
 
 /* ---------------------------------------------------------------- the story flow (text in normal flow) */
@@ -654,5 +734,5 @@
   width: 14px;
   height: 2px;
   border-radius: 1px;
-  background: var(--signal-line);
+  background: var(--map-route);
 }

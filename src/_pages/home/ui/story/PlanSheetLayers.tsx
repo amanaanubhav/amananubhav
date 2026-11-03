@@ -124,8 +124,9 @@ export function PlanSheetOverlay({ data }: { data: PlanSheetData }): ReactElemen
             />
           );
         }
+        // Lakes take the palette's lake colour (map-lake); the side-trip violet stays on the trips.
         const fill: CSSProperties =
-          m.kind === 'lake' ? both(N.branch, D.branch) : m.kind === 'pass-through' ? ground : both(N.route, D.route);
+          m.kind === 'lake' ? both(N.lake, D.lake) : m.kind === 'pass-through' ? ground : both(N.route, D.route);
         return (
           <circle
             key={m.name}
