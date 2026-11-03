@@ -1,0 +1,259 @@
+/*
+ * Survey Ridge name (HERO-FOOTER-SPEC §2): solid ink letters behind a ground-colour moat, the brushed-steel ridge
+ * (the mark's sheen) under the last line, the trekker on its summit. Every length is in em of the visual name, so
+ * one font-size sets the whole frame. Role tokens only.
+ *
+ * The frame, from Archivo's metrics (ascent 0.876 em, descent 0.211 em): a line box of height lh puts its baseline
+ * lh / 2 + 0.3325 em below its top, so the last baseline sits --rn-base above the name's bottom edge. The ridge box
+ * (0.6 em) starts on that baseline; the summit is 0.26 em under it, where the trekker (0.2 em) stands, clear of the
+ * letters. No clipping box holds a letter: the only clip is the ring layer, which holds none.
+ */
+
+.root {
+  margin: 0;
+}
+
+/* Leading 1.02, the display floor (SYS-1): the ink gap between the two lines is 0.28 em at rest (34 px at 121 px,
+   21 px at 74 px) and stays above 0.16 em at the full lift. */
+.vis {
+  --rn-lh: 1.02;
+  --rn-pb: 0.58em;
+  --rn-base: calc(var(--rn-pb) + (var(--rn-lh) / 2 - 0.3325) * 1em);
+  position: relative;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  /* headroom for the lift (0.12 em, 0.127 em with the spring's overshoot); the band holds the ridge */
+  padding: 0.16em 0 var(--rn-pb);
+  isolation: isolate;
+  font-family: var(--font-display), 'Archivo Fallback', sans-serif;
+  font-weight: 760;
+  font-stretch: 112%;
+  font-variation-settings: 'wdth' 112;
+  font-kerning: normal;
+  letter-spacing: -0.035em;
+  line-height: var(--rn-lh);
+  color: var(--ink);
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+/* ─── Sizes ─────────────────────────────────────────────────────────────────────────────────────── */
+
+/* Hero: 74 px at 390, 88 px from 463 to 1047, then 8.4 vw (121 px at 1440) up to 136 px; it never steps down. */
+.hero .vis {
+  font-size: min(19vw, 5.5rem);
+}
+@media (min-width: 640px) {
+  .hero .vis {
+    font-size: clamp(5.5rem, 8.4vw, 8.5rem);
+  }
+}
+/* Short desktops (1366 x 680): the name gives way to the height so the column stays one screen. */
+@media (min-width: 1024px) and (max-height: 760px) {
+  .hero .vis {
+    font-size: clamp(5.5rem, min(8.4vw, 14svh), 8.5rem);
+  }
+}
+
+/* Footer sheet: from 640 px one line fitted to the band (the root is the container; --rn-name-em is the line's
+   width in em, 7.91 measured in Chromium at 1440 plus a hair, so 100cqi / it is the size that fills the band: 165 px
+   in a 1310 px band). Two lines on phones. */
+.sheet {
+  --rn-name-em: 7.95;
+  container-type: inline-size;
+}
+.sheet .vis {
+  --rn-pb: 0.46em;
+  font-size: min(19vw, 5.5rem);
+}
+@media (min-width: 640px) {
+  .sheet .vis {
+    width: 100%;
+    font-size: calc(100cqi / var(--rn-name-em));
+  }
+}
+
+/* ─── Words and letters ─────────────────────────────────────────────────────────────────────────── */
+
+.word {
+  display: block;
+}
+.space {
+  display: none;
+}
+.line .word,
+.line .space {
+  display: inline;
+}
+@media (min-width: 640px) {
+  .auto .word,
+  .auto .space {
+    display: inline;
+  }
+}
+
+/* The moat (a ground-colour stroke painted under the fill): contours, rings and the 3D map never touch a glyph. */
+.letter {
+  position: relative;
+  z-index: 1;
+  -webkit-text-stroke: 0.045em var(--ground);
+  paint-order: stroke fill;
+  transition: color var(--dur-hover) ease;
+}
+/* Summit letters take the action tier (PALETTE-SPEC §11): a solid colour, 54 px and up (aquamarine, >= 7:1 in
+   Night and Day). */
+.letter[data-lit] {
+  color: var(--action);
+}
+/* The engine moves letters as cells; it gives each its kerned advance back as a margin. */
+.vis[data-engine] .letter {
+  display: inline-block;
+}
+/* Without the engine (reduced motion, or before it loads): hover and tap warm the letter under the pointer. */
+.vis:not([data-engine]) .letter:hover {
+  color: var(--action);
+}
+
+/* ─── Contour rings (added by the engine) ───────────────────────────────────────────────────────── */
+
+.rings {
+  position: absolute;
+  inset: -0.1em -0.3em 0.1em;
+  z-index: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+/* Phones: the inline outset never reaches past the 16 px gutter (0.3em is 22 px at the 74 px hero name). */
+@media (max-width: 639.98px) {
+  .rings {
+    inset-inline: max(-0.3em, -1rem);
+  }
+}
+.rings > svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2.8em;
+  height: 2.8em;
+  margin: -1.4em 0 0 -1.4em;
+  overflow: visible;
+  opacity: 0;
+}
+.rings path {
+  fill: none;
+  stroke: var(--ink-contour);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.rings path:last-child {
+  stroke-width: 1.6;
+}
+
+/* ─── The ridge: brushed steel (sheen-mark), silver at the summit; the bronze cue under the trekker ───── */
+
+.ridge {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--rn-base) - 0.6em);
+  z-index: 0;
+  width: 100%;
+  height: 0.6em;
+  overflow: visible;
+  pointer-events: none;
+}
+.base,
+.cue {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.base {
+  stroke-width: max(1.5px, 0.016em);
+}
+.cue {
+  stroke: var(--bronze);
+  stroke-width: max(2px, 0.022em);
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+.vis[data-summit] .cue {
+  opacity: 1;
+}
+.auto .cueLine {
+  display: none;
+}
+@media (min-width: 640px) {
+  .auto .cueStack {
+    display: none;
+  }
+  .auto .cueLine {
+    display: inline;
+  }
+}
+.steel1 {
+  stop-color: var(--sheen-mark-1);
+}
+.steel2 {
+  stop-color: var(--sheen-mark-2);
+}
+.steel3 {
+  stop-color: var(--sheen-mark-3);
+}
+.steel4 {
+  stop-color: var(--sheen-mark-4);
+}
+
+/* ─── The trekker: unlit (line-strong) until first light, then bronze ─────────────────────────────── */
+
+.trek {
+  position: absolute;
+  left: calc(var(--rn-summit) * 100% - 0.1em * 14 / 23.2);
+  bottom: calc(var(--rn-base) - 0.26em);
+  z-index: 2;
+  width: calc(0.2em * 14 / 23.2);
+  height: 0.2em;
+  overflow: visible;
+  pointer-events: none;
+  fill: var(--line-strong);
+  transition: fill 500ms ease;
+}
+.limbs {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-linecap: round;
+  transition: stroke 500ms ease;
+}
+.vis[data-summit] .trek {
+  fill: var(--bronze);
+}
+.vis[data-summit] .limbs {
+  stroke: var(--bronze);
+}
+
+@media (forced-colors: active) {
+  .letter,
+  .letter[data-lit],
+  .vis:not([data-engine]) .letter:hover {
+    color: CanvasText;
+    -webkit-text-stroke: 0;
+  }
+  .base,
+  .cue {
+    stroke: CanvasText;
+  }
+  .trek,
+  .vis[data-summit] .trek {
+    fill: CanvasText;
+  }
+  .limbs,
+  .vis[data-summit] .limbs {
+    stroke: CanvasText;
+  }
+  .rings {
+    display: none;
+  }
+}

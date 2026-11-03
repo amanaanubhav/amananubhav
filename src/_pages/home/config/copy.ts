@@ -74,23 +74,27 @@ export function getStoryPoint(id: HomeEntryId): StoryPoint {
 
 /* ------------------------------------------------------------------ hero */
 
-/** [S-PROLOGUE]. The kicker becomes the log (§G.1); the key-facts strip is not rendered. */
+/**
+ * [S-PROLOGUE], Survey Ridge (HERO-FOOTER-SPEC §2.1): the h1 is his name; the aphorism is the statement under it.
+ * The kicker becomes the field line; the key-facts strip is not rendered.
+ */
 export const HERO_COPY = {
-  headline: 'Everything I need, I carry.',
-  srPrefix: 'Aman Anubhav: ',
+  name: PROFILE.displayName ?? 'Aman Anubhav',
+  statement: 'Everything I need, I carry.',
   body: 'I build AI agents at Atlys and cross Himalayan passes alone. Both take the same thing: a clear plan, a light pack, and the patience to keep going when the air gets thin.',
   readStory: 'Read my story',
   status: 'Open to remote roles',
   statusHref: '/professional#remote',
 } as const;
 
-/** Hero log rows (the status row is rendered by the hero as a StatusChip). */
-export const HERO_LOG: readonly LogEntry[] = [
-  { key: 'field book of', value: PROFILE.displayName, mono: false },
-  { key: 'role', value: 'AI engineer, Atlys', mono: false },
-  // Q-03 interim: the deck's base city until Aman confirms it.
-  { key: 'base', value: 'Bhubaneswar, India', mono: false },
-];
+/**
+ * The hero's one field line: the role, then the status chip (rendered by the hero). The base city is held back
+ * from the hero until Aman confirms it (Q-03 interim), so it is not rendered.
+ */
+export const HERO_FIELD = {
+  role: { key: 'role', value: 'AI engineer, Atlys' },
+  base: { key: 'base', value: 'Bhubaneswar, India', confirmed: false },
+} as const;
 
 /* ---------------------------------------------------------------- entries */
 
@@ -254,10 +258,10 @@ export const LEDGER_GLYPH = {
 
 /** [S-EPILOGUE] and [S-REMOTE-SHORT]. Q-46 interim place names; no dates before the trip (Q-48). */
 export const NEXT_COPY = {
-  headline: 'Next: Dodital and Darwa Top. Then, ideally, your team.',
+  headline: 'Next: Dodital and Darwa Top. Then, ideally, your team.',
   /** After the trip (§G.1): "Last seen: Darwa Top, [altitude] m." */
   headlineAfter: (place: string, altitude?: string) => `Last seen: ${place}${altitude ? `, ${altitude}` : ''}.`,
-  body: "Next on the map: Dodital and Darwa Top in Uttarkashi. After that, I'd like my next climb to be a remote role on a team that ships AI people actually use. If that sounds like your team, write to me.",
+  body: "Next on the map: Dodital and Darwa Top in Uttarkashi. After that, I'd like my next climb to be a remote role on a team that ships AI people actually use. If that sounds like your team, write to me.",
   remote:
     "I'm looking for a remote AI engineering role: give me a clear problem and a quiet room, and I'll give you focused, well-documented work.",
   then: 'a remote AI engineering role',

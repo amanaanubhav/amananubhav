@@ -35,18 +35,23 @@ export const PAGE_LINKS: readonly PageLink[] = [
 ];
 
 /**
- * Routes that already end on the page's one full ask (§A.4, §H.3). Their last page keeps the full-viewport
- * composition but closes on the sign-off instead of a second ask: no h2, no body, no primary buttons;
- * The Vault stays as a quiet link in the "write" column so the vault is reachable from every footer.
+ * Routes that already end on the page's one full ask (§A.4, §H.3). Their last sheet closes on the sign-off instead
+ * of a second ask: no h2, no body, no primary button; the email, the Vault and Ask Alpenglow stay as quiet text
+ * actions under it, so both are reachable from every footer.
  */
 export const COMPACT_FOOTER_ROUTES: readonly string[] = [ROUTES.home, ROUTES.professional];
 
-/** [S-UI-COPY] footer copy. */
+/** [S-UI-COPY] footer copy (HERO-FOOTER-SPEC §2.5). The email is shown once, with Copy beside it. */
 export const FOOTER_COPY = {
   heading: "Let's build something worth the climb.",
-  bodyLead: "I'm open to remote AI engineering roles and good problems. Email",
-  bodyTail: ", or use the Vault if it's sensitive.",
+  bodyLead: "I'm open to remote AI engineering roles and good problems.",
   signOff: 'Pack light. Ship clean. Keep climbing.',
-  /** The giant decorative stamp across the foot of the page (the previous footer's wordmark, kept). */
-  wordmark: 'ANUBHAV',
+  /** His name across the foot of the sheet (decorative: the © line carries it). */
+  wordmark: 'Aman Anubhav',
+  /** Opens the Alpenglow terminal (`openTerminal()`): the old site's `>_`, back as the terminal entry. */
+  askLabel: 'Ask Alpenglow',
+  vaultLabel: 'Vault',
+  status: 'Open to remote roles',
+  statusHref: `${ROUTES.professional}#remote`,
+  keys: { write: 'write', pages: 'pages', elsewhere: 'elsewhere' },
 } as const;

@@ -1,502 +1,397 @@
 /*
- * The last page (src/widgets/footer). Colours come only from the generated tokens (`--c-*` triplets), so the
- * Night/Day palettes flow in. Every moving part animates transform or opacity, and every one of them is written
- * twice: a calm base (no transform) and an enhancement inside `prefers-reduced-motion: no-preference` and
- * `html:not([data-motion='off'])` (the footer's own switch). Hover enhancements also answer :focus-visible.
+ * The last sheet (src/widgets/footer, HERO-FOOTER-SPEC §2.5 "Survey Ridge"): the band (close, pages, elsewhere),
+ * his name across a contour sheet with the steel ridge as its horizon, then the bar. As tall as its content: no
+ * min-height and no empty bottom band. The seam above it is --space-seam (the page's last section has no bottom
+ * padding), 24 px close it below, and only the bar keeps the chat bead's corner clear. One accent wash
+ * (gradient-close) rises from the foot. Role tokens only. Hover is mirrored on :focus-visible, and nothing travels
+ * under reduced motion (the OS setting or html[data-motion='off'], the bar's own switch).
  */
 
 .root {
-  --wm-pad: clamp(12px, 2.2vw, 40px);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  min-height: 100svh;
-  padding-top: 6rem;
-  /* the mobile section chip and chat launcher sit over the last 80 px; then the home indicator */
-  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
-  overflow: clip;
+  position: relative;
+  z-index: 41;
   isolation: isolate;
-}
-@media (min-width: 1024px) {
-  .root {
-    padding-top: 5rem;
-    /* the last links stay clear of the chat bead in the corner (chat design §3) */
-    padding-bottom: calc(max(1.5rem, var(--chat-clearance)) + env(safe-area-inset-bottom, 0px));
-  }
-}
-
-/* A low dull-red glow rising from the stamp, violet at one shoulder: the previous footer's vignette, warmed. */
-.vignette {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(70% 45% at 50% 100%, rgb(var(--c-signal) / 0.11), transparent 72%),
-    radial-gradient(40% 35% at 88% 92%, rgb(var(--c-water) / 0.09), transparent 70%),
-    linear-gradient(180deg, rgb(var(--c-ground)) 0%, transparent 30%);
-}
-:global(:root[data-theme='day']) .vignette {
-  background:
-    radial-gradient(70% 45% at 50% 100%, rgb(var(--c-signal) / 0.07), transparent 72%),
-    radial-gradient(40% 35% at 88% 92%, rgb(var(--c-water) / 0.06), transparent 70%);
-}
-
-/* ─── Closing line ─────────────────────────────────────────────────────────────────────────────── */
-
-.closing {
-  font-family: var(--font-display), 'Archivo Fallback', sans-serif;
-  font-weight: 750;
-  font-stretch: 108%;
-  font-size: clamp(2.75rem, 1.1rem + 3.7vw, 5.25rem);
-  line-height: 0.96;
-  letter-spacing: -0.035em;
-  color: rgb(var(--c-ink));
-  text-wrap: balance;
-}
-
-/* Each word rides in its own mask; the padding keeps descenders and the comma inside it. */
-.mask {
-  display: inline-block;
   overflow: clip;
-  padding-block-end: 0.1em;
-  margin-block-end: -0.1em;
-  vertical-align: top;
-}
-.mask > .rise {
-  display: inline-block;
-}
-
-/* ─── Reveal on arrival (useFooterReveal sets the attribute only when motion is allowed) ─────────────── */
-
-.root[data-reveal='pending'] .rise {
-  opacity: 0;
-  transform: translate3d(0, 1.5rem, 0);
-}
-.root[data-reveal='pending'] .mask > .rise {
-  opacity: 1;
-  transform: translate3d(0, 108%, 0);
-}
-.root[data-reveal='pending'] .wordBase > .rise {
-  transform: translate3d(0, 35%, 0);
-}
-.root[data-reveal='pending'] .wordWarm {
-  opacity: 0;
-}
-.root[data-reveal='in'] .rise {
-  transition:
-    transform 1000ms var(--ease-settle),
-    opacity 700ms var(--ease-settle);
-  transition-delay: calc(var(--d, 0) * 60ms);
+  padding-top: var(--space-seam);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+  background: var(--ground);
 }
 
-/* ─── Links: drawn underline ─────────────────────────────────────────────────────────────────────── */
-
-.line {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 1.75rem;
-  border-radius: 2px;
-  color: rgb(var(--c-ink));
-  text-decoration: none;
-}
-@media (pointer: coarse) {
-  .line {
-    min-height: 2.75rem;
-  }
-}
-.lineText {
-  position: relative;
-  padding-bottom: 3px;
-}
-.lineText::before,
-.lineText::after {
+/* The close wash: one accent (the route's oxblood at faint) rising from the foot, gone by 70 %. */
+.root::before {
   content: '';
   position: absolute;
-  inset: auto 0 0 0;
+  inset: 0;
+  z-index: -2;
   pointer-events: none;
-}
-.lineText::before {
-  height: 1px;
-  background: rgb(var(--c-line-strong) / 0.8);
-}
-.lineText::after {
-  height: 2px;
-  background: rgb(var(--c-signal));
-  opacity: 0;
-  transition: opacity var(--dur-hover) var(--ease-settle);
-}
-.line:hover .lineText::after,
-.line:focus-visible .lineText::after,
-.line[aria-current='page'] .lineText::after {
-  opacity: 1;
+  background: linear-gradient(0deg, var(--gradient-close));
 }
 
+/* ─── The band: top-aligned columns, so no column sets a row the others leave empty ──────────────── */
+
+.band {
+  row-gap: 1.25rem;
+  align-items: start;
+}
+.close,
+.pages,
+.elsewhere {
+  grid-column: content-start / content-end;
+  min-width: 0;
+}
+@media (min-width: 640px) {
+  .band {
+    row-gap: 2.5rem;
+  }
+  .pages {
+    grid-column: 2 / span 2;
+  }
+  .elsewhere {
+    grid-column: 4 / span 2;
+  }
+}
+@media (min-width: 768px) {
+  .pages {
+    grid-column: 2 / span 4;
+  }
+  .elsewhere {
+    grid-column: 6 / span 4;
+  }
+}
+@media (min-width: 1024px) {
+  .close {
+    grid-column: 2 / span 6;
+    padding-right: 2rem;
+  }
+  .pages {
+    grid-column: 8 / span 3;
+  }
+  .elsewhere {
+    grid-column: 11 / span 3;
+  }
+}
+
+.key {
+  margin: 0 0 6px;
+  font-family: var(--font-text), 'Literata Fallback', serif;
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+/* The sign-off (compact routes) and the one ask (every other route). */
+.sign,
+.h2 {
+  margin: 0;
+  padding-block: 0.04em;
+  font-family: var(--font-display), 'Archivo Fallback', sans-serif;
+  line-height: 1.1;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.sign {
+  max-width: 20ch;
+  font-size: clamp(1.75rem, 1.2rem + 1.4vw, 2.375rem);
+  font-weight: 680;
+  font-stretch: 104%;
+  font-variation-settings: 'wdth' 104;
+  letter-spacing: -0.02em;
+}
+.h2 {
+  max-width: 22ch;
+  font-size: clamp(1.75rem, 1.3rem + 1.9vw, 2.875rem);
+  font-weight: 720;
+  font-stretch: 106%;
+  font-variation-settings: 'wdth' 106;
+  letter-spacing: -0.025em;
+}
+.body {
+  max-width: 40ch;
+  margin: 0.75rem 0 0;
+  font-family: var(--font-text), 'Literata Fallback', serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.write {
+  margin-top: 1.25rem;
+}
+@media (min-width: 640px) {
+  .write {
+    margin-top: 1.75rem;
+  }
+}
+
+/* The email, once, with Copy beside it. */
+.mail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+}
+/* Phones: the row stops short of the chat bead's lane, so Copy wraps under the email instead of under the bead. */
+@media (max-width: 639.98px) {
+  .mail {
+    padding-inline-end: var(--chat-clearance);
+  }
+}
+.mailFull {
+  margin-top: 0.5rem;
+}
+@media (min-width: 640px) {
+  .mailFull {
+    margin-top: 0.875rem;
+  }
+}
 .email {
-  font-family: var(--font-data), 'IBM Plex Mono Fallback', monospace;
-  font-size: clamp(1.0625rem, 0.9rem + 0.5vw, 1.375rem);
-  letter-spacing: -0.01em;
+  display: inline-block;
+  border-radius: 2px;
+  font-family: var(--font-display), 'Archivo Fallback', sans-serif;
+  font-size: clamp(1.125rem, 1rem + 0.4vw, 1.375rem);
+  font-weight: 560;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--link-underline);
+  text-decoration-thickness: var(--link-underline-width);
+  text-underline-offset: 5px;
   overflow-wrap: anywhere;
 }
 
-/* Text buttons in the write column (Copy email, the compact footer's Vault). */
-.textAction {
-  appearance: none;
+/* Text actions (Copy, Vault, Ask Alpenglow) and the list links: ink text on a line-strong underline. */
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 22px;
+  margin-top: 6px;
+}
+.actsWide {
+  gap: 12px 22px;
+  margin-top: 0.5rem;
+}
+@media (min-width: 640px) {
+  .actsWide {
+    margin-top: 0.875rem;
+  }
+}
+.act {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
   margin: 0;
   padding: 0;
   border: 0;
+  border-radius: 2px;
   background: none;
   cursor: pointer;
-  font-family: var(--font-text), 'Literata Fallback', serif;
-  font-size: var(--step-0);
+  font-family: var(--font-ui), 'Manrope Fallback', system-ui, sans-serif;
+  font-size: 1rem;
   font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink);
 }
-.textAction > svg {
-  color: rgb(var(--c-ink-muted));
-}
-
-.page {
-  font-family: var(--font-display), 'Archivo Fallback', sans-serif;
-  font-size: var(--step-1);
-  font-weight: 500;
-  min-height: 2.25rem;
-}
-@media (pointer: coarse) {
-  .page {
-    min-height: 2.75rem;
-  }
-}
-.pageNo {
-  font-family: var(--font-data), 'IBM Plex Mono Fallback', monospace;
-  font-size: 0.75rem;
-  color: rgb(var(--c-ink-muted));
-  transition: color var(--dur-hover) var(--ease-settle);
-}
-.page:hover .pageNo,
-.page:focus-visible .pageNo,
-.page[aria-current='page'] .pageNo {
-  color: rgb(var(--c-signal));
-}
-
-/* ─── Rolling letters (RollText) ──────────────────────────────────────────────────────────────────── */
-
-.roll {
-  display: inline-flex;
-  overflow: clip;
-  line-height: 1.3;
-  vertical-align: bottom;
-}
-.rollChar {
-  position: relative;
-  display: inline-block;
-  white-space: pre;
-}
-.rollChar::after {
-  content: attr(data-char);
-  position: absolute;
-  left: 0;
-  top: 100%;
-  color: rgb(var(--c-signal));
-}
-
-/* ─── Glass tiles for the profiles (the previous round icon buttons, labelled now) ────────────────────── */
-
-.tile {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-height: 3rem;
-  padding: 0 1rem 0 0.9rem;
-  border-radius: 999px;
-  border: 1px solid rgb(var(--c-ink) / 0.13);
-  background-color: rgb(var(--c-surface) / 0.62);
-  box-shadow: inset 0 1px 0 0 rgb(var(--c-ink) / 0.09);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
-  backdrop-filter: blur(16px) saturate(1.5);
-  color: rgb(var(--c-ink));
-  text-decoration: none;
-  font-family: var(--font-display), 'Archivo Fallback', sans-serif;
-  font-size: var(--step-0);
-  font-weight: 500;
-  transition: border-color var(--dur-hover) var(--ease-settle);
-}
-:global(:root[data-theme='day']) .tile {
-  background-color: rgb(var(--c-surface) / 0.8);
-  border-color: rgb(var(--c-ink) / 0.14);
-  box-shadow: inset 0 1px 0 0 rgb(var(--c-surface)), 0 6px 16px -10px rgb(var(--c-ink) / 0.25);
-}
-/* The fill: signal into water. Calm base: it fades in; enhanced: it sweeps across from the left. */
-.tile::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(100deg, rgb(var(--c-signal) / 0.24), rgb(var(--c-water) / 0.2));
-  opacity: 0;
-  transition: opacity var(--dur-ui) var(--ease-settle);
-}
-.tile:hover,
-.tile:focus-visible {
-  border-color: rgb(var(--c-signal) / 0.6);
-}
-.tile:hover::before,
-.tile:focus-visible::before {
-  opacity: 1;
-}
-.tileIcon {
+.act > svg {
   width: 18px;
   height: 18px;
-  flex-shrink: 0;
-  color: rgb(var(--c-ink-muted));
-  transition: color var(--dur-hover) var(--ease-settle);
+  flex: none;
+  color: var(--ink-muted);
 }
-.tileLabel {
-  min-width: 0;
+.tx {
+  text-decoration: underline;
+  text-decoration-color: var(--link-muted-underline);
+  text-decoration-thickness: var(--link-underline-width);
+  text-underline-offset: 5px;
 }
-.tileArrow {
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  border-radius: 2px;
+  font-family: var(--font-ui), 'Manrope Fallback', system-ui, sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+  text-decoration: none;
+}
+.icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--ink-muted);
+}
+.arrow {
   width: 16px;
   height: 16px;
-  flex-shrink: 0;
-  margin-inline-start: auto;
-  color: rgb(var(--c-ink-muted));
-  transition: color var(--dur-hover) var(--ease-settle);
-}
-.tile:hover .tileIcon,
-.tile:focus-visible .tileIcon {
-  color: rgb(var(--c-ink));
-}
-.tile:hover .tileArrow,
-.tile:focus-visible .tileArrow {
-  color: rgb(var(--c-signal));
+  flex: none;
+  color: var(--ink-muted);
 }
 
-/* ─── Magnetic pull (useFooterPointer writes --mx / --my; the marker itself never moves) ──────────────── */
-
-.magnetic {
-  display: block;
+/* The state is the underline alone: the current page holds a 2 px action-line underline, and hover and focus
+   step it to the action tier (PALETTE-SPEC §11). The text stays ink, 13.85 / 13.83:1. */
+.link[aria-current='page'] .tx {
+  text-decoration-color: var(--link-underline);
+  text-decoration-thickness: var(--link-underline-width-hover);
 }
-.magnet:not(.tile) {
-  display: block;
+.email:focus-visible,
+.act:focus-visible .tx,
+.link:focus-visible .tx {
+  text-decoration-color: var(--action);
+  text-decoration-thickness: var(--link-underline-width-hover);
 }
-
-/* ─── Buttons ──────────────────────────────────────────────────────────────────────────────────────── */
-
-/* Primary: a sheen crosses the signal fill on hover and focus (enhanced only). */
-.sheen {
-  overflow: hidden;
-}
-.sheen::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  display: none;
-  background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.3) 50%, transparent 70%);
-  transform: translate3d(-120%, 0, 0);
+@media (hover: hover) {
+  .email:hover,
+  .act:hover .tx,
+  .link:hover .tx {
+    text-decoration-color: var(--action);
+    text-decoration-thickness: var(--link-underline-width-hover);
+  }
 }
 
-/* Secondary: the navbar's glass, small. Tailwind's hover fill still shows (the image steps aside). */
-.glass {
-  background-image: linear-gradient(rgb(var(--c-surface) / 0.55), rgb(var(--c-surface) / 0.55));
-  box-shadow: inset 0 1px 0 0 rgb(var(--c-ink) / 0.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.5);
-  backdrop-filter: blur(16px) saturate(1.5);
+/* Phones: pages and profiles become two columns of 44 px rows. */
+@media (max-width: 639.98px) {
+  .list {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+  }
+  .link,
+  .act {
+    min-height: 44px;
+  }
 }
-.glass:hover,
-.glass:focus-visible {
-  background-image: none;
+@media (pointer: coarse) {
+  .link,
+  .act {
+    min-height: 44px;
+  }
 }
 
-/* ─── The stamp (Wordmark) ─────────────────────────────────────────────────────────────────────────── */
+/* ─── The name over the contour sheet ──────────────────────────────────────────────────────────── */
 
-.wordmark {
+.nameBand {
   position: relative;
-  margin-top: clamp(2.5rem, 3vw, 3rem);
-  margin-bottom: clamp(1rem, 1.4vw, 1.25rem);
-  padding-inline: var(--wm-pad);
-  user-select: none;
-  -webkit-user-select: none;
+  margin-top: 1.5rem;
 }
-.word {
+@media (min-width: 640px) {
+  .nameBand {
+    margin-top: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+  }
+}
+/* The contour drawing is an alpha mask over the contour ink, so it follows the theme; its top edge fades in. */
+.sheet {
+  position: absolute;
+  inset: -2.5rem 0 -1rem;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--ink-contour);
+  -webkit-mask-image: url('/hero-footer/contour-sheet.svg'), linear-gradient(to bottom, transparent, var(--ink) 2.5rem);
+  -webkit-mask-size: cover, 100% 100%;
+  -webkit-mask-position: center, 0 0;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-image: url('/hero-footer/contour-sheet.svg'), linear-gradient(to bottom, transparent, var(--ink) 2.5rem);
+  mask-size: cover, 100% 100%;
+  mask-position: center, 0 0;
+  mask-repeat: no-repeat;
+  mask-composite: intersect;
+}
+.name {
+  grid-column: content-start / content-end;
+  min-width: 0;
+}
+
+/* ─── The bar ──────────────────────────────────────────────────────────────────────────────────── */
+
+.bar {
+  grid-column: content-start / content-end;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  min-height: 52px;
+  margin-top: 4px;
+  font-family: var(--font-text), 'Literata Fallback', serif;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+.own,
+.zone {
   margin: 0;
-  font-family: var(--font-display), 'Archivo Fallback', sans-serif;
-  font-weight: 800;
-  font-stretch: 125%;
-  font-size: 13.8vw;
-  line-height: 0.8;
-  letter-spacing: -0.04em;
-  text-align: center;
-  white-space: nowrap;
 }
-.wordBase {
-  color: rgb(var(--c-ink) / 0.04);
-  -webkit-text-stroke: 1px rgb(var(--c-line-strong) / 0.75);
+/* Day: the bar's foot is darker under the close wash, so the zone line takes ink (muted is 4.10:1 there). */
+:global(html[data-theme='day']) .zone {
+  color: var(--ink);
 }
-.word > span {
-  display: inline-block; /* every copy the same, so kerning matches and the lit copy registers */
+.own {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
 }
-.wordWarm,
-.wordLit {
-  color: transparent;
-  background-image: linear-gradient(100deg, rgb(var(--c-signal)) 10%, rgb(var(--c-signal-line)) 45%, rgb(var(--c-water)) 90%);
-  -webkit-background-clip: text;
-  background-clip: text;
+.grow {
+  display: none;
 }
-.wordWarm {
-  position: absolute;
-  inset: 0;
-  padding-inline: var(--wm-pad);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--dur-reveal) var(--ease-settle);
+/* Phones: the docked chat bead sits beside the switch's row (12 px in, 52 px wide). */
+.switch {
+  margin-right: 72px;
 }
-.root:has(:focus-visible) .wordWarm {
-  opacity: 0.5;
-}
-@media (hover: none) {
-  .wordWarm {
-    opacity: 0.32;
+@media (min-width: 640px) {
+  .bar {
+    gap: 8px 28px;
+    margin-top: 8px;
+    padding-right: var(--chat-clearance);
+  }
+  .grow {
+    display: block;
+    flex: 1 1 auto;
+  }
+  .switch {
+    margin-right: 0;
   }
 }
 
-/* The lens: a soft disc that follows a fine pointer and shows the lit copy of the stamp through it. */
-.lens {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: clamp(14rem, 26vw, 26rem);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--dur-ui) var(--ease-settle);
-  -webkit-mask-image: radial-gradient(closest-side, #000 45%, transparent 100%);
-  mask-image: radial-gradient(closest-side, #000 45%, transparent 100%);
-  will-change: transform;
-}
-.lens::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(closest-side, rgb(var(--c-signal) / 0.2), rgb(var(--c-water) / 0.1) 60%, transparent);
-}
-.wordmark[data-lit] .lens {
-  opacity: 1;
-}
-.lensCopy {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: var(--wm-w, 100vw);
-  padding-inline: var(--wm-pad);
-  box-sizing: border-box;
-  will-change: transform;
-}
-
-@media (forced-colors: active) {
-  .wordWarm,
-  .lens,
-  .sheen::after,
-  .tile::before {
-    display: none;
-  }
-  .wordBase {
-    color: CanvasText;
-    -webkit-text-stroke: 0;
-  }
-}
-
-/* ─── Enhancements: only with motion allowed (OS setting and the footer switch) ──────────────────────── */
+/* ─── Motion: only with motion allowed (the OS setting and the bar's switch) ─────────────────────── */
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Drawn underline: grows from the left on arrival, leaves to the right. */
-  :global(html:not([data-motion='off'])) .lineText::after {
-    opacity: 1;
-    transform: scaleX(0);
-    transform-origin: right center;
-    transition: transform 480ms var(--ease-settle);
+  :global(html:not([data-motion='off'])) .act {
+    transition: transform 140ms var(--ease-settle);
   }
-  :global(html:not([data-motion='off'])) .line:hover .lineText::after,
-  :global(html:not([data-motion='off'])) .line:focus-visible .lineText::after,
-  :global(html:not([data-motion='off'])) .line[aria-current='page'] .lineText::after {
-    transform: scaleX(1);
-    transform-origin: left center;
+  :global(html:not([data-motion='off'])) .act:active {
+    transform: scale(0.97);
   }
-
-  /* Rolling letters. */
-  :global(html:not([data-motion='off'])) .rollChar {
-    transition: transform 560ms var(--ease-settle);
-    transition-delay: calc(var(--i, 0) * 16ms);
+  :global(html:not([data-motion='off'])) .arrow {
+    transition: transform var(--dur-hover) var(--ease-settle);
   }
-  :global(html:not([data-motion='off'])) :is(.line, .tile):focus-visible .rollChar {
-    transform: translate3d(0, -100%, 0);
-  }
-
-  /* Tile fill sweeps in from the left; the arrow lifts off. */
-  :global(html:not([data-motion='off'])) .tile::before {
-    opacity: 1;
-    transform: scaleX(0);
-    transform-origin: right center;
-    transition: transform 520ms var(--ease-settle);
-  }
-  :global(html:not([data-motion='off'])) .tile:is(:hover, :focus-visible)::before {
-    transform: scaleX(1);
-    transform-origin: left center;
-  }
-  :global(html:not([data-motion='off'])) .tileArrow {
-    transition:
-      color var(--dur-hover) var(--ease-settle),
-      transform 420ms var(--ease-settle);
-  }
-  :global(html:not([data-motion='off'])) .tile:is(:hover, :focus-visible) .tileArrow {
-    transform: translate3d(2px, -2px, 0);
-  }
-
-  /* Magnetic body and the tile's press. */
-  :global(html:not([data-motion='off'])) .magnet {
-    transform: translate3d(var(--mx, 0px), var(--my, 0px), 0) scale(var(--press, 1));
-    transition: transform 650ms var(--ease-settle);
-  }
-  :global(html:not([data-motion='off'])) [data-pulling] > .magnet {
-    transition-duration: 160ms;
-  }
-  :global(html:not([data-motion='off'])) .tile:active {
-    --press: 0.96;
-  }
-
-  /* Sheen across the primary button. */
-  :global(html:not([data-motion='off'])) .sheen::after {
-    display: block;
-  }
-  :global(html:not([data-motion='off'])) .sheen:focus-visible::after {
-    transform: translate3d(120%, 0, 0);
-    transition: transform 900ms var(--ease-settle);
+  :global(html:not([data-motion='off'])) .link:focus-visible .arrow {
+    transform: translate(2px, -2px);
   }
 }
-
-/* Hover-only halves of the enhancements: a real hover, never a sticky tap. */
 @media (prefers-reduced-motion: no-preference) and (hover: hover) {
-  :global(html:not([data-motion='off'])) :is(.line, .tile):hover .rollChar {
-    transform: translate3d(0, -100%, 0);
-  }
-  :global(html:not([data-motion='off'])) .sheen:hover::after {
-    transform: translate3d(120%, 0, 0);
-    transition: transform 900ms var(--ease-settle);
+  :global(html:not([data-motion='off'])) .link:hover .arrow {
+    transform: translate(2px, -2px);
   }
 }
 
-/* An inline link inside running text: on touch, pad its hit area to 40+ px without moving the line box. */
-@media (pointer: coarse) {
-  .inlineTarget {
-    padding-block: 0.6rem;
+/* Forced colours: the wash and the contour sheet go; the system colours carry text, underlines and focus. */
+@media (forced-colors: active) {
+  .root::before,
+  .sheet {
+    display: none;
   }
 }

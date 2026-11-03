@@ -14,6 +14,48 @@ export const RIDGE_SUMMIT = { x: 23, y: 2.5 } as const;
 /** The ridge's first point (its left foot), in the 48 × 16 frame. */
 export const RIDGE_START = { x: 1.5, y: 14.2 } as const;
 
+/** The ridge's vertices in the 48 × 16 frame, left foot to right foot: the points of RIDGE_PATH, absolute. */
+export const RIDGE_POINTS: readonly (readonly [number, number])[] = [
+  [1.5, 14.2],
+  [6.5, 10.6],
+  [9.5, 12.2],
+  [14.5, 7],
+  [17.7, 8.7],
+  [23, 2.5],
+  [26.9, 7.3],
+  [30.1, 5.4],
+  [34.9, 11],
+  [38.3, 9.5],
+  [44, 14],
+];
+
+const RIDGE_X0 = RIDGE_POINTS[0][0];
+const RIDGE_SPAN_X = RIDGE_POINTS[RIDGE_POINTS.length - 1][0] - RIDGE_X0;
+const RIDGE_RISE_Y = RIDGE_START.y - RIDGE_SUMMIT.y;
+
+/**
+ * Where the summit stands along the ridge: 0 is the left foot, 1 the right foot (0.506). The Survey Ridge name
+ * (shared/ui/ridge-name) stretches the ridge under a word and stands the trekker here.
+ */
+export const RIDGE_SUMMIT_T = (RIDGE_SUMMIT.x - RIDGE_X0) / RIDGE_SPAN_X;
+
+/**
+ * The ridge's elevation at `t` along its width (0 = left foot, 1 = right foot), normalised so the left foot is 0 and
+ * the summit 1 (the right foot is 0.017). Linear between the vertices, like the drawn ridge; clamped outside 0..1.
+ */
+export function ridgeElevationAt(t: number): number {
+  const x = RIDGE_X0 + Math.min(1, Math.max(0, t)) * RIDGE_SPAN_X;
+  for (let i = 1; i < RIDGE_POINTS.length; i++) {
+    const [x1, y1] = RIDGE_POINTS[i];
+    if (x <= x1) {
+      const [x0, y0] = RIDGE_POINTS[i - 1];
+      const y = y0 + (y1 - y0) * ((x - x0) / (x1 - x0));
+      return (RIDGE_START.y - y) / RIDGE_RISE_Y;
+    }
+  }
+  return (RIDGE_START.y - RIDGE_POINTS[RIDGE_POINTS.length - 1][1]) / RIDGE_RISE_Y;
+}
+
 export const MARK_WIDTH = 48;
 export const MARK_HEIGHT = 24;
 export const MARK_VIEWBOX = `0 0 ${MARK_WIDTH} ${MARK_HEIGHT}`;
@@ -69,6 +111,7 @@ export function trekkerFor(height: number): TrekkerFigure {
 export function ridgeMaskUrl(stroke = 1.6): string {
   const svg =
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${MARK_VIEWBOX}'>` +
+    // palette-allow: mask luminance only (an opaque stroke for the CSS mask), never painted
     `<path d='${RIDGE_PATH}' transform='translate(0 ${RIDGE_OFFSET_Y})' fill='none' stroke='black' ` +
     `stroke-width='${stroke}' stroke-linejoin='round' stroke-linecap='round'/></svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;

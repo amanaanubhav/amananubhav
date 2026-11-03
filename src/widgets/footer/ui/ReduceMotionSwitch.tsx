@@ -30,7 +30,7 @@ export function ReduceMotionSwitch() {
         onClick={() => setOn(!on)}
         className={cn(
           'group/switch inline-flex min-h-11 items-center gap-3 rounded-control text-ink',
-          'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal',
+          'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-focus-ring',
         )}
       >
         <span className="font-body text-ui font-medium">Reduce motion</span>
@@ -46,7 +46,7 @@ export function ReduceMotionSwitch() {
             className={cn(
               'absolute top-[3px] size-4 rounded-control transition-colors duration-ui ease-settle',
               // Position by offset, not transform: the switch is the motion control, so it never moves.
-              on ? 'left-[19px] bg-signal' : 'left-[3px] bg-ink-muted',
+              on ? 'left-[19px] bg-action' : 'left-[3px] bg-ink-muted',
               'forced-colors:bg-[ButtonText]',
             )}
           />
