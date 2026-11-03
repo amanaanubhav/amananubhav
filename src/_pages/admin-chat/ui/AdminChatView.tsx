@@ -52,8 +52,8 @@ export function AdminChatView(): JSX.Element {
   };
 
   return (
-    <div className="flex flex-col px-4 pb-6 pt-20 md:px-8">
-      <div className="mx-auto flex h-[calc(100svh-6.5rem)] min-h-[30rem] w-full max-w-content overflow-hidden rounded-panel border border-line bg-surface">
+    <div className="flex flex-col px-4 pb-6 pt-[var(--nav-clear)] md:px-8">
+      <div className="mx-auto flex h-[calc(100svh-var(--nav-clear)-1.5rem)] min-h-[30rem] w-full max-w-content overflow-hidden panel-steel rounded-panel border border-line bg-surface">
         <ConversationList
           total={inbox.chats.length}
           chats={visibleChats}

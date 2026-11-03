@@ -75,7 +75,9 @@ export function ChatIntroForm({ chat, onOpenTerminal, onOpenVault }: ChatIntroFo
     const body = bodyRef.current;
     if (!body) return;
     const update = () => {
-      body.toggleAttribute('data-more', body.scrollTop + body.clientHeight < body.scrollHeight - 1);
+      // Ceil: at a fractional zoom the end of the scroll can stop half a pixel short, which would leave the fade
+      // over the last line (O-03). At the end there is no fade at all.
+      body.toggleAttribute('data-more', Math.ceil(body.scrollTop) + body.clientHeight < body.scrollHeight - 1);
     };
     const observer = new ResizeObserver(update);
     observer.observe(body);

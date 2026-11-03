@@ -34,7 +34,8 @@ export function AdminGate({ authInput, onAuthInputChange, onLogin }: AdminGatePr
   };
 
   return (
-    <div className="flex min-h-[100svh] items-center justify-center px-4 pb-16 pt-24">
+    // The page under the navbar band: no footer here (AppShell), so the gate fills the rest of the window and no more.
+    <div className="flex min-h-[calc(100svh-var(--nav-clear))] items-center justify-center px-4 pb-block pt-[var(--nav-clear)]">
       <form onSubmit={submit} aria-describedby={leadId} className="w-full max-w-sm text-center">
         <h1 className="text-h3 m-0 font-display font-semibold text-ink">{INBOX_COPY.title}</h1>
         <p id={leadId} className="text-ui m-0 mt-3 font-body text-ink-muted">
@@ -60,7 +61,7 @@ export function AdminGate({ authInput, onAuthInputChange, onLogin }: AdminGatePr
             spellCheck={false}
             aria-invalid={rejected || undefined}
             aria-describedby={rejected ? errorId : undefined}
-            className="text-ui h-11 w-full rounded-control border border-line-strong bg-surface-2 px-3 font-data text-ink transition-[border-color] duration-micro hover:border-ink-muted focus-visible:border-signal focus-visible:outline-offset-0"
+            className="text-ui h-11 w-full rounded-control border border-line-strong bg-surface-2 [html[data-theme=day]_&]:bg-surface px-3 font-data text-ink transition-[border-color] duration-micro hover:border-ink-muted placeholder:text-placeholder focus-visible:border-action focus-visible:outline-offset-0"
           />
           {rejected ? (
             <p key={attempt} id={errorId} role="alert" className="text-caption m-0 mt-2 flex items-start gap-2 font-body text-error">

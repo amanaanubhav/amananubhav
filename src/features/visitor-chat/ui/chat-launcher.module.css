@@ -1,7 +1,8 @@
 /*
- * The chat bead (chat design §3): one round button of the navbar's liquid glass in the corner of every page,
- * carrying the Ridge Dart. The glass values are copied from widgets/navbar (FSD: no import of a widget), so keep
- * them in step by hand. Colours come only from the generated tokens (`--c-*` triplets).
+ * The chat bead (chat design §3): one round button of the shared liquid glass (`.glass-chrome glass-bead`,
+ * globals.css: the wet top edge, violet refraction on the lower rim, aqua caustic under the body, and the solid
+ * fallbacks) in the corner of every page, carrying the Ridge Dart. This module adds only shape, size, placement,
+ * the press and lift, and the dock. Colours come only from palette tokens.
  */
 
 /* The draggable dock. `--drag-bottom` is where a drag left it; the bead never sinks below its gutter or rises
@@ -38,41 +39,39 @@
   visibility: hidden;
 }
 
-.glass {
-  --tint: 0.88; /* surface opacity: the ink icon holds 4.5:1 even over a pure white backdrop (navbar value) */
-  --rim: rgb(var(--c-ink) / 0.13);
-  --spec: rgb(var(--c-ink) / 0.16);
-  --shade: rgb(var(--c-ground-sky) / 0.7);
-  --caustic: rgb(var(--c-water) / 0.12);
-  isolation: isolate;
-  background-color: rgb(var(--c-surface) / var(--tint));
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid var(--rim);
-  box-shadow:
-    inset 0 1px 0 0 var(--spec),
-    0 14px 32px -16px var(--shade),
-    0 2px 8px -4px var(--shade);
+/*
+ * Below 1024 px, on a page with SectionDotNav, the bead joins the bottom dock (contracts/dock.md §3, C-01): it sits
+ * on the bar's line at the bar's height, ignores the remembered side and height, and leaves and returns with the bar
+ * on the same attribute, distance, duration and curve. `translate` (never `transform`: motion owns the inline drag
+ * transform, and the two compose). No `data-dock`: the bead keeps its own corner.
+ */
+:global(html[data-dock]) .dock {
+  --bead: var(--bar-h);
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  left: auto;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  translate: none;
+  transition: translate var(--dur-ui) var(--ease-settle);
 }
-:global(:root[data-theme='day']) .glass {
-  --tint: 0.84; /* and over a pure black one in Day */
-  --rim: rgb(var(--c-ink) / 0.11);
-  --spec: rgb(var(--c-surface) / 0.95);
-  --shade: rgb(var(--c-ink) / 0.2);
-  --caustic: rgb(var(--c-water) / 0.07);
+:global(html[data-dock='hidden']) .dock:not([data-open]) {
+  translate: 0 calc(var(--dock-h) + 16px);
+  transition-duration: var(--dur-hover);
 }
-/* The wet top of the glass and the violet caustic along its foot. */
-.glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, var(--spec) 0%, transparent 55%),
-    radial-gradient(70% 120% at 50% 130%, var(--caustic), transparent 70%);
-  opacity: 0.45;
+/* Docked, the name pill opens above the bead (the bar sits to its left). */
+:global(html[data-dock]) .dock .tip {
+  top: auto;
+  right: 0;
+  left: auto;
+  bottom: calc(100% + 10px);
+  transform: translateY(4px);
+}
+:global(html[data-dock]) .dock:not([data-dragging]) .bead:focus-visible + .tip {
+  transform: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  :global(html[data-dock]) .dock:not([data-dragging]) .bead:hover + .tip {
+    transform: none;
+  }
 }
 
 .bead {
@@ -90,15 +89,17 @@
   -webkit-tap-highlight-color: transparent;
   transition:
     transform var(--dur-hover) var(--ease-settle),
-    box-shadow var(--dur-hover) var(--ease-settle),
-    background-color 160ms var(--ease-settle);
+    box-shadow var(--dur-hover) var(--ease-settle);
 }
 .bead:focus-visible {
-  outline: 2px solid rgb(var(--c-signal));
-  outline-offset: 3px;
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
-.bead[aria-expanded='true'] {
-  background-color: rgb(var(--c-surface-2) / var(--tint));
+/* Open: the glass itself shows the state with the 1 px active rim (`.glass-chrome[aria-expanded='true']`). */
+/* The bead floats over body text on pages without a dock, so its glass is near-opaque (the sheet alpha): a line
+   under it must not read through. Same colour, same blur; only the fill's alpha rises. */
+.bead:global(.glass-bead) {
+  --gc-fill: rgb(var(--c-glass-bead) / var(--alpha-sheet));
 }
 
 .icon {
@@ -132,12 +133,14 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .bead:hover {
+  /* The lift deepens the glass's own shadow; the open bead keeps its active rim instead. */
+  .bead:not([aria-expanded='true']):hover {
     transform: translateY(-2px);
     box-shadow:
-      inset 0 1px 0 0 var(--spec),
-      0 18px 36px -14px var(--shade),
-      0 3px 10px -4px var(--shade);
+      inset 0 1px 0 var(--glass-highlight),
+      inset 0 -1px 0 var(--glass-refract),
+      0 18px 36px -14px var(--glass-shadow),
+      0 3px 10px -4px var(--glass-shadow);
   }
   .bead:hover :global(.plane) {
     transform: translate(1.5px, -1.5px);
@@ -151,7 +154,7 @@
   cursor: grabbing;
 }
 
-/* Unread: a 10 px signal dot in a 2 px ground ring at the top right. It fades in; it never pulses. */
+/* Unread: a 10 px action dot in a 2 px ground ring at the top right. It fades in; it never pulses. */
 .dot {
   position: absolute;
   top: -1px;
@@ -159,7 +162,7 @@
   width: 14px;
   height: 14px;
   border-radius: 9999px;
-  background: rgb(var(--c-signal));
+  background: var(--action);
   border: 2px solid rgb(var(--c-ground));
   opacity: 0;
   transition: opacity 150ms linear;
@@ -243,43 +246,21 @@
   transition: none;
 }
 
-/* Opaque where the glass would hurt legibility, is unsupported, or costs too much (lite devices). */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass {
-    --tint: 1 !important;
-  }
-}
-:global(html[data-lite='1']) .glass {
-  --tint: 1 !important;
+/*
+ * The glass falls back to its solid material by itself (no backdrop-filter, reduced transparency, more contrast,
+ * forced colors: globals.css). Lite devices are this component's call: the blur costs too much there, so the bead
+ * and its name pill use the solid fallback (`--gc-fallback`: the opaque bead, or the chrome fallback for the pill).
+ */
+:global(html[data-lite='1']) .lite {
+  background-color: var(--gc-fallback);
+  background-image: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-@media (prefers-reduced-transparency: reduce) {
-  .glass {
-    --tint: 1 !important;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-  .glass::before {
-    display: none;
-  }
-}
-@media (prefers-contrast: more) {
-  .glass {
-    --tint: 1 !important;
-  }
-}
 @media (forced-colors: active) {
-  .glass {
-    background: Canvas;
-    border: 1px solid ButtonText;
+  .bead {
     color: ButtonText;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
     box-shadow: none;
-  }
-  .glass::before {
-    display: none;
   }
   .bead:focus-visible {
     outline-color: Highlight;

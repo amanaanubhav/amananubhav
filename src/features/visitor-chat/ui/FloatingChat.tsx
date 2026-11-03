@@ -16,6 +16,7 @@ import { ChatLauncher } from './ChatLauncher';
 import styles from './chat-launcher.module.css';
 import type { ChatWindow as ChatWindowComponent } from './ChatWindow';
 import { CHAT_WINDOW_GAP, CHAT_WINDOW_MIN_HEIGHT, CHAT_WINDOW_SIZE, CHAT_WINDOW_TOP_MIN } from './chat-window-size';
+import { useDocked } from './use-docked';
 
 /**
  * The window (intro form, thread, owner photo) is its own chunk, warmed when idle, so it stays off the initial JS
@@ -162,6 +163,8 @@ export function FloatingChat({ onOpenTerminal, onOpenVault }: FloatingChatProps)
   const y = useMotionValue(0);
   const windowId = useId();
   const isCompact = useMediaQuery('(max-width: 639px)');
+  // Below 1024 px on a SectionDotNav page the bead sits in the bottom dock: fixed there, not draggable.
+  const isDocked = useDocked();
   const motionOk = useMotionAllowed();
   // Mounted under the first-load curtain: the window's chunk waits until it has gone (and for the stage hold).
   useIdlePreload(loadChatWindow, useBootPhase() === 'done');
@@ -312,7 +315,12 @@ export function FloatingChat({ onOpenTerminal, onOpenVault }: FloatingChatProps)
         data-chrome=""
         data-side={dock.side}
         data-dragging={isDragging ? '' : undefined}
-        drag
+        // The dock (contracts/dock.md §3): focus on the bead holds the dock shown; open, the bead stays put, and a
+        // non-modal window (640 px and up, the page still scrolls) holds the whole dock shown.
+        data-dock-follow=""
+        data-open={isOpen ? '' : undefined}
+        data-dock-hold={isOpen && !isCompact ? '' : undefined}
+        drag={!isDocked}
         dragMomentum={false}
         onDragStart={() => setIsDragging(true)}
         onDragEnd={onDragEnd}

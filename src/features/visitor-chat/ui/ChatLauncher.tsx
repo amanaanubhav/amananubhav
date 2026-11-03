@@ -17,7 +17,7 @@ interface ChatLauncherProps {
 }
 
 /**
- * The closed chat (chat design §3): a 52 px (48 px on phones) glass bead with the Ridge Dart, no label at rest.
+ * The closed chat (chat design §3): a 52 px (48 px on phones; 52 px, the bar height, while docked) glass bead with the Ridge Dart, no label at rest.
  * Open, the plane turns into an X and the bead stays as the stable focus-return target. The tooltip repeats the
  * name for sighted pointer and keyboard users; the dot is decoration (the name carries the count).
  */
@@ -33,7 +33,7 @@ export function ChatLauncher({ ref, isOpen, label, hasUnread, controls, onClick 
         aria-expanded={isOpen}
         aria-controls={controls}
         onClick={onClick}
-        className={cn(styles.bead, styles.glass)}
+        className={cn('glass-chrome glass-bead', styles.bead, styles.lite)}
       >
         <ChatPlane className={cn(styles.icon, styles.planeIcon)} />
         <svg
@@ -50,7 +50,7 @@ export function ChatLauncher({ ref, isOpen, label, hasUnread, controls, onClick 
         </svg>
         <span aria-hidden="true" className={styles.dot} />
       </button>
-      <span aria-hidden="true" className={cn(styles.tip, styles.glass)}>
+      <span aria-hidden="true" className={cn('glass-chrome', styles.tip, styles.lite)}>
         {label}
       </span>
     </>

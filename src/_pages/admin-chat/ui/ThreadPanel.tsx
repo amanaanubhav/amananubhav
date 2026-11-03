@@ -30,7 +30,8 @@ export interface ThreadPanelProps {
 }
 
 /** Destructive actions read in the error color, with a text label (§G.7, §B.1). */
-const DESTRUCTIVE = 'text-error duration-micro';
+const DESTRUCTIVE =
+  'border-error bg-transparent text-error hover:bg-error-soft focus-visible:bg-error-soft active:bg-error-soft duration-micro';
 
 /** Right pane (§G.7): who, the actions, the thread as log entries, the composer. */
 export function ThreadPanel({
@@ -106,7 +107,9 @@ export function ThreadPanel({
                     {time ? <time dateTime={toDateTime(msg.timestamp)}>{time}</time> : null}
                   </span>
                   <div className="min-w-0">
-                    <p className={cn('text-caption m-0 font-body italic', mine ? 'text-signal' : 'text-ink-muted')}>
+                    {/* Who wrote it: Aman's own lines carry an action marker (a graphic), the label stays ink (small action text fails the Night size rule). */}
+                    <p className={cn('text-caption m-0 flex items-center gap-1.5 font-body italic', mine ? 'text-ink' : 'text-ink-muted')}>
+                      {mine ? <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-action" /> : null}
                       {mine ? INBOX_COPY.you : name}
                     </p>
                     <p className="text-ui m-0 mt-0.5 whitespace-pre-wrap break-words font-body text-ink">{msg.text}</p>
@@ -121,7 +124,7 @@ export function ThreadPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-line px-4 py-4 md:px-6">
+      <div className="rule-steel border-t border-line px-4 py-4 md:px-6">
         <form onSubmit={onSend} className="flex items-end gap-3">
           <div className="min-w-0 flex-1">
             <label htmlFor={replyId} className="sr-only">
@@ -141,7 +144,7 @@ export function ThreadPanel({
               rows={2}
               aria-describedby={hintId}
               placeholder={blocked ? INBOX_COPY.blockedComposer : INBOX_COPY.replyPlaceholder}
-              className="text-ui block min-h-14 w-full resize-none rounded-control border border-line-strong bg-surface-2 px-3 py-2.5 font-body text-ink transition-[border-color] duration-micro placeholder:text-ink-muted hover:border-ink-muted focus-visible:border-signal focus-visible:outline-offset-0 disabled:border-line disabled:text-ink-muted disabled:hover:border-line"
+              className="text-ui block min-h-14 w-full resize-none rounded-control border border-line-strong bg-surface-2 [html[data-theme=day]_&:enabled]:bg-surface px-3 py-2.5 font-body text-ink transition-[border-color] duration-micro placeholder:text-placeholder hover:border-ink-muted focus-visible:border-action focus-visible:outline-offset-0 disabled:border-disabled-edge disabled:bg-disabled-fill disabled:text-disabled-ink disabled:hover:border-line"
             />
           </div>
           <Button type="submit" icon={Send} disabled={!newMessage.trim() || blocked} className="duration-micro">

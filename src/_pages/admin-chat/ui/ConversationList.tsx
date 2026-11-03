@@ -41,9 +41,9 @@ function ConversationRow({ chat, active, onSelect }: { chat: ChatThread; active:
         onClick={onSelect}
         aria-current={active ? 'true' : undefined}
         className={cn(
-          'block w-full px-4 py-3 text-left transition-colors duration-micro hover:bg-surface-2',
-          'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal',
-          'aria-[current=true]:bg-surface-2 aria-[current=true]:shadow-[inset_2px_0_0_rgb(var(--c-signal))]',
+          'block w-full px-4 py-3 text-left transition-colors duration-micro hover:bg-[var(--hover-wash)] active:bg-[var(--press-wash)]',
+          'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring',
+          'aria-[current=true]:bg-action-soft aria-[current=true]:shadow-[inset_2px_0_0_var(--action-line)]',
         )}
       >
         <span className="flex items-baseline justify-between gap-3">

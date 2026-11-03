@@ -242,7 +242,7 @@ export function ChatWindow({
         dragElastic={{ top: 0, bottom: 1 }}
         onDragEnd={onSheetDragEnd}
         style={placementStyle}
-        className={cn(styles.window, isCompact ? styles.sheet : styles.panel)}
+        className={cn('glass-chrome glass-sheet', styles.window, isCompact ? styles.sheet : styles.panel)}
       >
         <motion.div className={styles.inner} {...contentMotion}>
           {isCompact ? (

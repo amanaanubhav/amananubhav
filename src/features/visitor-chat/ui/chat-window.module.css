@@ -1,35 +1,27 @@
 /*
  * The chat window (chat design §4): a floating glass panel that grows out of the bead on desktop, a floating
- * modal sheet on phones. Glass values follow the bead's (chat-launcher.module.css), a little more opaque, so body
- * text keeps 4.5:1 over a pure white or black backdrop. Colours come only from the generated tokens.
+ * modal sheet on phones. The material is the shared sheet glass (`.glass-chrome glass-sheet`, globals.css:
+ * glass-fill-strong, 32 px blur, the wet top edge, violet refraction, aqua caustic, and the solid fallbacks for no
+ * backdrop-filter, reduced transparency, more contrast and forced colors). Body text holds >= 6.1:1 on it over every
+ * backdrop. Every surface inside is solid (the bubbles, fields and callouts), so no text sits on an alpha wash.
+ * Colours come only from palette tokens.
  */
 
 .window {
-  --tint: 0.94;
-  --rim: rgb(var(--c-ink) / 0.13);
-  --spec: rgb(var(--c-ink) / 0.16);
-  --shade: rgb(var(--c-ground-sky) / 0.7);
   position: fixed;
   z-index: 61; /* Z_INDEX.chatWindow */
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border-radius: 22px;
-  color: rgb(var(--c-ink));
-  background-color: rgb(var(--c-surface) / var(--tint));
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid var(--rim);
-  box-shadow:
-    inset 0 1px 0 0 var(--spec),
-    0 30px 60px -24px var(--shade),
-    0 4px 14px -6px var(--shade);
+  color: var(--ink);
 }
-:global(:root[data-theme='day']) .window {
-  --tint: 0.92;
-  --rim: rgb(var(--c-ink) / 0.11);
-  --spec: rgb(var(--c-surface) / 0.95);
-  --shade: rgb(var(--c-ink) / 0.2);
+/* Lite devices: the solid sheet, no blur (the shared glass leaves this call to the component). */
+:global(html[data-lite='1']) .window {
+  background-color: var(--glass-fallback);
+  background-image: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .window:focus {
   outline: none;
@@ -58,7 +50,7 @@
   position: fixed;
   inset: 0;
   z-index: 61; /* Z_INDEX.chatWindow: over the bead, under the sheet (later in the DOM) */
-  background: rgb(var(--c-ground-sky) / 0.55);
+  background: var(--glass-scrim); /* modal on phones: dim to focus */
 }
 
 .inner {
@@ -83,7 +75,7 @@
   width: 36px;
   height: 4px;
   border-radius: 2px;
-  background: rgb(var(--c-line-strong) / 0.7);
+  background: rgb(var(--c-line-strong) / var(--alpha-heavy));
 }
 
 .header {
@@ -143,7 +135,7 @@
     400 13px/18px var(--font-text),
     Georgia,
     serif;
-  color: rgb(var(--c-ink-muted));
+  color: rgb(var(--c-ink));
 }
 .actions {
   flex: none;
@@ -168,12 +160,18 @@
   width: 20px;
   height: 20px;
 }
-.iconButton:hover {
-  background: rgb(var(--c-ink) / 0.08);
-  color: rgb(var(--c-ink));
+@media (hover: hover) and (pointer: fine) {
+  .iconButton:hover {
+    background: var(--hover-wash);
+    color: var(--ink);
+  }
+}
+.iconButton:active {
+  background: var(--press-wash);
+  color: var(--ink);
 }
 .iconButton:focus-visible {
-  outline: 2px solid rgb(var(--c-signal));
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: 2px;
 }
 @media (pointer: coarse) {
@@ -225,7 +223,7 @@
   height: 3px;
   margin-left: -1.5px;
   border-radius: 9999px;
-  background: rgb(var(--c-signal));
+  background: var(--bronze);
 }
 
 /* ---------------------------------------------------------------- body (intro and thread) */
@@ -237,10 +235,10 @@
   overscroll-behavior: contain;
   padding: 14px 18px 12px;
   scrollbar-width: thin;
-  scrollbar-color: rgb(var(--c-line)) transparent;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 .body:focus-visible {
-  outline: 2px solid rgb(var(--c-signal));
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: -2px;
 }
 
@@ -257,7 +255,9 @@
 }
 /* Present only while content continues below, so nothing is faded at rest or at the end of the scroll. */
 .form > .body[data-more] {
+  /* palette-allow: mask luminance only, never painted */
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  /* palette-allow: mask luminance only, never painted */
   mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
 }
 @media (prefers-contrast: more), (forced-colors: active) {
@@ -304,21 +304,25 @@
   height: 44px;
   padding: 0 12px;
   border-radius: 12px;
-  border: 1px solid rgb(var(--c-line-strong) / 0.7);
-  background: rgb(var(--c-ground));
-  color: rgb(var(--c-ink));
+  border: 1px solid rgb(var(--c-line-strong));
+  background: var(--surface-2);
+  color: var(--ink);
   font:
     400 14.5px/1.2 var(--font-text),
     Georgia,
     serif;
   transition: border-color var(--dur-hover) var(--ease-settle);
 }
+:global(:root[data-theme='day']) .input,
+:global(:root[data-theme='day']) .pill {
+  background: var(--surface);
+}
 .input:hover {
   border-color: rgb(var(--c-ink-muted));
 }
 .input:focus-visible {
-  border-color: rgb(var(--c-ink));
-  outline: 2px solid rgb(var(--c-signal));
+  border-color: var(--ink);
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: 1px;
 }
 .input[aria-invalid='true'] {
@@ -379,9 +383,11 @@
     sans-serif;
   text-align: left;
   text-decoration: underline;
-  text-decoration-color: rgb(var(--c-line-strong));
-  text-underline-offset: 3px;
+  text-decoration-color: var(--link-muted-underline);
+  text-decoration-thickness: var(--link-underline-width);
+  text-underline-offset: 0.22em;
   cursor: pointer;
+  transition: text-decoration-color var(--dur-hover) var(--ease-settle);
 }
 .link svg {
   flex: none;
@@ -389,11 +395,15 @@
   height: 18px;
   color: rgb(var(--c-ink-muted));
 }
-.link:hover {
-  text-decoration-color: rgb(var(--c-ink));
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    text-decoration-color: var(--link-underline);
+    text-decoration-thickness: var(--link-underline-width-hover);
+  }
 }
 .link:focus-visible {
-  outline: 2px solid rgb(var(--c-signal));
+  text-decoration-color: var(--link-underline);
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -401,7 +411,7 @@
 .footer {
   flex: none;
   padding: 10px 16px 12px;
-  border-top: 1px solid rgb(var(--c-line) / 0.7);
+  border-top: 1px solid rgb(var(--c-line) / var(--alpha-heavy));
 }
 .primary {
   display: flex;
@@ -412,30 +422,43 @@
   height: 46px;
   border: 0;
   border-radius: 9999px;
-  background: rgb(var(--c-signal));
-  color: rgb(var(--c-on-signal));
+  background: var(--action);
+  /* metal gloss, as on .btn-primary */
+  box-shadow:
+    inset 0 1px 0 rgb(var(--c-metal-50) / var(--alpha-edge)),
+    inset 0 -1px 0 rgb(var(--c-ground-sky) / var(--alpha-edge));
+  color: var(--on-action);
   font:
     600 14px/1 var(--font-ui),
     system-ui,
     sans-serif;
   cursor: pointer;
-  transition: filter var(--dur-hover) var(--ease-settle);
+  transition:
+    background-color var(--dur-hover) var(--ease-settle),
+    transform var(--dur-micro) var(--ease-settle);
 }
 .primary svg {
   width: 18px;
   height: 18px;
 }
-.primary:hover {
-  filter: var(--btn-hover-filter);
+@media (hover: hover) and (pointer: fine) {
+  .primary:hover {
+    background: var(--action-hover);
+  }
+}
+.primary:active {
+  background: var(--action-pressed);
+  transform: scale(0.98);
 }
 .primary:focus-visible {
-  outline: 2px solid rgb(var(--c-ink));
-  outline-offset: 3px;
+  outline: var(--focus-width) solid var(--focus-ring-inverse);
+  outline-offset: var(--focus-offset);
 }
 /* Start chat waiting on the server (time-limited by the model): no hover lift, a busy cursor. */
 .primary[aria-busy='true'] {
   cursor: progress;
-  filter: none;
+  background: var(--action);
+  transform: none;
 }
 /* Start chat did not go through: the reason sits over the button, which reads Retry. */
 .footer .error {
@@ -481,24 +504,23 @@
   margin: 0;
 }
 .run[data-from='aman'] .bubble {
-  background: rgb(var(--c-ground) / 0.7);
-  border: 1px solid rgb(var(--c-line));
+  background: var(--surface-2);
+  border: 1px solid transparent;
 }
 .run[data-from='aman'] .bubble:last-of-type {
   border-bottom-left-radius: 5px;
 }
+/* "You" is aqua across the site (terminal and chat): a solid aqua-soft ground with the aqua rim (ink 10.38 / 12.75). */
 .run[data-from='you'] .bubble {
-  background: color-mix(in srgb, rgb(var(--c-signal)) 14%, rgb(var(--c-surface)));
-  border: 1px solid rgb(var(--c-signal) / 0.28);
-}
-:global(:root[data-theme='day']) .run[data-from='you'] .bubble {
-  background: color-mix(in srgb, rgb(var(--c-signal)) 8%, rgb(var(--c-surface)));
+  background: var(--you-solid);
+  border: 1px solid var(--you-rim);
 }
 .run[data-from='you'] .bubble:last-of-type {
   border-bottom-right-radius: 5px;
 }
 .run[data-failed] .bubble {
   border-style: dashed;
+  border-color: var(--line-strong);
 }
 .bubble[data-new] {
   animation: bubble-in 200ms var(--ease-settle) both;
@@ -539,7 +561,7 @@
     italic 400 12px/16px var(--font-text),
     Georgia,
     serif;
-  color: rgb(var(--c-ink-muted));
+  color: rgb(var(--c-ink));
 }
 .failed {
   display: flex;
@@ -568,7 +590,7 @@
   cursor: pointer;
 }
 .retry:focus-visible {
-  outline: 2px solid rgb(var(--c-signal));
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -592,12 +614,14 @@
   flex: 1;
   border-top: 1px dashed rgb(var(--c-line));
 }
+/* NEW: the label turns ink (small action text fails the Night size rule); the action line carries the rules, solid. */
 .separator[data-new] {
-  color: rgb(var(--c-signal));
+  color: var(--ink);
 }
 .separator[data-new]::before,
 .separator[data-new]::after {
-  border-top-color: rgb(var(--c-signal) / 0.55);
+  border-top-style: solid;
+  border-top-color: var(--action-line);
 }
 
 .note {
@@ -609,7 +633,7 @@
     400 13px/19px var(--font-text),
     Georgia,
     serif;
-  color: rgb(var(--c-ink-muted));
+  color: rgb(var(--c-ink));
 }
 
 .skeleton {
@@ -636,8 +660,8 @@
   margin: 0 12px 8px;
   padding: 9px 12px;
   border-radius: 12px;
-  border: 1px solid rgb(var(--c-warning) / 0.45);
-  background: color-mix(in srgb, rgb(var(--c-warning)) 14%, rgb(var(--c-surface)));
+  border: 1px solid rgb(var(--c-warning) / var(--alpha-line));
+  background: var(--warning-soft);
   font:
     400 13px/18px var(--font-text),
     Georgia,
@@ -662,13 +686,13 @@
   gap: 6px;
   padding: 3px 3px 3px 14px;
   border-radius: 22px;
-  border: 1px solid rgb(var(--c-line-strong) / 0.7);
-  background: rgb(var(--c-ground));
+  border: 1px solid rgb(var(--c-line-strong));
+  background: var(--surface-2);
   transition: border-color var(--dur-hover) var(--ease-settle);
 }
 .pill:focus-within {
-  border-color: rgb(var(--c-ink));
-  outline: 2px solid rgb(var(--c-signal));
+  border-color: var(--ink);
+  outline: var(--focus-width) solid var(--focus-ring);
   outline-offset: 1px;
 }
 .pill:has(textarea:disabled) {
@@ -692,7 +716,8 @@
   field-sizing: content;
 }
 .textarea::placeholder {
-  color: rgb(var(--c-ink-muted));
+  color: var(--placeholder);
+  opacity: 1;
 }
 .textarea:disabled {
   cursor: not-allowed;
@@ -707,8 +732,12 @@
   padding: 0;
   border: 0;
   border-radius: 9999px;
-  background: rgb(var(--c-signal));
-  color: rgb(var(--c-on-signal));
+  background: var(--action);
+  color: var(--on-action);
+  /* metal gloss, as on .btn-primary */
+  box-shadow:
+    inset 0 1px 0 rgb(var(--c-metal-50) / var(--alpha-edge)),
+    inset 0 -1px 0 rgb(var(--c-ground-sky) / var(--alpha-edge));
   cursor: pointer;
   transition:
     background-color var(--dur-hover) var(--ease-settle),
@@ -725,13 +754,22 @@
   height: 18px;
   overflow: visible;
 }
+@media (hover: hover) and (pointer: fine) {
+  .send:not(:disabled):hover {
+    background: var(--action-hover);
+  }
+}
+.send:not(:disabled):active {
+  background: var(--action-pressed);
+}
 .send:disabled {
-  background: rgb(var(--c-surface-2));
-  color: rgb(var(--c-ink-muted));
+  box-shadow: none;
+  background: var(--disabled-fill);
+  color: var(--disabled-ink);
   cursor: default;
 }
 .send:focus-visible {
-  outline: 2px solid rgb(var(--c-ink));
+  outline: var(--focus-width) solid var(--focus-ring-inverse);
   outline-offset: 2px;
 }
 /* Send: the plane flies out up-right and a fresh one glides in from below-left (never on the bead). */
@@ -775,7 +813,7 @@
   flex: none;
   margin: 0;
   padding: 12px 18px 16px;
-  border-top: 1px solid rgb(var(--c-line) / 0.7);
+  border-top: 1px solid rgb(var(--c-line) / var(--alpha-heavy));
   font:
     400 13.5px/20px var(--font-text),
     Georgia,
@@ -799,35 +837,15 @@
   animation: none;
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .window {
-    --tint: 1 !important;
-  }
-}
-:global(html[data-lite='1']) .window {
-  --tint: 1 !important;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
+/* The phone scrim is a translucent layer of its own: solid under reduced transparency, plain Canvas in forced colors. */
 @media (prefers-reduced-transparency: reduce) {
-  .window {
-    --tint: 1 !important;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}
-@media (prefers-contrast: more) {
-  .window {
-    --tint: 1 !important;
+  .scrim {
+    background: var(--ground-sky);
   }
 }
 @media (forced-colors: active) {
-  .window {
+  .scrim {
     background: Canvas;
-    border: 1px solid ButtonText;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
   }
   .rule path {
     stroke: CanvasText;
