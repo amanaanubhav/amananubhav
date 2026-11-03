@@ -149,16 +149,16 @@ export function ExperienceSection({
   const rows = [...experience.map(fromExperience), ...education.map(fromEducation)];
 
   return (
-    <section id="experience" aria-labelledby={TITLE_ID} className="journal-grid mt-32 lg:mt-48">
+    <section id="experience" aria-labelledby={TITLE_ID} className="journal-grid mt-section">
       <div className="col-[content-start/content-end] lg:col-[5/span_7]">
         <ChapterHeader as="h2" id={TITLE_ID}>
           {EXPERIENCE_COPY.title}
         </ChapterHeader>
       </div>
 
-      <div className="col-[content-start/content-end] mt-12 lg:mt-20">
+      <div className="col-[content-start/content-end] mt-block">
         <ExperienceTrack>
-          <ol aria-label={EXPERIENCE_COPY.listLabel} className="m-0 flex list-none flex-col gap-24 p-0 lg:gap-32">
+          <ol aria-label={EXPERIENCE_COPY.listLabel} className="m-0 flex list-none flex-col gap-block p-0">
             {rows.map((row) => (
               <TimelineEntry key={row.key} row={row} />
             ))}

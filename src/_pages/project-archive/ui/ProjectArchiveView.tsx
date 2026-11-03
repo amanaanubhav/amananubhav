@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, ChevronDown, SlidersHorizontal } from 'lucide-react';
 
 import { PROJECTS, type ProjectId } from '@/entities/project';
+import { cn } from '@/shared/lib/cn';
 import { useScrollToTopOnMount } from '@/shared/lib/dom';
 import { SearchField } from '@/shared/ui/archive';
 import { Button } from '@/shared/ui/button';
@@ -78,9 +79,11 @@ export function ProjectArchiveView({ media }: ProjectArchiveViewProps) {
   const groups = Array.from(groupedProjects);
 
   return (
-    <div ref={ledgerRef} className="relative mt-16 md:mt-20">
-      {/* Control row: sits under the navbar's 56 px strip once it sticks. */}
-      <div ref={barRef} className="sticky top-0 z-content border-b border-line bg-ground pt-14">
+    <div ref={ledgerRef} className="relative md:mt-2">
+      {/* Control row: its top padding is the navbar clearance (`--nav-clear`), so once it sticks the search sits
+          clear of the navbar; at rest that padding is the gap under the header (72 / 80 px, the /achievements twin's
+          64 / 80 px), not a second margin stacked on it (P-04). */}
+      <div ref={barRef} className="sticky top-0 z-content border-b border-line [border-image:linear-gradient(100deg,var(--sheen-steel))_1] contrast-more:[border-image:none] bg-ground pt-[var(--nav-clear)]">
         <div className="journal-grid">
           <div className="col-[content-start/content-end] flex flex-wrap items-center gap-3 py-3">
             {/* Fixed width at md+: the clear button takes room from the input instead of pushing the row. */}
@@ -118,7 +121,10 @@ export function ProjectArchiveView({ media }: ProjectArchiveViewProps) {
                   id={typeId}
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="text-ui h-11 w-full max-w-full cursor-pointer appearance-none truncate rounded-control border border-line-strong bg-surface-2 pl-3 pr-10 font-body text-ink transition-[border-color] duration-hover hover:border-ink-muted focus-visible:border-signal focus-visible:outline-offset-0 md:w-auto md:max-w-[16rem]"
+                  className={cn(
+                    'text-ui h-11 w-full max-w-full cursor-pointer appearance-none truncate rounded-control border pl-3 pr-10 font-body text-ink transition-[border-color] duration-hover hover:border-ink-muted focus-visible:border-focus-ring focus-visible:outline-offset-0 md:w-auto md:max-w-[16rem]',
+                    filterType !== 'All' ? 'border-action-line bg-action-soft' : 'border-line-strong bg-surface-2',
+                  )}
                 >
                   {ALL_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -147,7 +153,7 @@ export function ProjectArchiveView({ media }: ProjectArchiveViewProps) {
             <p
               role="status"
               aria-live="polite"
-              className="text-caption m-0 w-full font-data text-ink-muted [font-variant-numeric:tabular-nums_slashed-zero] md:ml-auto md:w-auto"
+              className="text-caption m-0 w-full font-data text-ink-muted [font-variant-numeric:tabular-nums_slashed-zero] md:ml-auto md:me-[max(0px,calc(var(--chat-clearance)_-_var(--margin)))] md:w-auto"
             >
               {buildCountLabel(filteredProjects.length)}
             </p>

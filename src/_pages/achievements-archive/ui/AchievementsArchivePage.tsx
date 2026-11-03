@@ -27,7 +27,8 @@ export function AchievementsArchivePage() {
   const wins = ACHIEVEMENTS.filter((item) => isTopRank(item.rank)).length;
 
   return (
-    <div className="pb-32 pt-24 md:pt-28">
+    // No bottom padding: the footer's seam is the one gap after the register (P-02, SYS-4).
+    <div className="pt-24 md:pt-28">
       <header className="journal-grid">
         <div className="col-[content-start/content-end] lg:col-[2/span_3] lg:row-start-1">
           <BackButton />

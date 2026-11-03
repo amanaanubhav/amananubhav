@@ -30,7 +30,7 @@ export function ProfessionalHero() {
     {
       key: 'status',
       value: availability?.openToRemote ? (
-        <StatusChip tone="success" href={HERO_COPY.log.statusHref}>
+        <StatusChip tone="live" href={HERO_COPY.log.statusHref}>
           {HERO_COPY.log.status}
         </StatusChip>
       ) : undefined,
@@ -42,7 +42,7 @@ export function ProfessionalHero() {
 
   return (
     <section aria-labelledby={TITLE_ID} className="journal-grid pt-28 lg:pt-24">
-      <div className="col-[content-start/content-end] lg:col-[5/span_9] lg:pr-24">
+      <div className="col-[content-start/content-end] lg:col-[5/span_9]">
         <ChapterHeader
           as="h1"
           id={TITLE_ID}
@@ -70,8 +70,8 @@ export function ProfessionalHero() {
         <p className="m-0 mt-8 max-w-measure font-body text-body text-ink [text-wrap:pretty]">{HERO_COPY.more}</p>
       </div>
 
-      {/* Plate 1 stops 96 px short of the window edge from 1024 px, clear of the waypoint rail (§J.3). */}
-      <div className="col-[content-start/content-end] mt-12 lg:col-[5/span_9] lg:row-start-3 lg:mt-16 lg:pr-24 xl:col-[10/span_4] xl:row-start-2 xl:mt-10 xl:pr-[calc(96px_-_var(--margin))]">
+      {/* Plate 1 ends at content-end, which the journal grid keeps `--rail-reserve` clear of the waypoint rail. */}
+      <div className="col-[content-start/content-end] mt-12 lg:col-[5/span_9] lg:row-start-3 lg:mt-16 xl:col-[10/span_4] xl:row-start-2 xl:mt-10">
         <BlueprintFigure
           id="M-PRO-AGENT-01"
           breakpoints="hero"
@@ -87,10 +87,10 @@ export function ProfessionalHero() {
 
       <ul
         aria-label={HERO_COPY.proofLabel}
-        className="col-[content-start/content-end] m-0 mt-16 grid list-none gap-10 p-0 lg:col-[5/span_9] lg:row-start-4 lg:mt-24 lg:grid-cols-3 lg:gap-6 lg:pr-24 xl:row-start-3"
+        className="col-[content-start/content-end] m-0 mt-16 grid list-none gap-10 p-0 lg:col-[5/span_9] lg:row-start-4 lg:mt-24 lg:grid-cols-3 lg:gap-6 xl:row-start-3"
       >
         {PROOF_POINTS.map((point) => (
-          <li key={point.id} className="border-t border-line-strong pt-4">
+          <li key={point.id} className="rule-steel border-t border-line-strong pt-4">
             <p className="m-0 font-body text-body text-ink [text-wrap:pretty]">
               <strong className="mb-2 block font-display text-title font-semibold text-ink">{point.title}</strong>
               <RichLine parts={point.body} />

@@ -20,7 +20,7 @@ export function TechStackSection() {
   const total = groups.reduce((sum, group) => sum + group.count, 0);
 
   return (
-    <section id="techstack" aria-labelledby={TITLE_ID} className="journal-grid mt-32 lg:mt-48">
+    <section id="techstack" aria-labelledby={TITLE_ID} className="journal-grid mt-section">
       <div className="col-[content-start/content-end] lg:col-[5/span_5]">
         <ChapterHeader as="h2" id={TITLE_ID}>
           {STACK_COPY.title}
@@ -37,11 +37,11 @@ export function TechStackSection() {
         />
       </div>
 
-      <div className="col-[content-start/content-end] mt-10 grid gap-x-10 gap-y-12 md:grid-cols-2 lg:col-[5/span_9] lg:row-start-2 lg:mt-12 lg:pr-24">
+      <div className="col-[content-start/content-end] mt-10 grid gap-x-10 gap-y-12 md:grid-cols-2 lg:col-[5/span_9] lg:row-start-2 lg:mt-12">
         {groups.map((group) => {
           const headingId = `stack-${group.key}`;
           return (
-            <section key={group.key} aria-labelledby={headingId} className="min-w-0 border-t border-line-strong pt-4">
+            <section key={group.key} aria-labelledby={headingId} className="rule-titanium min-w-0 border-t border-line-strong pt-4">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <ChapterHeader as="h3" id={headingId}>
                   {group.label}

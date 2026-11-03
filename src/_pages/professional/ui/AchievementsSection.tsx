@@ -19,7 +19,7 @@ const TITLE_ID = 'achievements-title';
 export function AchievementsSection({ items }: { items: readonly Achievement[] }) {
   if (items.length === 0) return null;
   return (
-    <section id="achievements" aria-labelledby={TITLE_ID} className="journal-grid mt-32 pb-32 lg:mt-48 lg:pb-48">
+    <section id="achievements" aria-labelledby={TITLE_ID} className="journal-grid mt-section">
       <div className="col-[content-start/content-end] lg:col-[5/span_5]">
         <ChapterHeader as="h2" id={TITLE_ID}>
           {HONORS_COPY.title}
@@ -28,12 +28,12 @@ export function AchievementsSection({ items }: { items: readonly Achievement[] }
 
       <ol
         aria-label={HONORS_COPY.listLabel}
-        className="col-[content-start/content-end] m-0 mt-10 flex list-none flex-col p-0 lg:col-[2/span_11] lg:mt-14 lg:pr-24"
+        className="col-[content-start/content-end] m-0 mt-10 flex list-none flex-col p-0 lg:col-[2/span_11] lg:mt-14"
       >
         {items.map((item, index) => {
           const headingId = `honor-${index}`;
           return (
-            <li key={item.title} className="border-t border-line-strong last:border-b">
+            <li key={item.title} className="border-t border-line last:border-b">
               <article
                 aria-labelledby={headingId}
                 className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 py-5 lg:grid-cols-11 lg:gap-x-[var(--gutter)]"
@@ -53,7 +53,7 @@ export function AchievementsSection({ items }: { items: readonly Achievement[] }
                 </div>
                 {item.rank ? (
                   <div className="col-start-2 row-start-2 self-start justify-self-end pt-1 lg:col-[10/span_2] lg:row-start-1 lg:justify-self-start">
-                    <Stamp tone={isWinningRank(item.rank) ? 'signal' : 'ink'}>{item.rank}</Stamp>
+                    <Stamp tone={isWinningRank(item.rank) ? 'signal' : 'placed'}>{item.rank}</Stamp>
                   </div>
                 ) : null}
               </article>

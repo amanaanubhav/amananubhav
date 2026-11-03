@@ -109,7 +109,7 @@ const NOTES = {
 
 /**
  * G-05b: the DIVERT corridor (animated). A street grid; the vehicle marker drives the route while the signals
- * ahead of it turn from ink to signal in sequence, and the route bends into a diversion of about 800 m around a
+ * ahead of it clear to the action colour in sequence, and the route bends into a diversion of about 800 m around a
  * congested block. Plays once (about 3.2 s) when 30% is in view, rests on its final frame, and a Play button replays
  * it; the button appears only after that first play. Server markup and reduced motion show the final frame and the
  * button; already in view at mount, it does not auto-play.
@@ -235,7 +235,7 @@ export function DivertCorridor({ className, variant = 'landscape' }: BlueprintPr
           <path
             ref={routeRef}
             d={FULL_D}
-            className="route-line stroke-signal-line"
+            className="route-line stroke-accent-2"
             fill="none"
             strokeWidth={2}
             vectorEffect="non-scaling-stroke"
@@ -250,7 +250,7 @@ export function DivertCorridor({ className, variant = 'landscape' }: BlueprintPr
                 cx={signal.x}
                 cy={signal.y}
                 r={11}
-                className="fill-ground stroke-ink"
+                className="fill-[var(--plate-field)] stroke-accent-2"
                 strokeWidth={1.25}
                 vectorEffect="non-scaling-stroke"
               />
@@ -261,15 +261,15 @@ export function DivertCorridor({ className, variant = 'landscape' }: BlueprintPr
                 cx={signal.x}
                 cy={signal.y}
                 r={7}
-                className="signal-mark fill-signal-line transition-opacity duration-ui ease-settle"
+                className="signal-mark fill-action transition-opacity duration-ui ease-settle"
               />
             </g>
           ))}
 
           {/* The vehicle marker. */}
           <g ref={vehicleRef} transform={`translate(${FINAL.x} ${FINAL.y}) rotate(${FINAL.angle})`}>
-            <rect x={-18} y={-11} width={36} height={22} rx={4} className="signal-mark fill-signal-line stroke-ground" strokeWidth={2} vectorEffect="non-scaling-stroke" />
-            <path d="M8 -6V6" className="stroke-ground" strokeWidth={2} vectorEffect="non-scaling-stroke" />
+            <rect x={-18} y={-11} width={36} height={22} rx={4} className="signal-mark fill-action stroke-[var(--plate-field)]" strokeWidth={2} vectorEffect="non-scaling-stroke" />
+            <path d="M8 -6V6" className="stroke-[var(--plate-field)]" strokeWidth={2} vectorEffect="non-scaling-stroke" />
           </g>
         </g>
 
@@ -293,7 +293,7 @@ export function DivertCorridor({ className, variant = 'landscape' }: BlueprintPr
               if (!playing) playRef.current?.();
             }}
             aria-disabled={playing || undefined}
-            className="bg-ground px-3 sm:px-4"
+            className="bg-surface px-3 sm:px-4"
           >
             Play
             <VisuallyHidden> the DIVERT corridor</VisuallyHidden>

@@ -111,7 +111,7 @@ function LedgerRow({ project, media }: { project: Project; media?: ReactNode }) 
       )}
     >
       <td role="cell" className={cn(CELL, ENTRY_AND_WIDE, 'max-md:row-span-2')}>
-        <span aria-hidden="true" className="inline-flex size-12 items-center justify-center text-ink">
+        <span aria-hidden="true" className="inline-flex size-12 items-center justify-center text-line-strong">
           <Glyph aria-hidden="true" focusable="false" className="size-12" strokeWidth={PROJECT_GLYPH_STROKE} />
         </span>
       </td>
@@ -134,7 +134,7 @@ function LedgerRow({ project, media }: { project: Project; media?: ReactNode }) 
         </span>
         {project.tag || hasLinks ? (
           <span className="mt-2 hidden flex-col items-start gap-2 md:flex xl:hidden">
-            {project.tag ? <ArchiveTag>{project.tag}</ArchiveTag> : null}
+            {project.tag ? <ArchiveTag tone={project.tag === 'Research' ? 'violet' : 'ink'}>{project.tag}</ArchiveTag> : null}
             <ProjectLinks project={project} />
           </span>
         ) : null}
@@ -150,7 +150,7 @@ function LedgerRow({ project, media }: { project: Project; media?: ReactNode }) 
       </td>
 
       <td role="cell" data-label={ARCHIVE_COPY.columns.tag} className={cn(CELL, ENTRY_AND_WIDE, ENTRY_LABEL_INLINE, 'max-md:col-span-2 xl:pt-[1.5rem]')}>
-        {project.tag ? <ArchiveTag>{project.tag}</ArchiveTag> : null}
+        {project.tag ? <ArchiveTag tone={project.tag === 'Research' ? 'violet' : 'ink'}>{project.tag}</ArchiveTag> : null}
       </td>
 
       <td role="cell" data-label={ARCHIVE_COPY.columns.links} className={cn(CELL, ENTRY_AND_WIDE, ENTRY_LABEL_BLOCK, 'max-md:col-span-2 xl:pr-0 xl:pt-[1.375rem]')}>

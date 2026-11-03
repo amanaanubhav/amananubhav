@@ -24,7 +24,7 @@ const FULL = 'col-[content-start/content-end]';
 
 function RegisterEntry({ item, plate }: { item: Achievement; plate?: ReactNode }) {
   return (
-    <li className="journal-grid pb-10">
+    <li className="journal-grid pb-10 last:pb-0">
       <div aria-hidden="true" className={`${FULL} h-px bg-line lg:col-[2/span_11]`} />
 
       <div className={`${FULL} pt-8 lg:col-[5/span_5] lg:row-start-2`}>
@@ -34,7 +34,7 @@ function RegisterEntry({ item, plate }: { item: Achievement; plate?: ReactNode }
           </h3>
           {item.rank ? (
             <span className="shrink-0 pt-1">
-              <Stamp rotate tone={isTopRank(item.rank) ? 'signal' : 'ink'}>
+              <Stamp rotate tone={isTopRank(item.rank) ? 'signal' : 'placed'}>
                 {item.rank}
               </Stamp>
             </span>

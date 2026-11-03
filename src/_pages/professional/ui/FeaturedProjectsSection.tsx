@@ -17,7 +17,7 @@ import { StackList } from './StackList';
 const TITLE_ID = 'projects-title';
 
 const LINK_CLASSES =
-  'inline-flex min-h-6 items-center rounded-control text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2';
+  'inline-flex min-h-6 items-center rounded-control text-link-ink underline decoration-link-underline decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2 hover:decoration-action focus-visible:decoration-action';
 
 function ProjectLinks({ project }: { project: Project }) {
   const links = project.links ?? [];
@@ -83,8 +83,8 @@ function ProjectSpread({ project }: { project: Project }) {
     <Spread
       as="article"
       labelledBy={headingId}
-      // §G.3: each spread is about 90svh tall on desktop; content stays top-aligned (Spread's 1fr row takes the rest).
-      className="mt-24 lg:mt-32 lg:min-h-[90svh]"
+      // Spreads are blocks of #projects (SYS-4): sized by their content, no viewport-tall empty tail (P-11).
+      className="mt-block"
       plateSpan="bleed"
       heading={
         <ChapterHeader as="h3" size="h3" id={headingId} srPrefix={`${project.title}: `}>
@@ -93,9 +93,9 @@ function ProjectSpread({ project }: { project: Project }) {
       }
       log={<Log items={log} />}
       plate={
-        // From 1024 px the plate column stops short of the window edge, where the waypoint rail and its active
-        // label live: 96 px (§J.3), and 128 px from 1280 px so the label clears the diagram's text too.
-        <div className="flex flex-col gap-6 px-4 md:px-8 lg:pl-0 lg:pr-24 xl:pr-32">
+        // A bleed plate runs past content-end; from 1024 px the drawing (its labels are text) still stops at
+        // content-end, the grid's `--margin-end` (the rail reserve on rail pages), so nothing runs under the rail.
+        <div className="flex flex-col gap-6 px-4 md:px-8 lg:pl-0 lg:pr-[var(--margin-end)]">
           <BlueprintPlate project={project} />
           {project.id === 'divert' ? (
             <MediaSlot id="M-NOTEBOOK-02" layout="inset" sizes="280px" className="max-w-[280px]" />
@@ -135,7 +135,7 @@ function ProjectSpread({ project }: { project: Project }) {
  */
 export function FeaturedProjectsSection({ projects }: { projects: readonly Project[] }) {
   return (
-    <section id="projects" aria-labelledby={TITLE_ID} className="mt-32 lg:mt-48">
+    <section id="projects" aria-labelledby={TITLE_ID} className="mt-section">
       <div className="journal-grid">
         <div className="col-[content-start/content-end] lg:col-[5/span_5]">
           <ChapterHeader as="h2" id={TITLE_ID}>
@@ -148,7 +148,7 @@ export function FeaturedProjectsSection({ projects }: { projects: readonly Proje
         <ProjectSpread key={project.id} project={project} />
       ))}
 
-      <div className="journal-grid mt-16 lg:mt-24">
+      <div className="journal-grid mt-block">
         <div className="col-[content-start/content-end] lg:col-[5/span_5]">
           <Button variant="text" href={ROUTES.projectArchive} icon={ArrowRight} iconPosition="end" className="whitespace-normal text-left">
             {PROJECTS_COPY.archiveLink}

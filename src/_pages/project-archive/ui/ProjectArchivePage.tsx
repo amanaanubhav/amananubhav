@@ -23,7 +23,8 @@ export function ProjectArchivePage() {
   const since = earliestProjectYear(PROJECTS);
 
   return (
-    <div className="pb-32 pt-24 md:pt-28">
+    // No bottom padding: the footer's seam is the one gap after the ledger (P-02, SYS-4).
+    <div className="pt-24 md:pt-28">
       <header className="journal-grid">
         <div className="col-[content-start/content-end] lg:col-[2/span_3] lg:row-start-1">
           <BackButton />

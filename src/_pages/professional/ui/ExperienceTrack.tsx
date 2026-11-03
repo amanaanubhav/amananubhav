@@ -7,8 +7,8 @@ import { gsap, useGSAP } from '@/shared/lib/gsap';
 import { useMotionAllowed } from '@/shared/lib/motion-tier';
 
 /**
- * The logbook spine (§G.3 #experience): a 1 px line-strong spine down the timeline that fills in ink with scroll
- * (scaleY, scrubbed, linear), and a signal tick on the spine at the entry nearest the viewport centre (it moves in
+ * The logbook spine (§G.3 #experience): a 1 px steel spine down the timeline that fills in action-line with scroll
+ * (scaleY, scrubbed, linear), and an action tick on the spine at the entry nearest the viewport centre (it moves in
  * 280 ms; CSS makes it jump under reduced motion). Entries never fade in. The spine sits just left of the text
  * column at >= 1024 px (between content columns 3 and 4) and at the left edge below that.
  * Children: the server-rendered `<ol>`; each entry carries `data-entry`, and its `[data-entry-mark]` sets the tick's height.
@@ -103,14 +103,14 @@ export function ExperienceTrack({ children }: { children: ReactNode }) {
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 left-0 w-px lg:left-[calc((100%_-_11_*_var(--gutter))_*_3_/_12_+_2.5_*_var(--gutter))]"
       >
-        <div className="absolute inset-0 bg-line-strong" />
+        <div className="absolute inset-0 spine-steel" />
         <div
           ref={fillRef}
-          className="absolute inset-y-0 left-[-0.5px] w-[2px] origin-top bg-ink forced-colors:bg-[CanvasText]"
+          className="absolute inset-y-0 left-[-0.5px] w-[2px] origin-top bg-action-line forced-colors:bg-[CanvasText]"
         />
         <div
           ref={tickRef}
-          className="signal-mark absolute -left-[7px] top-0 h-0.5 w-[15px] bg-signal-line opacity-0 transition-[transform,opacity] duration-ui ease-settle forced-colors:bg-[Highlight]"
+          className="signal-mark absolute -left-[7px] top-0 h-0.5 w-[15px] bg-action opacity-0 transition-[transform,opacity] duration-ui ease-settle forced-colors:bg-[Highlight]"
         />
       </div>
       {children}

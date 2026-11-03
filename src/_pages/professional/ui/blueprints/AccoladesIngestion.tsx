@@ -13,7 +13,7 @@ const RECORDS_PORTRAIT: readonly number[] = [90, 170, 250];
 function Record({ y }: { y: number }) {
   return (
     <g>
-      <rect x={60} y={y} width={140} height={56} rx={4} className="fill-ground" />
+      <rect x={60} y={y} width={140} height={56} rx={4} className="fill-accent-2-soft" />
       <Line
         d={`M64 ${y}H196Q200 ${y} 200 ${y + 4}V${y + 52}Q200 ${y + 56} 196 ${y + 56}H64Q60 ${y + 56} 60 ${y + 52}V${y + 4}Q60 ${y} 64 ${y}Z`}
         pass="node"
@@ -44,8 +44,8 @@ function Landscape() {
 
       {/* The gate: the unique constraint. */}
       <g>
-        <rect x={872} y={120} width={16} height={84} className="fill-ground" />
-        <rect x={872} y={236} width={16} height={84} className="fill-ground" />
+        <rect x={872} y={120} width={16} height={84} className="fill-[var(--plate-field)]" />
+        <rect x={872} y={236} width={16} height={84} className="fill-[var(--plate-field)]" />
         <Line d="M872 120H888V204H872ZM872 236H888V320H872Z" pass="node" />
         <Label x={880} y={100}>
           unique
@@ -104,8 +104,8 @@ function Portrait() {
 
       {/* The gate: the unique constraint, lying across the path, with a gap where one record passes. */}
       <g>
-        <rect x={370} y={552} width={64} height={16} className="fill-ground" />
-        <rect x={466} y={552} width={64} height={16} className="fill-ground" />
+        <rect x={370} y={552} width={64} height={16} className="fill-[var(--plate-field)]" />
+        <rect x={466} y={552} width={64} height={16} className="fill-[var(--plate-field)]" />
         <Line d="M370 552H434V568H370ZM466 552H530V568H466Z" pass="node" />
         <Label x={550} y={570} anchor="start">
           unique

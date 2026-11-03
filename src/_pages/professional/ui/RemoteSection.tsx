@@ -18,8 +18,6 @@ import { SecureContactButton } from './SecureContactButton';
 
 const TITLE_ID = 'remote-title';
 
-/** Standard plates end at the content edge; from 1024 px this keeps them 96 px clear of the window edge (§J.3 rail). */
-const RAIL_RESERVE = 'lg:pr-[calc(96px_-_var(--margin))]';
 const CTA_ID = 'remote-cta-title';
 
 /** A numbered or ticked row: the marker in the log column (cols 1-3), the text in cols 4-8. */
@@ -77,7 +75,7 @@ export function RemoteSection() {
   ];
 
   return (
-    <section id="remote" aria-labelledby={TITLE_ID} className="mt-32 lg:mt-48">
+    <section id="remote" aria-labelledby={TITLE_ID} className="mt-section">
       {/* 1. Spread A. */}
       <Spread
         as="div"
@@ -87,11 +85,8 @@ export function RemoteSection() {
           </ChapterHeader>
         }
         log={<Log items={log} label={REMOTE_COPY.logLabel} />}
-        plate={
-          <div className={RAIL_RESERVE}>
-            <MediaSlot id="M-HOW-01" reveal="none" />
-          </div>
-        }
+        // Standard plates end at content-end, which the journal grid keeps `--rail-reserve` clear of the rail.
+        plate={<MediaSlot id="M-HOW-01" reveal="none" />}
       >
         <div className="flex max-w-measure flex-col gap-4 font-body text-body text-ink">
           {REMOTE_COPY.paragraphs.map((paragraph) => (
@@ -102,24 +97,23 @@ export function RemoteSection() {
         </div>
       </Spread>
 
-      {/* 2. Overlap band (Q-20: no overlap claim until a window is set). */}
-      <div className="journal-grid mt-16 lg:mt-24">
-        <div className="col-[content-start/content-end] lg:col-[2/span_11] lg:pr-24">
-          <OverlapBand workWindowIST={availability?.workWindowIST} caption={getMedia('M-HOW-02').alt} />
+      {/* 2. Overlap band (Q-20, P-03): mounted only once a working window is set, never as "to be confirmed" lanes. */}
+      {availability?.workWindowIST ? (
+        <div className="journal-grid mt-block">
+          <div className="col-[content-start/content-end] lg:col-[2/span_11]">
+            <OverlapBand workWindowIST={availability.workWindowIST} caption={getMedia('M-HOW-02').alt} />
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* 3. The ledger. */}
       <Spread
         as="div"
-        className="mt-24 lg:mt-32"
+        className="mt-block"
         heading={<SubHeading>{proof.title}</SubHeading>}
         log={<Log items={proof.log.map((row) => ({ ...row, mono: row.key === 'where' ? false : undefined }))} />}
-        plate={
-          <div className={RAIL_RESERVE}>
-            <MediaSlot id="M-PRO-BRNDO-01" reveal="none" />
-          </div>
-        }
+        // Passed bare so Spread's `empty:hidden` plate cell collapses while the slot renders nothing.
+        plate={<MediaSlot id="M-PRO-BRNDO-01" reveal="none" />}
       >
         <p className="m-0 max-w-measure font-body text-body text-ink [text-wrap:pretty]">{proof.lead}</p>
         <table className="mt-8 w-full border-collapse text-left">
@@ -132,7 +126,7 @@ export function RemoteSection() {
           </thead>
           <tbody>
             {proof.rows.map((row) => (
-              <tr key={row.stat} className="border-t border-line-strong last:border-b">
+              <tr key={row.stat} className="border-t border-line last:border-b">
                 <th
                   scope="row"
                   className="w-[38%] py-3 pr-4 align-top font-data text-ui font-medium text-ink [font-variant-numeric:tabular-nums_slashed-zero] sm:w-[34%]"
@@ -148,7 +142,7 @@ export function RemoteSection() {
       </Spread>
 
       {/* 4. What a remote team gets. */}
-      <div className="journal-grid mt-24 lg:mt-32">
+      <div className="journal-grid mt-block">
         <div className="col-[content-start/content-end] lg:col-[5/span_5]">
           <SubHeading>{values.title}</SubHeading>
         </div>
@@ -173,7 +167,7 @@ export function RemoteSection() {
 
       {/* 5. The checklist: omitted while no line is confirmed (Q-23). */}
       {checklist.length > 0 ? (
-        <div className="journal-grid mt-24 lg:mt-32">
+        <div className="journal-grid mt-block">
           <div className="col-[content-start/content-end] lg:col-[5/span_5]">
             <SubHeading>{REMOTE_COPY.checklist.title}</SubHeading>
           </div>
@@ -191,7 +185,7 @@ export function RemoteSection() {
       ) : null}
 
       {/* 6. What I'm looking for, then the ask. */}
-      <div className="journal-grid mt-24 lg:mt-32">
+      <div className="journal-grid mt-block">
         <div className="col-[content-start/content-end] lg:col-[5/span_5]">
           <SubHeading>{fit.title}</SubHeading>
           <dl className="m-0 mt-6 flex flex-col">
@@ -202,7 +196,7 @@ export function RemoteSection() {
                   key={row.key}
                   className="grid gap-1 border-t border-line py-3 first:border-t-0 first:pt-0 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-4"
                 >
-                  <dt className="font-body text-caption italic text-ink-muted sm:pt-1">{row.key}</dt>
+                  <dt className="font-body text-caption italic text-accent-2 sm:pt-1">{row.key}</dt>
                   <dd className="m-0 font-body text-body text-ink [text-wrap:pretty]">{row.value}</dd>
                 </div>
               ))}
@@ -210,7 +204,8 @@ export function RemoteSection() {
         </div>
       </div>
 
-      <section aria-labelledby={CTA_ID} className="journal-grid pb-32 pt-24">
+      {/* The ask closes the section: a block apart from the fit list, no bottom padding (P-01, SYS-4). */}
+      <section aria-labelledby={CTA_ID} className="journal-grid mt-block">
         <div className="col-[content-start/content-end] lg:col-[5/span_6]">
           <ChapterHeader as="h2" id={CTA_ID} reveal="none">
             {cta.title}

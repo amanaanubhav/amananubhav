@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { cn } from '@/shared/lib/cn';
 
 /*
- * The G-05 stroke system (§F): one sheet per blueprint; boxes with a small radius and 1.25 px ink strokes; labels
- * in Plex Mono, notes in Literata italic; the request path in `signal-line` at 2 px with arrowheads (the route pact,
- * §B.1 rule 2). Every stroke is non-scaling, so line weights hold at any plate size. Colors come only from Tailwind
+ * The G-05 stroke system (§F): one sheet per blueprint; violet nodes (accent-2-soft, 1.25 px accent-2 edges) on a cyanotype field (.plate-cyanotype); labels
+ * in Plex Mono, notes in Literata italic; the request path in `accent-2` at 2 px with arrowheads (a flow is structure;
+ * oxblood stays the trek route, PALETTE-SPEC §11). Every stroke is non-scaling, so line weights hold at any plate size. Colors come only from Tailwind
  * theme roles and CSS variables, never hex.
  *
  * Two layouts per blueprint: `landscape` (1200 × 900, 4:3) where the plate is wide, and `portrait` (840 × 1120,
@@ -66,7 +66,7 @@ export function Sheet({ id, title, desc, variant = 'landscape', className, defs,
       role="img"
       aria-labelledby={`${id}-title`}
       aria-describedby={`${id}-desc`}
-      className={cn('block h-full w-full select-none', className)}
+      className={cn('plate-cyanotype block h-full w-full select-none', className)}
       preserveAspectRatio="xMidYMid meet"
     >
       <title id={`${id}-title`}>{title}</title>
@@ -98,7 +98,7 @@ function CornerTicks({ width, height }: { width: number; height: number }) {
         <path
           key={`${x}-${y}`}
           d={`M${x - 14} ${y}H${x + 14}M${x} ${y - 14}V${y + 14}`}
-          className="stroke-line-strong"
+          className="stroke-aqua-line"
           {...STROKE}
           strokeWidth={1}
           data-draw=""
@@ -131,7 +131,7 @@ export function Box({ x, y, w = 200, h = 100, label, sub, dashed = false, hatch,
   const cy = y + h / 2;
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx={6} className="fill-ground" />
+      <rect x={x} y={y} width={w} height={h} rx={6} className="fill-accent-2-soft" />
       {hatch ? <rect x={x} y={y} width={w} height={h} rx={6} fill={`url(#${hatch})`} /> : null}
       <rect
         x={x}
@@ -139,7 +139,7 @@ export function Box({ x, y, w = 200, h = 100, label, sub, dashed = false, hatch,
         width={w}
         height={h}
         rx={6}
-        className="stroke-ink"
+        className="stroke-accent-2"
         {...STROKE}
         strokeDasharray={dashed ? '8 6' : undefined}
         data-draw=""
@@ -209,7 +209,7 @@ export function Edge({ d, tips = [], dashed = false, pass = 'frame' }: EdgeProps
     <g>
       <path
         d={d}
-        className="stroke-ink"
+        className={dashed ? 'stroke-accent-2-line' : 'stroke-ink'}
         {...STROKE}
         strokeDasharray={dashed ? '10 8' : undefined}
         strokeLinecap="round"
@@ -220,7 +220,7 @@ export function Edge({ d, tips = [], dashed = false, pass = 'frame' }: EdgeProps
       {tips.length > 0 ? (
         <path
           d={tips.map(([x, y, dir]) => arrowHead(x, y, dir, 16)).join('')}
-          className="fill-ink"
+          className={dashed ? 'fill-accent-2-line' : 'fill-ink'}
           data-draw-label=""
           data-pass={pass}
         />
@@ -229,13 +229,13 @@ export function Edge({ d, tips = [], dashed = false, pass = 'frame' }: EdgeProps
   );
 }
 
-/** The request path: 2 px `signal-line`, round caps, with arrowheads. Nothing else on a plate uses this color. */
+/** The request path: 2 px `accent-2` (violet, structure), round caps, with arrowheads. */
 export function SignalPath({ d, tips = [] }: { d: string; tips?: readonly Tip[] }) {
   return (
     <g>
       <path
         d={d}
-        className="route-line stroke-signal-line"
+        className="route-line stroke-accent-2"
         fill="none"
         strokeWidth={2}
         vectorEffect="non-scaling-stroke"
@@ -247,7 +247,7 @@ export function SignalPath({ d, tips = [] }: { d: string; tips?: readonly Tip[] 
       {tips.length > 0 ? (
         <path
           d={tips.map(([x, y, dir]) => arrowHead(x, y, dir)).join('')}
-          className="signal-mark fill-signal-line"
+          className="signal-mark fill-accent-2"
           data-draw-label=""
           data-pass="signal"
         />
@@ -277,7 +277,7 @@ export function Note({ x, y, children, anchor = 'start', size = TYPE.note, pass 
       y={y}
       textAnchor={anchor}
       fontSize={size}
-      className={cn('fill-ink-muted font-body italic', halo && 'stroke-ground')}
+      className={cn('fill-ink-muted font-body italic', halo && 'stroke-[var(--plate-field)]')}
       style={halo ? { paintOrder: 'stroke' } : undefined}
       strokeWidth={halo ? 10 : undefined}
       strokeLinejoin={halo ? 'round' : undefined}
