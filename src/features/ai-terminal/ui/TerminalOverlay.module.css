@@ -2,21 +2,22 @@
  * "Ask Aman", the AI terminal (§H.5 redesign): a split dashboard on desktop, a full-height sheet on phones,
  * and the Alpenglow response motion (light crossing a ridge while Aman thinks, words developing out of a
  * soft blur while he writes, the trekker on the summit catching the light once when the reply is complete).
- * Colours come only from the generated token roles (`--c-*` triplets), so a new palette flows in.
+ * Colours come only from the palette tokens (PALETTE-SPEC §4.10: term-*, you-*, the glass and sheen tokens and
+ * the alpha ladder), so a new palette flows in. The panel is the sheet glass (`.glass-chrome glass-sheet`, set in
+ * TSX); every other layer here is solid or a ladder wash on top of it.
  * Everything that moves animates transform, opacity, filter or background-position only.
  */
 
 .overlay {
-  --t-rim: rgb(var(--c-ink) / 0.1);
-  --t-spec: rgb(var(--c-ink) / 0.07);
-  --t-rail: rgb(var(--c-ground) / 0.55);
-  --t-hover: rgb(var(--c-ink) / 0.06);
-  --t-you: rgb(var(--c-water) / 0.13);
-  --t-you-rim: rgb(var(--c-water) / 0.22);
-  --t-field: rgb(var(--c-surface-2));
-  --t-ghost: rgb(var(--c-ink) / 0.07);
-  --t-sheen: rgb(var(--c-ink) / 0.1);
-  --t-scrim: rgb(var(--c-ground-sky) / 0.78);
+  --t-rail: var(--term-rail);
+  --t-hover: var(--hover-wash);
+  --t-press: var(--press-wash);
+  --t-you: var(--you-solid);
+  --t-you-rim: var(--you-rim);
+  --t-field: var(--term-field);
+  --t-ghost: rgb(var(--c-ink) / var(--alpha-hair));
+  --t-sheen: rgb(var(--c-ink) / var(--alpha-faint));
+  --t-scrim: var(--glass-scrim);
   position: fixed;
   inset: 0;
   display: grid;
@@ -25,15 +26,10 @@
   padding: 32px;
 }
 
+/* Day: the ghost-line sheen is paper light, not ink (every other token is theme-aware at :root). */
 :global(:root[data-theme='day']) .overlay {
-  --t-spec: rgb(var(--c-surface) / 0.95);
-  --t-rail: rgb(var(--c-ground) / 0.6);
-  --t-hover: rgb(var(--c-ink) / 0.05);
-  --t-you: rgb(var(--c-water) / 0.09);
-  --t-you-rim: rgb(var(--c-water) / 0.2);
-  --t-field: rgb(var(--c-surface));
-  --t-sheen: rgb(var(--c-surface) / 0.75);
-  --t-scrim: rgb(var(--c-ground) / 0.72);
+  --t-sheen: rgb(var(--c-surface) / var(--alpha-heavy));
+  --t-rail: var(--surface-2);
 }
 
 .scrim {
@@ -42,6 +38,9 @@
   background: var(--t-scrim);
 }
 
+/* The sheet: fill, blur, rim, wet top edge, violet lower-rim refraction, aqua caustic and the glass shadow all come
+   from `.glass-chrome glass-sheet` (globals.css), including its solid fallbacks for no backdrop-filter, reduced
+   transparency, more contrast and forced colors. This rule sets only geometry, so it never fights the material. */
 .panel {
   position: relative;
   display: grid;
@@ -49,11 +48,8 @@
   width: min(1120px, 100%);
   height: min(780px, 100%);
   overflow: hidden;
-  background: rgb(var(--c-surface));
-  color: rgb(var(--c-ink));
-  border: 1px solid var(--t-rim);
+  color: var(--ink);
   border-radius: 20px;
-  box-shadow: inset 0 1px 0 var(--t-spec), var(--shadow-float);
 }
 
 /* ── Header ───────────────────────────────────────────────────────────────────────────── */
@@ -82,9 +78,10 @@
   height: 28px;
   padding: 0 12px 0 10px;
   border-radius: 999px;
-  border: 1px solid rgb(var(--c-line));
+  border: 1px solid rgb(var(--c-warning) / var(--alpha-line));
+  background: var(--warning-soft);
   font: 500 14px/1 var(--font-display), sans-serif;
-  color: rgb(var(--c-ink-muted));
+  color: rgb(var(--c-ink));
   white-space: nowrap;
   animation: fade-in var(--dur-ui) var(--ease-settle) both;
 }
@@ -95,7 +92,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgb(var(--c-warning));
+  background: var(--warning);
 }
 
 .close {
@@ -110,11 +107,14 @@
   background: transparent;
   color: rgb(var(--c-ink));
   cursor: pointer;
-  transition: background-color var(--dur-hover) var(--ease-settle);
+  transition:
+    background-color var(--dur-hover) var(--ease-settle),
+    transform 120ms var(--ease-settle);
 }
 
-.close:hover {
-  background: var(--t-hover);
+.close:active {
+  background: var(--t-press);
+  transform: scale(0.96);
 }
 
 /* ── Body: rail + main ────────────────────────────────────────────────────────────────── */
@@ -134,9 +134,9 @@
   /* The rail scrolls on its own; reaching its end never chains to the page behind. */
   overscroll-behavior: contain;
   background: var(--t-rail);
-  border-right: 1px solid rgb(var(--c-line));
-  scrollbar-width: thin;
-  scrollbar-color: rgb(var(--c-line-strong)) transparent;
+  /* Tone step, not a line: the border box stays, coloured transparent. */
+  border-right: 1px solid transparent;
+  /* Scrollbar colours come from .scroll-pane (thumb, transparent track, hover thumb). */
 }
 
 .railHead {
@@ -180,9 +180,9 @@
   line-height: 1;
 }
 
-.prompt:hover,
-.goto:hover {
-  background: var(--t-hover);
+.prompt:active,
+.goto:active {
+  background: var(--t-press);
 }
 
 .prompt:focus-visible,
@@ -212,17 +212,34 @@
   height: 32px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid rgb(var(--c-line));
-  background: transparent;
+  border: 1px solid var(--accent-2-soft);
+  background: var(--accent-2-soft);
   font: 400 14px/1 var(--font-data), ui-monospace, monospace;
   color: rgb(var(--c-ink));
   cursor: pointer;
-  transition: border-color var(--dur-hover) var(--ease-settle), background-color var(--dur-hover) var(--ease-settle);
+  transition:
+    border-color var(--dur-hover) var(--ease-settle),
+    background-color var(--dur-hover) var(--ease-settle),
+    transform 120ms var(--ease-settle);
 }
 
-.cmd:hover {
-  border-color: rgb(var(--c-line-strong));
-  background: var(--t-hover);
+.cmd:active {
+  border-color: var(--accent-2-line);
+  background: var(--surface-3);
+  transform: scale(0.97);
+}
+
+/* Hover washes only where a pointer can hover (touch would keep a sticky hover after the tap). */
+@media (hover: hover) and (pointer: fine) {
+  .close:hover:not(:active),
+  .prompt:hover:not(:active),
+  .goto:hover:not(:active) {
+    background: var(--t-hover);
+  }
+
+  .cmd:hover:not(:active) {
+    border-color: var(--accent-2-line);
+  }
 }
 
 .gotoNav {
@@ -242,8 +259,6 @@
   padding: 32px 32px 16px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(var(--c-line-strong)) transparent;
 }
 
 .log:focus-visible {
@@ -324,7 +339,12 @@
   border-radius: 14px;
   background: rgb(var(--c-surface-2));
   font: 400 14px/1.4 var(--font-display), sans-serif;
-  color: rgb(var(--c-ink-muted));
+  color: rgb(var(--c-ink));
+}
+
+/* Offline tone: the warning wash (the svg stays warning); the ok tone keeps surface-2. */
+.notice:not([data-tone='ok']) {
+  background: var(--warning-soft);
 }
 
 .notice svg {
@@ -355,7 +375,7 @@
 .cliYou b {
   margin-right: 10px;
   font-weight: 500;
-  color: rgb(var(--c-signal));
+  color: var(--term-prompt); /* the prompt glyph, not running text */
 }
 
 .cliOut {
@@ -448,15 +468,16 @@
   transition: border-color var(--dur-hover) var(--ease-settle);
 }
 
+/* The field carries the input's focus ring (the input itself has none): the site's ring, 2 px action (R0) at 3 px
+   (PALETTE-SPEC §5.3 retired the 0.35-alpha ring, which fell below 3:1). */
 .composer:focus-within {
-  border-color: rgb(var(--c-signal));
-  outline: 2px solid rgb(var(--c-signal) / 0.35);
-  outline-offset: 2px;
+  outline: var(--focus-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
 }
 
 .ps {
   font: 500 16px/1 var(--font-data), ui-monospace, monospace;
-  color: rgb(var(--c-signal));
+  color: var(--term-prompt);
 }
 
 .input {
@@ -469,7 +490,7 @@
   outline: none;
   font: 400 16px/1.4 var(--font-display), sans-serif;
   color: rgb(var(--c-ink));
-  caret-color: rgb(var(--c-signal));
+  caret-color: var(--caret);
 }
 
 .input:focus-visible {
@@ -477,7 +498,7 @@
 }
 
 .input::placeholder {
-  color: rgb(var(--c-ink-muted));
+  color: var(--placeholder);
   opacity: 1;
 }
 
@@ -485,7 +506,9 @@
   font: 400 15px/1.4 var(--font-data), ui-monospace, monospace;
 }
 
-/* Signal fill with the on-signal icon: the fill holds 3:1+ against the field in both themes. */
+/* Action (aquamarine) fill with the on-action icon and the metal gloss (PALETTE-SPEC §11, M6): the fill holds
+   3:1+ against the field in both themes. Hover and press move along the action states (no brightness filter); the
+   press also gives under the finger. */
 .send {
   position: relative;
   display: grid;
@@ -495,14 +518,36 @@
   height: 44px;
   border: 0;
   border-radius: 14px;
-  background: rgb(var(--c-signal));
-  color: rgb(var(--c-on-signal));
+  background: var(--action);
+  color: var(--on-action);
+  box-shadow:
+    inset 0 1px 0 rgb(var(--c-metal-50) / var(--alpha-edge)),
+    inset 0 -1px 0 rgb(var(--c-ground-sky) / var(--alpha-edge));
   cursor: pointer;
-  transition: background-color var(--dur-hover) var(--ease-settle), color var(--dur-hover) var(--ease-settle);
+  transition:
+    background-color var(--dur-hover) var(--ease-settle),
+    color var(--dur-hover) var(--ease-settle),
+    transform 120ms var(--ease-settle);
+}
+
+.send:not([aria-disabled='true']):active {
+  background: var(--action-pressed);
+  transform: scale(0.96);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .send:not([aria-disabled='true']):hover:not(:active) {
+    background: var(--action-hover);
+  }
 }
 
 .send:focus-visible {
   outline-offset: 2px;
+}
+
+/* An action ring would merge with the action fill: the inverse (ink) ring, as on every primary fill. */
+.send:not([aria-disabled='true']):focus-visible {
+  outline-color: var(--focus-ring-inverse);
 }
 
 .send svg {
@@ -579,7 +624,9 @@
     padding: 0;
   }
 
-  .panel {
+  /* A full-height sheet has no edge to light: drop the glass rim and shadows (the fill, blur and caustic stay).
+     `.overlay .panel` outranks `.glass-chrome` whatever order the stylesheets load in. */
+  .overlay .panel {
     width: 100%;
     height: 100%;
     padding-top: env(safe-area-inset-top);
@@ -655,13 +702,35 @@
     border-top: 1px solid rgb(var(--c-line));
   }
 
+  /* A sideways scroller with no scrollbar: the ends fade (O-04) so a chip that runs past the edge reads as "more
+     this way", not as cut. With scroll-driven animations the start fade grows in only once the row has moved and
+     the end fade melts away at the last chip; without them the end alone fades. The block padding keeps the
+     focus ring (2 px at 2 px off) inside the scroller's clip. */
   .chips {
+    --t-fade-start: 0px;
+    --t-fade-end: 28px;
     display: flex;
     gap: 8px;
-    margin: 0 -12px 10px;
-    padding: 2px 12px;
+    margin: 0 -12px 8px;
+    padding: calc(var(--focus-width) + 2px) 12px;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     scrollbar-width: none;
+    /* palette-allow: mask luminance only, never painted */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--t-fade-start), #000 calc(100% - var(--t-fade-end)), transparent);
+    /* palette-allow: mask luminance only, never painted */
+    mask-image: linear-gradient(90deg, transparent, #000 var(--t-fade-start), #000 calc(100% - var(--t-fade-end)), transparent);
+  }
+
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .chips {
+      animation: chip-edges linear both;
+      animation-timeline: scroll(self inline);
+    }
   }
 
   .chip {
@@ -678,7 +747,22 @@
   }
 
   .chip[data-mono] {
+    border-color: var(--accent-2-soft);
+    background: var(--accent-2-soft);
     font: 400 14px/1 var(--font-data), ui-monospace, monospace;
+  }
+
+  .chip,
+  .pill {
+    transition:
+      background-color var(--dur-hover) var(--ease-settle),
+      transform 120ms var(--ease-settle);
+  }
+
+  .chip:active,
+  .pill:active {
+    background: var(--t-press);
+    transform: scale(0.97);
   }
 
   .composer {
@@ -710,15 +794,8 @@
   inset: 0;
   -webkit-mask: var(--ag-mask) center / 100% 100% no-repeat;
   mask: var(--ag-mask) center / 100% 100% no-repeat;
-  background: linear-gradient(
-      90deg,
-      rgb(var(--c-line-strong)) 0 32%,
-      rgb(var(--c-water)) 41%,
-      rgb(var(--c-signal)) 47% 53%,
-      rgb(var(--c-water)) 59%,
-      rgb(var(--c-line-strong)) 68% 100%
-    )
-    100% 0 / 300% 100% no-repeat;
+  /* gradient-alpenglow: pewter at rest, violet (accent-2) edges, a dull red (signal) core */
+  background: linear-gradient(90deg, var(--gradient-alpenglow)) 100% 0 / 300% 100% no-repeat;
 }
 
 /* The trekker on the summit: steel like the resting ridge; lit (signal) at rest on `lit` marks, and lit once,
@@ -734,7 +811,8 @@
 
 .lit > .trekker,
 [data-ag='done'] .trekker {
-  color: rgb(var(--c-signal));
+  /* palette-allow: trekker is an SVG graphic drawn in currentColor; bronze is graphics only */
+  color: var(--bronze);
 }
 
 [data-ag='thinking'] .ridge,
@@ -754,8 +832,9 @@
   animation: ag-summit 900ms var(--ease-settle) both;
 }
 
-/* "Thinking": the same light crosses the word 300 ms later, as if it left the ridge. Every frame sits
-   between ink-muted and ink, so the label holds 4.5:1 throughout. */
+/* "Thinking": the same light crosses the word 300 ms later, as if it left the ridge. The site's one gradient
+   on text (sheen-label, PALETTE-SPEC §5.5): every frame sits between ink-muted and ink, so the label holds 4.5:1
+   throughout. Its members keep the narrow 38-62% band (the token's own stops are 0 / 50 / 100). */
 .thinking {
   display: grid;
   gap: 14px;
@@ -775,9 +854,9 @@
   .label {
     background: linear-gradient(
         90deg,
-        rgb(var(--c-ink-muted)) 0 38%,
-        rgb(var(--c-ink)) 50%,
-        rgb(var(--c-ink-muted)) 62% 100%
+        var(--sheen-label-1) 0 38%,
+        var(--sheen-label-2) 50%,
+        var(--sheen-label-3) 62% 100%
       )
       100% 0 / 300% 100%;
     -webkit-background-clip: text;
@@ -856,7 +935,7 @@
   margin-left: 3px;
   vertical-align: -0.17em;
   border-radius: 1px;
-  background: linear-gradient(180deg, rgb(var(--c-signal)), rgb(var(--c-water)));
+  background: linear-gradient(180deg, var(--gradient-caret)); /* signal into the violet tail */
   animation: ag-breathe 1.2s var(--ease-breath) 500ms infinite alternate;
 }
 
@@ -870,7 +949,8 @@
   margin: -22px 0 0 -22px;
   border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(closest-side, rgb(var(--c-signal) / 0.26), rgb(var(--c-water) / 0.1) 55%, transparent);
+  /* the lantern: the approved term-lantern light, a violet ring (accent-2-wash), then nothing */
+  background: radial-gradient(closest-side, var(--term-lantern), var(--accent-2-wash) 55%, transparent);
   animation: ag-lantern 2.4s var(--ease-breath) 500ms infinite alternate both;
 }
 
@@ -890,7 +970,7 @@
   height: 1.1em;
   margin-left: 2px;
   vertical-align: -0.2em;
-  background: rgb(var(--c-signal));
+  background: var(--term-cursor);
 }
 
 [data-ag='offline-wait'] .block {
@@ -971,18 +1051,55 @@
   }
 }
 
-/* Alpenglow on the trekker (filter only): from steel grey to the signal color, a soft glow that blooms and fades. */
+/* Alpenglow on the trekker (filter and transform only): from steel grey into the signal colour, catching the
+   light with a brief lift and brightening. No glow: the palette allows offset shadows only (R12). */
 @keyframes ag-summit {
   0% {
-    filter: grayscale(1) brightness(0.8) drop-shadow(0 0 0 rgb(var(--c-signal) / 0));
+    filter: grayscale(1) brightness(0.8);
+    transform: translateY(0);
   }
 
   40% {
-    filter: grayscale(0) brightness(1.08) drop-shadow(0 0 2.5px rgb(var(--c-signal) / 0.75));
+    filter: grayscale(0) brightness(1.15);
+    transform: translateY(-4%);
   }
 
   100% {
-    filter: grayscale(0) brightness(1) drop-shadow(0 0 0 rgb(var(--c-signal) / 0));
+    filter: grayscale(0) brightness(1);
+    transform: translateY(0);
+  }
+}
+
+/* The chip row's edge fades, driven by its own sideways scroll (registered so the lengths interpolate). */
+@property --t-fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --t-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 28px;
+}
+
+@keyframes chip-edges {
+  0% {
+    --t-fade-start: 0px;
+    --t-fade-end: 28px;
+  }
+
+  8% {
+    --t-fade-start: 24px;
+  }
+
+  92% {
+    --t-fade-end: 28px;
+  }
+
+  100% {
+    --t-fade-start: 24px;
+    --t-fade-end: 0px;
   }
 }
 
@@ -1022,7 +1139,8 @@
   .tok,
   .caret,
   .caret::before,
-  .block {
+  .block,
+  .chips {
     animation: none !important;
   }
 
@@ -1065,7 +1183,8 @@
 :global(html[data-motion='off']) .tok,
 :global(html[data-motion='off']) .caret,
 :global(html[data-motion='off']) .caret::before,
-:global(html[data-motion='off']) .block {
+:global(html[data-motion='off']) .block,
+:global(html[data-motion='off']) .chips {
   animation: none !important;
 }
 
@@ -1093,10 +1212,25 @@
   opacity: 0.7;
 }
 
+/* Reduced transparency (and more contrast): the sheet is already solid via .glass-chrome; the terminal's own
+   translucent layers follow. The scrim turns into the opaque ground (the solid sheet sits a tone step above it),
+   the rail into the solid second surface, and the visitor bubble into its opaque you-solid. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .overlay {
+    --t-scrim: var(--ground);
+    --t-rail: var(--surface-2);
+    --t-you: var(--you-solid);
+  }
+}
+
 @media (prefers-contrast: more) {
   .overlay {
-    --t-ghost: rgb(var(--c-ink) / 0.12);
-    --t-hover: rgb(var(--c-ink) / 0.12);
+    --t-ghost: rgb(var(--c-ink) / var(--alpha-wash));
+    --t-hover: rgb(var(--c-ink) / var(--alpha-wash));
+  }
+
+  .you {
+    box-shadow: inset 0 0 0 1px var(--line-strong);
   }
 
   .label {

@@ -334,7 +334,8 @@ export function TerminalOverlay({ isOpen, onClose }: TerminalOverlayProps) {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className={s.panel}
+            // The sheet glass (C-14): fill, blur, rim, light and every solid fallback come from the shared material.
+            className={`glass-chrome glass-sheet ${s.panel}`}
             {...panelMotion}
           >
             <header className={s.head}>
