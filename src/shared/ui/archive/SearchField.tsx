@@ -26,7 +26,8 @@ export function SearchField({ value, onChange, placeholder, className, label, id
       className={cn(
         'group/search relative inline-flex h-11 items-center gap-2 rounded-control border border-line-strong bg-surface-2 pl-3 text-ink',
         'transition-[border-color] duration-hover hover:border-ink-muted',
-        'focus-within:border-signal focus-within:[outline-style:solid] focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-signal',
+        // The field's focus ring is drawn on the box (the input itself shows none): the focus-ring role, flush.
+        'focus-within:border-focus-ring focus-within:[outline-style:solid] focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-focus-ring',
       )}
     >
       {label ? (
@@ -52,7 +53,7 @@ export function SearchField({ value, onChange, placeholder, className, label, id
           }
         }}
         className={`text-ui ${cn(
-          'h-full min-w-0 bg-transparent font-body text-ink placeholder:text-ink-muted',
+          'h-full min-w-0 bg-transparent font-body text-ink placeholder:text-placeholder',
           'outline-none focus-visible:outline-none [&::-webkit-search-cancel-button]:appearance-none',
           value ? 'pr-1' : 'pr-3',
           className,
@@ -66,7 +67,7 @@ export function SearchField({ value, onChange, placeholder, className, label, id
             onChange('');
             inputRef.current?.focus();
           }}
-          className="mr-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors duration-hover hover:bg-surface hover:text-ink focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal"
+          className="mr-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-control text-ink-muted transition-colors duration-hover hover:bg-surface-3 hover:text-ink active:bg-surface-3 focus-visible:-outline-offset-2"
         >
           <X aria-hidden="true" focusable="false" className="size-4" strokeWidth={1.75} />
         </button>

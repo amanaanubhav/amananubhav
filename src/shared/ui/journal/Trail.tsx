@@ -15,22 +15,33 @@ export interface TrailItem {
 
 export interface TrailMarkProps {
   lane: TrailLane;
-  /** The mark turns signal ("you are here"). */
+  /** The mark turns oxblood ("you are here"). */
   active?: boolean;
   /** Accessible name; without it the mark is decorative. */
   title?: string;
   /** systems lane only: a filled square (the item links somewhere). */
   filled?: boolean;
+  /** summit lane only, colour only: the resting summit triangle in ink (default) or bronze (graphics only). */
+  summitTone?: 'ink' | 'bronze';
   className?: string;
 }
 
 /**
  * Two-lane trail marks (§D.1, D1 graft). Shape carries the meaning, not color:
  * systems = 8 px square (1.5 px ink stroke, filled when it links); summit = 10 px filled triangle;
- * planned = 10 px dashed outline triangle in line-strong. `active` turns the mark signal.
+ * planned = 10 px dashed outline triangle in line-strong. `active` turns the mark oxblood (the trek's "you are here", Update 1.1 §11); `summitTone="bronze"`
+ * fills a resting summit in bronze.
  */
-export function TrailMark({ lane, active = false, title, filled = false, className }: TrailMarkProps) {
-  const color = active ? 'text-signal' : lane === 'planned' ? 'text-line-strong' : 'text-ink';
+export function TrailMark({
+  lane,
+  active = false,
+  title,
+  filled = false,
+  summitTone = 'ink',
+  className,
+}: TrailMarkProps) {
+  // palette-allow: currentColor stroke and fill of the "you are here" trail mark (oxblood is the trek's graphics role)
+  const color = active ? 'text-oxblood' : lane === 'planned' ? 'text-line-strong' : 'text-ink';
   const labelled = Boolean(title);
   return (
     <svg
@@ -55,7 +66,11 @@ export function TrailMark({ lane, active = false, title, filled = false, classNa
           fill={filled ? 'currentColor' : 'none'}
         />
       ) : lane === 'summit' ? (
-        <path d="M5 0.6 9.6 9.4H0.4Z" fill="currentColor" />
+        !active && summitTone === 'bronze' ? (
+          <path d="M5 0.6 9.6 9.4H0.4Z" className="fill-bronze" />
+        ) : (
+          <path d="M5 0.6 9.6 9.4H0.4Z" fill="currentColor" />
+        )
       ) : (
         <path
           d="M5 1.2 9.2 9H0.8Z"
@@ -80,19 +95,22 @@ export interface TrailProps {
   items: readonly TrailItem[];
   /** Accessible name of the list. */
   label?: string;
+  /** Passed to each summit mark (colour only); default ink. */
+  summitTone?: 'ink' | 'bronze';
   className?: string;
 }
 
+/** A trail link (PALETTE-SPEC §5.3, §11): ink with the 1 px link-underline (action-line), 2 px action on hover and focus. */
 const LINK_CLASSES =
-  'rounded-control text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] ' +
-  'transition-[text-decoration-thickness] duration-hover hover:decoration-2 ' +
-  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal';
+  'rounded-control text-link-ink underline decoration-link-underline decoration-1 underline-offset-[0.22em] ' +
+  'transition-[text-decoration-thickness] duration-hover hover:decoration-2 hover:decoration-action ' +
+  'focus-visible:decoration-2 focus-visible:decoration-action';
 
 /**
  * One dated trail with two lanes (systems and summits) on a single spine (§D.1).
  * Each item: mark, then <time dateTime> (only when the date is known), then the label (a link when `href`).
  */
-export function Trail({ items, label, className }: TrailProps) {
+export function Trail({ items, label, summitTone = 'ink', className }: TrailProps) {
   if (items.length === 0) return null;
   return (
     <ol aria-label={label} className={cn('relative m-0 list-none p-0', className)}>
@@ -121,7 +139,12 @@ export function Trail({ items, label, className }: TrailProps) {
             )}`}
           >
             <span className="flex h-[1.45em] items-center">
-              <TrailMark lane={item.lane} filled={item.lane === 'systems' && Boolean(item.href)} title={LANE_NAME[item.lane]} />
+              <TrailMark
+                lane={item.lane}
+                filled={item.lane === 'systems' && Boolean(item.href)}
+                summitTone={summitTone}
+                title={LANE_NAME[item.lane]}
+              />
             </span>
             <span className="min-w-0 font-body text-ink [text-wrap:pretty]">
               {item.date ? (

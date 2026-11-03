@@ -34,10 +34,21 @@ export type ButtonActionProps = ButtonBase & { href?: undefined } & Omit<
   >;
 export type ButtonProps = ButtonLinkProps | ButtonActionProps;
 
+/*
+ * States follow the palette (PALETTE-SPEC §5.3, Update 1.1 §11 role remap): the focus ring is the global one (2 px
+ * `focus-ring` = focus-ring-action 3 px off; `focus-ring-inverse` on the action fill, both from globals.css); surfaces
+ * step by tone, never by a filter.
+ * primary: the aquamarine action key. `.btn-primary` (globals.css) steps the fill to `action-hover` on hover (fine
+ *   pointers) and to `action-pressed` with scale(0.98) while pressed, with a metal gloss; on-action >= 7.22:1 on all three.
+ * secondary: `.satin-steel` (globals.css), a `surface-2` satin plate on a steel rim with a glass top edge; hover
+ *   `surface-3` with a brushed (Night) / titanium (Day) rim; pressed and open (aria-expanded) `surface-3`; toggled
+ *   (aria-pressed) `action-soft` with the 2 px action-line rule. Error-toned callers (text-error) keep their own edge.
+ * text: ink with the 1 px action-line (link-underline) underline, 2 px in `action` on hover and focus.
+ * disabled: the disabled-* roles (ink-muted text, line edge, surface-2 fill), never opacity alone.
+ */
 const BASE =
   'group/button relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap font-display font-semibold ' +
-  'transition-[filter,background-color,border-color,color,text-decoration-thickness,transform] duration-hover ease-settle ' +
-  'focus-visible:[outline-style:solid] focus-visible:outline-2 ' +
+  'transition-[background-color,border-color,color,text-decoration-thickness,transform] duration-hover ease-settle ' +
   'disabled:cursor-not-allowed aria-disabled:cursor-not-allowed';
 
 const BOXED =
@@ -45,19 +56,20 @@ const BOXED =
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    'btn-primary bg-signal text-on-signal hover:brightness-[1.06] [html[data-theme=day]_&]:hover:brightness-[0.94] ' +
-    'focus-visible:outline-ink focus-visible:outline-offset-2 ' +
-    'disabled:bg-surface-2 disabled:text-ink-muted disabled:filter-none aria-disabled:bg-surface-2 aria-disabled:text-ink-muted aria-disabled:filter-none',
+    'btn-primary bg-action text-on-action ' +
+    'disabled:bg-disabled-fill disabled:text-disabled-ink aria-disabled:bg-disabled-fill aria-disabled:text-disabled-ink',
   secondary:
-    'border border-line-strong bg-transparent text-ink hover:bg-surface-2 ' +
-    'focus-visible:outline-signal focus-visible:outline-offset-[3px] ' +
-    'aria-[pressed=true]:border-ink aria-[pressed=true]:bg-surface-2 aria-[pressed=true]:shadow-[inset_0_-2px_0_rgb(var(--c-signal))] ' +
-    'aria-[expanded=true]:border-ink aria-[expanded=true]:bg-surface-2 ' +
-    'disabled:border-line disabled:text-ink-muted disabled:hover:bg-transparent aria-disabled:border-line aria-disabled:text-ink-muted',
+    'border border-line-strong bg-surface-2 text-ink hover:border-ink-muted hover:bg-surface-3 active:bg-surface-3 ' +
+    'aria-[pressed=true]:border-line-strong aria-[pressed=true]:bg-action-soft aria-[pressed=true]:shadow-[inset_0_-2px_0_var(--action-line)] ' +
+    'aria-[expanded=true]:border-line-strong aria-[expanded=true]:bg-surface-3 ' +
+    'disabled:border-disabled-edge disabled:bg-disabled-fill disabled:text-disabled-ink disabled:hover:border-disabled-edge disabled:hover:bg-disabled-fill disabled:active:bg-disabled-fill ' +
+    'aria-disabled:border-disabled-edge aria-disabled:bg-disabled-fill aria-disabled:text-disabled-ink aria-disabled:hover:border-disabled-edge aria-disabled:hover:bg-disabled-fill',
   text:
-    'min-h-6 rounded-control px-0 text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] hover:decoration-2 ' +
-    'focus-visible:outline-signal focus-visible:outline-offset-[3px] [@media(pointer:coarse)]:min-h-11 ' +
-    'disabled:text-ink-muted disabled:no-underline aria-disabled:text-ink-muted aria-disabled:no-underline',
+    'min-h-6 rounded-control px-0 text-link-ink underline decoration-link-underline decoration-1 underline-offset-[0.22em] ' +
+    'hover:decoration-2 hover:decoration-action focus-visible:decoration-2 focus-visible:decoration-action ' +
+    // Coarse pointers get a 44 px tap box from a pseudo-element, so the link keeps its 24 px line in the layout.
+    "[@media(pointer:coarse)]:before:absolute [@media(pointer:coarse)]:before:inset-x-0 [@media(pointer:coarse)]:before:-inset-y-2.5 [@media(pointer:coarse)]:before:content-[''] " +
+    'disabled:text-disabled-ink disabled:no-underline aria-disabled:text-disabled-ink aria-disabled:no-underline',
 };
 
 const SIZES: Record<ButtonSize, string> = { md: 'h-11', lg: 'h-12' };
@@ -76,7 +88,10 @@ export function buttonClassName({
   className?: string;
 }): string {
   // text-ui stays outside cn(): tailwind-merge would read the custom type-scale class as a text color.
-  return `text-ui ${cn(BASE, variant === 'text' ? null : [BOXED, SIZES[size]], VARIANTS[variant], className)}`;
+  const classes = cn(BASE, variant === 'text' ? null : [BOXED, SIZES[size]], VARIANTS[variant], className);
+  // The satin steel material is the secondary at rest; an error-toned (destructive) secondary keeps its own edge and fill.
+  const satin = variant === 'secondary' && !/(?:^|\s)text-error(?:\s|$)/.test(classes) ? ' satin-steel' : '';
+  return `text-ui ${classes}${satin}`;
 }
 
 function Content({

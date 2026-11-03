@@ -43,19 +43,24 @@ const TYPE: Record<ProfileVariant, { label: number; axis: number }> = {
   cover: { label: 28, axis: 22 },
 };
 
+/*
+ * Chart roles (PALETTE-SPEC §4.9, §5.6): his route is `chart-highlight` (= signal-line, the route pact) at the
+ * heaviest stroke; the unrevealed trace and the axis are `chart-axis`; gridlines `chart-grid`; tick text
+ * `chart-label`; names and values `chart-value`. Lakes stay on the map lake tokens, side trips on accent-2-line.
+ */
 const STROKE_ROUTE: CSSProperties = {
-  stroke: 'rgb(var(--c-signal-line))',
+  stroke: 'var(--chart-highlight)',
   strokeWidth: 2,
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
   fill: 'none',
 };
-const STROKE_TRACE: CSSProperties = { stroke: 'rgb(var(--c-line-strong))', strokeWidth: 1, fill: 'none' };
-const STROKE_GRID: CSSProperties = { stroke: 'var(--ink-contour)', strokeWidth: 1, fill: 'none' };
+const STROKE_TRACE: CSSProperties = { stroke: 'var(--chart-axis)', strokeWidth: 1, fill: 'none' };
+const STROKE_GRID: CSSProperties = { stroke: 'var(--chart-grid)', strokeWidth: 1, fill: 'none' };
 const STROKE_LEADER: CSSProperties = { ...STROKE_TRACE, strokeDasharray: '2 3', opacity: 0.7 };
 const PROGRESS_CLIP: CSSProperties = { clipPath: 'inset(0 calc((1 - var(--profile-progress, 1)) * 100%) 0 0)' };
 /** Axis text: shared attributes sit on the group, so each tick only carries its position (§J.2 inline SVG budget). */
-const AXIS_TEXT = 'fill-ink-muted font-data tabular';
+const AXIS_TEXT = 'fill-chart-label font-data tabular';
 
 function altitudeText(p: ProfilePoint): string {
   return `${p.approx ? '~' : ''}${nf.format(Math.round(p.altitudeM as number))} m`;
@@ -251,12 +256,19 @@ export function ElevationProfile({
       plotted.forEach((p, i) => {
         if (isPeak(p) || (variant === 'cover' && i === highIndex)) {
           markers.push(
-            <path key={`pk-${i}`} d={trianglePath(xs[i], ys[i] - 7, variant === 'cover' ? 14 : 10)} className="fill-ink" />,
+            <path key={`pk-${i}`} d={trianglePath(xs[i], ys[i] - 7, variant === 'cover' ? 14 : 10)} className={i === highIndex ? 'fill-bronze' : 'fill-ink'} />,
           );
         } else if (p.kind === 'lake' && labelled) {
+          // Lake: map-lake fill inside a 1 px map-lake-edge shoreline, as on the map (§5.7).
           markers.push(
-            <circle key={`lk-${i}`} cx={r1(xs[i])} cy={r1(ys[i])} r={3.5} className="fill-ground"
-              style={{ stroke: 'rgb(var(--c-water))', strokeWidth: 1.5 }} vectorEffect="non-scaling-stroke" />,
+            <circle key={`lk-${i}`} cx={r1(xs[i])} cy={r1(ys[i])} r={4} className="fill-map-lake"
+              style={{ stroke: 'var(--map-lake-edge)', strokeWidth: 1 }} vectorEffect="non-scaling-stroke" />,
+          );
+        } else if (p.kind === 'side-trip' && labelled) {
+          // Side trip: a hollow accent-2-line ring, never the route oxblood.
+          markers.push(
+            <circle key={`st-${i}`} cx={r1(xs[i])} cy={r1(ys[i])} r={3.5} className="fill-ground"
+              style={{ stroke: 'var(--accent-2-line)', strokeWidth: 1.5 }} vectorEffect="non-scaling-stroke" />,
           );
         } else if (variant === 'full') {
           markers.push(<circle key={`pt-${i}`} cx={r1(xs[i])} cy={r1(ys[i])} r={2.5} className="fill-ink-muted" />);
@@ -283,6 +295,7 @@ export function ElevationProfile({
         {drawn && (
           <defs>
             <mask id={maskId} maskUnits="userSpaceOnUse" x={0} y={0} width={box.width} height={box.height}>
+              {/* palette-allow: SVG mask luminance for the draw-on reveal, never painted */}
               <path d={line} data-draw fill="none" stroke="white" strokeWidth={28} strokeLinecap="round" strokeLinejoin="round" />
             </mask>
           </defs>
@@ -317,7 +330,7 @@ export function ElevationProfile({
         )}
 
         {n > 1 && (
-          <path d={area} aria-hidden="true" style={{ fill: 'rgb(var(--c-ink) / 0.08)', stroke: 'none' }} />
+          <path d={area} aria-hidden="true" style={{ fill: 'rgb(var(--c-aqua) / var(--alpha-wash))', stroke: 'none' }} />
         )}
 
         {n > 1 && (
@@ -333,16 +346,16 @@ export function ElevationProfile({
           {markers}
           {highlightIndex >= 0 && !stretch && (
             <circle cx={r1(xs[highlightIndex])} cy={r1(ys[highlightIndex])} r={9} fill="none"
-              className="signal-mark" style={{ stroke: 'rgb(var(--c-signal-line))', strokeWidth: 2 }}
+              className="signal-mark" style={{ stroke: 'var(--chart-highlight)', strokeWidth: 2 }}
               vectorEffect="non-scaling-stroke" />
           )}
           {leaderPath && <path d={leaderPath} style={STROKE_LEADER} vectorEffect="non-scaling-stroke" />}
           {labels.map((l) => (
             <text key={l.key} x={r1(l.textX)} y={rowY(l.row)} textAnchor={l.anchor} fontSize={type.label}
-              className={l.point.kind === 'lake' ? 'fill-water font-body italic' : 'fill-ink font-display font-semibold'}>
+              className={l.point.kind === 'lake' ? 'fill-map-lake-text font-body italic' : 'fill-chart-value font-display font-semibold'}>
               {l.point.name}
               {isPeak(l.point) && (
-                <tspan className="fill-ink-muted font-data font-normal tabular" fontSize={type.axis}>
+                <tspan className="fill-chart-label font-data font-normal tabular" fontSize={type.axis}>
                   {' '}
                   {altitudeText(l.point)}
                 </tspan>
@@ -351,17 +364,17 @@ export function ElevationProfile({
           ))}
           {variant === 'cover' && highPoint && (
             <g>
-              <text x={box.pad.l} y={52} fontSize={type.label} className="fill-ink font-display font-semibold">
+              <text x={box.pad.l} y={52} fontSize={type.label} className="fill-chart-value font-display font-semibold">
                 {highPoint.name}
               </text>
-              <text x={box.pad.l} y={86} fontSize={type.axis} className="fill-ink-muted font-data tabular">
+              <text x={box.pad.l} y={86} fontSize={type.axis} className="fill-chart-label font-data tabular">
                 {altitudeText(highPoint)}
               </text>
             </g>
           )}
           {labelled && n < 2 && (
             <text x={box.width / 2} y={box.height / 2} textAnchor="middle" fontSize={type.label}
-              className="fill-ink-muted font-body italic">
+              className="fill-chart-label font-body italic">
               Altitude data to come
             </text>
           )}
@@ -422,8 +435,8 @@ function ProfileTable({
         // clsx, not cn: tailwind-merge (unconfigured) treats `text-ui` as a colour and drops it.
         className={clsx(
           'inline-flex min-h-6 cursor-pointer list-none items-center gap-1 rounded-control font-body text-ui text-ink',
-          'underline decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover',
-          'hover:decoration-2 [&::-webkit-details-marker]:hidden',
+          'underline decoration-link-underline decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover',
+          'hover:decoration-2 hover:decoration-action [&::-webkit-details-marker]:hidden',
         )}
       >
         <span className="group-open:hidden">Show data</span>

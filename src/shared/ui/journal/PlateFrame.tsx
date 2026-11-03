@@ -73,6 +73,8 @@ function RegistrationTicks() {
 /**
  * A printed plate (§D.1, §B.6): a fixed aspect-ratio box (class "plate", radius 0, no border) with an optional
  * caption line ("Plate 4", the caption, a log strip). The fixed ratio reserves the space, so nothing shifts on load.
+ * From 1024 px the caption is padded by `--caption-reserve` (default 0): Spread's bleed placement sets it to the
+ * grid's end margin, so a caption under a plate that runs to the window edge never runs under the desktop rail.
  */
 export function PlateFrame({
   ratio,
@@ -96,7 +98,16 @@ export function PlateFrame({
   return (
     <Outer className={cn('m-0 min-w-0', className)}>
       <div
-        className={cn('plate relative w-full overflow-hidden', tone === 'pending' && 'bg-surface-2', boxClassName)}
+        className={cn(
+          'plate relative w-full overflow-hidden',
+          tone === 'pending' && 'bg-surface-2',
+          // Update 1.1 (M4): the full pending plate (dev and ?media=spec, the one with the survey grid) is a dusk-violet
+          // field with an aqua grid inside a titanium-aqua frame.
+          tone === 'pending' &&
+            grid &&
+            'steel-frame bg-accent-2-soft [--ink-contour:rgb(var(--c-aqua)/var(--alpha-spec))]',
+          boxClassName,
+        )}
         style={{ aspectRatio: aspectRatioCss(ratio), ...(grid ? GRID_STYLE : null) }}
       >
         {children}

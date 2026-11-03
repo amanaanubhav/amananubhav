@@ -152,7 +152,8 @@ export function ContourSheet({
           className="route-line"
           style={{
             ...ROUTE,
-            ...(route.kind === 'side-trip' ? { stroke: 'rgb(var(--c-water))' } : {}),
+            // Side trips are the violet branch (map-branch); his route alone keeps signal-line.
+            ...(route.kind === 'side-trip' ? { stroke: 'rgb(var(--c-map-branch))' } : {}),
             strokeWidth: look.width,
             strokeDasharray: look.dash,
           }}
@@ -199,7 +200,7 @@ export function ContourSheet({
                   vectorEffect={NON_SCALING} />
               )}
               {data.water && data.water.length > 0 && (
-                <path d={data.water.join(' ')} style={{ stroke: 'rgb(var(--c-water))', fill: 'none', strokeWidth: 1.25 }}
+                <path d={data.water.join(' ')} style={{ stroke: 'rgb(var(--c-aqua-line))', fill: 'none', strokeWidth: 1.25 }}
                   vectorEffect={NON_SCALING} />
               )}
             </symbol>
@@ -207,6 +208,7 @@ export function ContourSheet({
           {animateDraw && (
             <mask id={maskId} maskUnits="userSpaceOnUse" x={0} y={0} width={w} height={h}>
               {lead.map(({ route }) => (
+                // palette-allow: SVG <mask> luminance for the route draw-on, never painted
                 <path key={route.id} d={route.d} data-sheet-draw="" fill="none" stroke="white" strokeWidth={28}
                   strokeLinecap="round" strokeLinejoin="round" />
               ))}

@@ -17,7 +17,11 @@ export interface ChapterHeaderProps {
   altitudeM?: number;
   /** Explicit width (default 112 display, 108 h2, 104 h3, 100 title). */
   wdth?: number;
-  /** Default 'lines' for h2, 'none' for h1 and h3. The h1 is never split. */
+  /**
+   * Default 'lines' for h2, 'none' for h1 and h3. The h1 is never split. 'lines' is RevealText's masked line rise:
+   * only for a heading below the fold at load, it plays once as the heading's top passes 75% of the viewport and is
+   * reverted to the plain heading when done.
+   */
   reveal?: 'lines' | 'none';
   /** Visually hidden prefix, e.g. 'Aman Anubhav: '. */
   srPrefix?: string;
@@ -37,7 +41,9 @@ const SIZE_STYLE: Record<ChapterHeaderSize, { size: string; weight: string; wdth
 /**
  * Chapter heading (§D.3): Archivo with a width axis, balanced wrapping, sentence case. Width is fixed on the
  * server (thin air from `altitudeM`, never animated): `--wdth` is set from `--wdth-wide`, and below 768 px from
- * `--wdth-compact` (also exposed as `data-wdth-compact`). h2s get the line-mask reveal by default.
+ * `--wdth-compact` (also exposed as `data-wdth-compact`). h2s get the line-mask reveal by default (RevealText:
+ * `.line-mask` wrappers, so no ink is cut, reverted on completion). A `.trim-cap` className keeps the heading
+ * unsplit (the trimmed box would let the mask clip ink).
  */
 export function ChapterHeader({
   as,

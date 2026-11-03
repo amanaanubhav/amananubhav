@@ -118,6 +118,11 @@ const segStyle = ([s, e]: [number, number]) => ({ '--p': pct(s), '--w': pct(e - 
 
 /* ------------------------------------------------------------------------------------------------
  * Layout CSS (hoisted and de-duplicated by React 19; tokens only)
+ *
+ * Chart roles (PALETTE-SPEC §4.9, §5.6): his working day is the highlight series (`chart-highlight`, the
+ * route oxblood, hatched at the heaviest border); the visitor is the first categorical (`chart-1`,
+ * meltwater, the "you" hue); "now" is a `chart-value` hairline ringed in the track ground so it never
+ * merges with the oxblood hatch; tracks, ticks and frames sit on `chart-grid` / `chart-axis`.
  * --------------------------------------------------------------------------------------------- */
 
 function verticalRules(scope: string): string {
@@ -137,20 +142,24 @@ const BAND_CSS = `
 .ob-scale{grid-area:scale;position:relative;height:1.5rem}
 .ob-l1{grid-area:l1;margin-top:6px}.ob-l2{grid-area:l2;margin-top:6px}
 .ob-t1{grid-area:t1}.ob-t2{grid-area:t2}
-.ob-track{position:relative;height:2rem;background:rgb(var(--c-surface-2));border:1px solid rgb(var(--c-line))}
+.ob-track{position:relative;height:2rem;background:var(--surface-2);border:1px solid var(--chart-grid)}
 .ob-seg{position:absolute;top:0;bottom:0;left:var(--p);width:var(--w)}
-.ob-tick{position:absolute;top:0;bottom:0;left:var(--p);width:1px;background:rgb(var(--c-line))}
-.ob-tick[data-major]{background:rgb(var(--c-line-strong))}
+.ob-tick{position:absolute;top:0;bottom:0;left:var(--p);width:1px;background:var(--chart-grid)}
+.ob-tick[data-major]{background:var(--chart-axis)}
 .ob-hour{position:absolute;top:0;left:var(--p);transform:translateX(-50%);white-space:nowrap}
 .ob-hour[data-edge='start']{transform:none}
-.ob-now{position:absolute;top:-4px;bottom:-4px;left:var(--p);width:2px;transform:translateX(-1px);background:rgb(var(--c-signal))}
-.ob-mine{background-image:repeating-linear-gradient(135deg,rgb(var(--c-ink)) 0 1px,transparent 1px 7px);border:1px solid rgb(var(--c-ink))}
-.ob-yours{background:rgb(var(--c-ink) / 0.12);border:1px solid rgb(var(--c-ink-muted))}
+.ob-now{position:absolute;top:-4px;bottom:-4px;left:var(--p);width:2px;transform:translateX(-1px);background:var(--chart-value);
+  outline:2px solid var(--surface-2)}
+.ob-mine{background-image:repeating-linear-gradient(135deg,var(--chart-highlight) 0 1.5px,transparent 1.5px 7px);
+  border:2px solid var(--chart-highlight)}
+.ob-yours{background:rgb(var(--c-chart-1) / var(--alpha-edge));border:1px solid var(--chart-1)}
+.ob-key{display:inline-block;width:.875rem;height:.625rem;margin-right:.375rem;vertical-align:baseline}
 .ob-tbc{position:absolute;inset:3px;display:flex;align-items:center;justify-content:center;padding:0 8px;text-align:center;
-  line-height:1.2;border:1px dashed rgb(var(--c-line-strong));background:rgb(var(--c-surface-2) / 0.88)}
+  line-height:1.2;border:1px dashed var(--chart-axis);background:rgb(var(--c-surface-2) / var(--alpha-glass))}
 ${verticalRules(".ob[data-o='vertical']")}
 @media (max-width:639px){${verticalRules(".ob[data-o='auto']")}}
-@media (forced-colors:active){.ob-now{background:Highlight}.ob-mine,.ob-yours,.ob-tbc{border-color:CanvasText}}`;
+@media (forced-colors:active){.ob-now{background:Highlight;outline-color:Canvas}.ob-mine,.ob-yours,.ob-tbc{border-color:CanvasText}
+  .ob-mine{background-image:repeating-linear-gradient(135deg,CanvasText 0 1.5px,transparent 1.5px 7px)}}`;
 
 /* ------------------------------------------------------------------------------------------------
  * Component
@@ -213,7 +222,7 @@ export function OverlapBand({
             .map((h) => (
               <span
                 key={h}
-                className="ob-hour font-data text-caption tabular text-ink-muted"
+                className="ob-hour font-data text-caption tabular text-chart-label"
                 data-edge={h === 0 ? 'start' : undefined}
                 style={{ '--p': pct(h * 60) } as CSSVars}
               >
@@ -223,6 +232,7 @@ export function OverlapBand({
         </div>
 
         <p className="ob-l1 font-body text-caption text-ink" aria-hidden="true">
+          {workWindowIST && <span className="ob-key ob-mine" />}
           <span className="font-data tabular">IST</span> <span className="text-ink-muted">(UTC+5:30)</span>
           {workWindowIST ? (
             <span className="italic text-ink-muted">, my working day {mineText.replace(' IST', '')}</span>
@@ -241,13 +251,14 @@ export function OverlapBand({
           {!workWindowIST && (
             <span className="ob-tbc font-body text-caption italic text-ink-muted">Working hours to be confirmed</span>
           )}
-          {clock && <span className="ob-now signal-mark" style={{ '--p': pct(clock.nowIst) } as CSSVars} />}
+          {clock && <span className="ob-now" style={{ '--p': pct(clock.nowIst) } as CSSVars} />}
         </div>
 
         {/* The visitor row is reserved on the server so nothing shifts when it fills in. */}
         <p className="ob-l2 min-h-[1.45em] font-body text-caption text-ink" aria-hidden="true">
           {clock && (
             <>
+              <span className="ob-key ob-yours" />
               You, <span className="italic">{clock.zoneName}</span>{' '}
               <span className="text-ink-muted">({utcLabel(clock.offsetMin)})</span>
               <span className="text-ink-muted">: </span>
@@ -262,7 +273,7 @@ export function OverlapBand({
           {yours.map((s, i) => (
             <span key={i} className="ob-seg ob-yours" style={segStyle(s)} />
           ))}
-          {clock && <span className="ob-now signal-mark" style={{ '--p': pct(clock.nowIst) } as CSSVars} />}
+          {clock && <span className="ob-now" style={{ '--p': pct(clock.nowIst) } as CSSVars} />}
         </div>
       </div>
 
@@ -277,7 +288,7 @@ export function OverlapBand({
         <summary
           className={clsx(
             'inline-flex min-h-6 cursor-pointer list-none items-center gap-1 rounded-control font-body text-ui text-ink',
-            'underline decoration-signal decoration-1 underline-offset-[0.22em] hover:decoration-2 [&::-webkit-details-marker]:hidden',
+            'underline decoration-link-underline decoration-1 underline-offset-[0.22em] hover:decoration-2 hover:decoration-action [&::-webkit-details-marker]:hidden',
           )}
         >
           <span className="group-open:hidden">Show data</span>

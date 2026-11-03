@@ -38,10 +38,11 @@ function isInternalHref(href: string): boolean {
   return href.startsWith('/') && !href.startsWith('//');
 }
 
+/** A link in the log (PALETTE-SPEC §5.3, §11): ink with the 1 px link-underline (action-line), 2 px action on hover and focus. */
 const LINK_CLASSES =
-  'rounded-control text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] ' +
-  'transition-[text-decoration-thickness] duration-hover hover:decoration-2 ' +
-  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal';
+  'rounded-control text-link-ink underline decoration-link-underline decoration-1 underline-offset-[0.22em] ' +
+  'transition-[text-decoration-thickness] duration-hover hover:decoration-2 hover:decoration-action ' +
+  'focus-visible:decoration-2 focus-visible:decoration-action';
 
 function Value({ entry }: { entry: LogEntry }) {
   const { value, unit, approx, href, external } = entry;
@@ -104,13 +105,20 @@ export function Log({ items, label, layout = 'auto', className }: LogProps) {
             column && 'border-t border-line py-2 first:border-t-0 first:pt-0',
             layout === 'auto' &&
               'flex items-baseline gap-2 lg:block lg:border-t lg:border-line lg:py-2 lg:first:border-t-0 lg:first:pt-0',
+            // Update 1.1 (M3): the meta-rail rows are violet hairlines (structure), in page content off the home story.
+            layout === 'auto' && 'lg:[:root:not(:has(#home-title))_main_&]:border-accent-2-line/edge',
           )}
         >
-          <dt className="font-body italic text-ink-muted">{entry.key}</dt>
+          {/* Update 1.1 (M5), page content off the home story: violet keys (>= 4.54:1), aqua readouts (>= 4.89:1). */}
+          <dt className="font-body italic text-ink-muted [:root:not(:has(#home-title))_main_&]:text-accent-2">
+            {entry.key}
+          </dt>
           <dd
             className={cn(
               'm-0 text-ink',
-              entry.mono === false ? 'font-body' : 'font-data [font-variant-numeric:tabular-nums_slashed-zero]',
+              entry.mono === false
+                ? 'font-body'
+                : 'font-data [font-variant-numeric:tabular-nums_slashed-zero] [:root:not(:has(#home-title))_main_&]:text-aqua',
             )}
           >
             <Value entry={entry} />

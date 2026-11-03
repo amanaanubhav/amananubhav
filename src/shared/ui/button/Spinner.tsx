@@ -1,5 +1,5 @@
 /**
- * 270° arc spinner (§D.3): signal on outline and text buttons, on-signal inside the primary fill.
+ * 270° arc spinner (§D.3): action on outline and text buttons, on-action inside the primary fill.
  * Spins 1 s linear; static under reduced motion (OS setting or the footer switch).
  */
 export function Spinner() {
@@ -9,7 +9,7 @@ export function Spinner() {
       fill="none"
       aria-hidden="true"
       focusable="false"
-      className="size-[18px] shrink-0 animate-spin text-signal motion-reduce:animate-none group-[.btn-primary]/button:text-current"
+      className="size-[18px] shrink-0 animate-spin text-action motion-reduce:animate-none group-[.btn-primary]/button:text-current"
     >
       <circle
         cx={9}

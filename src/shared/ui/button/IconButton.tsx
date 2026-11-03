@@ -7,7 +7,7 @@ export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
   label: string;
   icon: LucideIcon;
   onClick?: () => void;
-  /** Toggle state; sets `aria-pressed` and draws a 2 px signal rule at the bottom edge. */
+  /** Toggle state; sets `aria-pressed` and draws a 2 px action-line rule at the bottom edge. */
   pressed?: boolean;
   /** 40 or 44 CSS px; touch pointers always get at least 44 px. Default 44. */
   size?: 40 | 44;
@@ -20,7 +20,11 @@ const VARIANTS = {
   outline: 'border border-line-strong',
 } as const;
 
-/** Square icon-only button (§D.3, §B.10 secondary/icon states). Server-safe; give it an `onClick` from a client parent. */
+/**
+ * Square icon-only button (§D.3, §B.10 secondary/icon states). Server-safe; give it an `onClick` from a client parent.
+ * States (PALETTE-SPEC §5.3): hover `hover-wash`; pressed `press-wash`; toggled `action-soft` on a line-strong edge
+ * with the 2 px action-line rule (Update 1.1 §11); open `surface-3`; disabled on the disabled-* roles; the global focus ring.
+ */
 export function IconButton({
   label,
   icon: Icon,
@@ -42,11 +46,11 @@ export function IconButton({
       className={cn(
         'inline-flex shrink-0 items-center justify-center rounded-control bg-transparent text-ink',
         'transition-[background-color,border-color,color,transform] duration-hover ease-settle',
-        'hover:bg-surface-2 active:scale-[0.98] active:duration-micro',
-        'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal',
-        'aria-pressed:border-ink aria-pressed:bg-surface-2 aria-pressed:shadow-[inset_0_-2px_0_rgb(var(--c-signal))]',
-        'aria-expanded:border-ink aria-expanded:bg-surface-2',
-        'disabled:cursor-not-allowed disabled:border-line disabled:text-ink-muted disabled:hover:bg-transparent disabled:active:scale-100',
+        'hover:bg-[var(--hover-wash)] active:scale-[0.98] active:bg-[var(--press-wash)] active:duration-micro',
+        'aria-pressed:border-line-strong aria-pressed:bg-action-soft aria-pressed:shadow-[inset_0_-2px_0_var(--action-line)]',
+        'aria-expanded:border-ink aria-expanded:bg-surface-3',
+        'disabled:cursor-not-allowed disabled:border-disabled-edge disabled:text-disabled-ink disabled:hover:bg-transparent',
+        'disabled:active:scale-100 disabled:active:bg-transparent',
         size === 40 ? 'size-10 [@media(pointer:coarse)]:size-11' : 'size-11',
         VARIANTS[variant],
         className,

@@ -8,7 +8,7 @@ export interface TrigMarkProps {
 
 /**
  * The brand mark (G-11): a survey trig point, an equilateral triangle of side 16 with a centre dot,
- * drawn in `currentColor` (callers color it, usually `text-signal`).
+ * drawn in `currentColor`, so it takes the text colour of its parent.
  */
 export function TrigMark({ size = 16, className, title }: TrigMarkProps) {
   const labelled = Boolean(title);

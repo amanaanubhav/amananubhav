@@ -4,7 +4,8 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { HashLink } from './HashLink';
 
-export type StatusTone = 'success' | 'warning' | 'neutral';
+/** `live`: the palette's aqua "you / live" role (PALETTE-SPEC §5.1), e.g. "Open to remote roles". */
+export type StatusTone = 'success' | 'warning' | 'neutral' | 'live';
 
 export interface StatusChipProps {
   tone?: StatusTone;
@@ -22,12 +23,14 @@ const DOT: Record<StatusTone, string> = {
   success: 'bg-success',
   warning: 'bg-warning',
   neutral: 'bg-ink-muted',
+  live: 'bg-live live-halo', // aqua-line: a 6 px graphic (5.76:1 Night, 3.90:1 Day on ground), a 3 px aqua-wash halo
 };
 
 const ICON: Record<StatusTone, string> = {
   success: 'text-success',
   warning: 'text-warning',
   neutral: 'text-ink-muted',
+  live: 'text-aqua', // icon only: `live` is a graphics-only role, never text
 };
 
 /**
@@ -52,11 +55,12 @@ export function StatusChip({ tone = 'neutral', icon: Icon, children, href, prefe
       </span>
     );
   }
+  // A link chip (PALETTE-SPEC §5.3, §11): ink with the 1 px link-underline (action-line), 2 px action on hover and focus.
   const linkClasses = `text-caption ${cn(
     base,
-    'min-h-6 rounded-control underline decoration-signal decoration-1 underline-offset-[0.22em]',
-    'transition-[text-decoration-thickness] duration-hover hover:decoration-2',
-    'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal',
+    'min-h-6 rounded-control text-link-ink underline decoration-link-underline decoration-1 underline-offset-[0.22em]',
+    'transition-[text-decoration-thickness] duration-hover hover:decoration-2 hover:decoration-action',
+    'focus-visible:decoration-2 focus-visible:decoration-action',
     className,
   )}`;
   const body = (
