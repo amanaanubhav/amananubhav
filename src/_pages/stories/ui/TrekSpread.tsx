@@ -3,9 +3,8 @@ import { STORIES } from '@/entities/story';
 import { ElevationProfile } from '@/shared/ui/charts';
 import { ChapterHeader } from '@/shared/ui/chapter-header';
 import { Log, Spread } from '@/shared/ui/journal';
-import { MediaSlot } from '@/shared/ui/media-slot';
+import { isMediaSlotShown, MediaSlot } from '@/shared/ui/media-slot';
 import type { TrekCopy } from '../config/treks';
-import { isSlotShown } from '../lib/media';
 import { plottedCount, trekProfilePoints, trekProfileText } from '../lib/trek-profile';
 import { ReadFieldNoteButton } from './ReadFieldNoteButton';
 import { trekLog } from './trek-log';
@@ -24,8 +23,10 @@ export function TrekSpread({ trek }: { trek: TrekCopy }) {
   const exp = getExpedition(trek.expeditionId);
   const story = exp.storyId ? STORIES.find((item) => item.id === exp.storyId) : undefined;
   const titleId = `${trek.id}-title`;
-  const leadSlots = trek.leadSlots.filter(isSlotShown);
-  const rowSlots = trek.rowSlots.filter(isSlotShown);
+  // Lead plates sit in the spread's plate column (a pending one is a one-line strip in production); row plates
+  // are grid cells that collapse while pending, so an all-pending row drops its list (C-05).
+  const leadSlots = trek.leadSlots.filter((id) => isMediaSlotShown(id, 'standard'));
+  const rowSlots = trek.rowSlots.filter((id) => isMediaSlotShown(id, 'grid'));
   const points = trekProfilePoints(exp);
   const profile = plottedCount(points) > 1 ? trekProfileText(exp) : null;
   const callouts = new Set(trek.calloutSlots ?? []);
@@ -73,14 +74,14 @@ export function TrekSpread({ trek }: { trek: TrekCopy }) {
       </Spread>
 
       {rowSlots.length > 0 ? (
-        <div className="journal-grid mt-12 lg:mt-16">
+        <div className="journal-grid mt-block">
           <ul
             role="list"
-            className={`col-[content-start/content-end] m-0 grid list-none grid-cols-1 items-start gap-x-6 gap-y-10 p-0 sm:grid-cols-2 lg:col-[5/span_9] lg:pr-24 ${ROW_COLUMNS[Math.min(rowSlots.length, 4)] ?? ''}`}
+            className={`col-[content-start/content-end] m-0 grid list-none grid-cols-1 items-start gap-x-6 gap-y-10 p-0 sm:grid-cols-2 lg:col-[5/span_9] ${ROW_COLUMNS[Math.min(rowSlots.length, 4)] ?? ''}`}
           >
             {rowSlots.map((id) => (
-              <li key={id} className="min-w-0">
-                <MediaSlot id={id} layout="standard" sizes={ROW_SIZES} callouts={callouts.has(id)} />
+              <li key={id} className="min-w-0 empty:hidden">
+                <MediaSlot id={id} layout="grid" sizes={ROW_SIZES} callouts={callouts.has(id)} />
               </li>
             ))}
           </ul>

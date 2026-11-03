@@ -11,7 +11,7 @@ import { PACK_COPY } from '../config/treks';
 
 const VIEW = 640;
 const NON_SCALING = 'non-scaling-stroke' as const;
-const INK: CSSProperties = { stroke: 'rgb(var(--c-ink))', fill: 'none', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' };
+const INK: CSSProperties = { stroke: 'rgb(var(--c-accent-2))', fill: 'none', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' };
 const LEADER: CSSProperties = { stroke: 'rgb(var(--c-ink-muted))', fill: 'none', strokeWidth: 1, strokeDasharray: '3 4' };
 const TICK: CSSProperties = { stroke: 'rgb(var(--c-line-strong))', strokeWidth: 1 };
 
@@ -98,7 +98,7 @@ export function PackPlate({ className }: { className?: string }) {
             return (
               <g key={c.name}>
                 <path d={`M${c.x + towardPack * 40} ${c.y}L${c.ax} ${c.ay}`} style={LEADER} vectorEffect={NON_SCALING} />
-                <circle cx={c.ax} cy={c.ay} r={3.5} className="fill-ink" />
+                <circle cx={c.ax} cy={c.ay} r={3.5} className="fill-aqua" />
                 <path d={GLYPHS[c.name]} transform={`translate(${c.x} ${c.y}) scale(1.15)`} style={INK} vectorEffect={NON_SCALING} />
                 <text x={c.x} y={c.y + 58} textAnchor="middle" fontSize={26} className="fill-ink font-display font-semibold">
                   {c.name}
@@ -120,7 +120,7 @@ export function PackPlate({ className }: { className?: string }) {
             y={BAR.y}
             width={BAR.w}
             height={BAR.h}
-            style={{ fill: 'rgb(var(--c-ink) / 0.08)', stroke: 'rgb(var(--c-ink))', strokeWidth: 1.25 }}
+            style={{ fill: 'rgb(var(--c-accent-2) / var(--alpha-faint))', stroke: 'rgb(var(--c-accent-2))', strokeWidth: 1.25 }}
             vectorEffect={NON_SCALING}
           />
           {ticks.map((x) => (

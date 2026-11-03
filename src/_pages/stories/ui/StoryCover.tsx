@@ -10,13 +10,15 @@ const COVER_SIZES = '(min-width: 1024px) 560px, (min-width: 768px) 55vw, 100vw';
 
 /**
  * A story card's 3:2 cover (§G.4, G-17), rendered on the server and handed to the client card as a node,
- * so the media registry never ships to the browser. Trek stories pass an `ElevationProfile variant="cover"`
- * as the pending fill; the others keep the registry's fill (stars, grid and glyph).
+ * so the media registry never ships to the browser. `layout="cover"` (C-05): until the photo arrives the cover
+ * is a finished plate, never a "to come" frame: trek stories draw their `ElevationProfile variant="cover"`, the
+ * others the registry's generated fill (seeded contours, or stars for sky slots). A story without a cover slot
+ * gets the same plain contour plate, so every card on the stack reads as one set.
  */
 export function StoryCover({ story }: { story: Story }) {
   if (!story.coverSlot) {
     return (
-      <PlateFrame ratio="3:2" tone="pending" ticks grid captionHidden caption={story.title}>
+      <PlateFrame as="div" ratio="3:2" tone="pending">
         <MediaFill kind="contour" seed={story.id} />
       </PlateFrame>
     );
@@ -30,6 +32,14 @@ export function StoryCover({ story }: { story: Story }) {
     ) : undefined;
 
   return (
-    <MediaSlot id={story.coverSlot} ratio="3:2" caption="none" reveal="none" sizes={COVER_SIZES} fill={fill} />
+    <MediaSlot
+      id={story.coverSlot}
+      layout="cover"
+      ratio="3:2"
+      caption="none"
+      reveal="none"
+      sizes={COVER_SIZES}
+      fill={fill}
+    />
   );
 }

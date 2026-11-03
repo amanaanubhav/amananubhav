@@ -20,12 +20,12 @@ interface ArchiveDrawerProps {
 
 const FILTER_CLASSES =
   'inline-flex min-h-11 items-center whitespace-nowrap rounded-control border-b-2 border-transparent px-0.5 font-body text-ui ' +
-  'text-ink-muted transition-colors duration-hover hover:text-ink aria-pressed:border-signal aria-pressed:text-ink ' +
-  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal';
+  'text-ink-muted transition-colors duration-hover hover:text-ink hover:border-line-strong aria-pressed:border-action aria-pressed:hover:border-action aria-pressed:text-ink ' +
+  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-focus-ring';
 
 const ROW_BUTTON =
-  'rounded-control text-left font-display font-semibold text-ink decoration-signal decoration-1 underline-offset-[0.22em] ' +
-  'group-hover:underline focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal';
+  'rounded-control text-left font-display font-semibold text-ink decoration-link-underline decoration-1 underline-offset-[0.22em] ' +
+  'group-hover:underline group-hover:decoration-action focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring';
 
 /**
  * The journal index (§G.4): the logbook as a `<table>` (date, title, category, place) with the search

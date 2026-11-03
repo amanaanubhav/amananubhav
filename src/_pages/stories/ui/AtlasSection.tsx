@@ -31,7 +31,7 @@ function altitudeText(pin: AtlasPinData): string {
 
 const JOURNEY_LINK =
   'flex min-h-11 items-center gap-3 border-t border-line py-2 text-ink transition-colors duration-hover ' +
-  'hover:bg-surface-2 focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal';
+  'hover:bg-[var(--hover-wash)] active:bg-[var(--press-wash)] focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring';
 
 /** Below 768 px the primary path to each trek: the same data as the pins, as plain links (§G.4). */
 function JourneysList() {
@@ -44,7 +44,7 @@ function JourneysList() {
         {PINS.map((pin) => (
           <li key={pin.expeditionId}>
             <JumpLink targetId={pin.sectionId} className={JOURNEY_LINK}>
-              <TrailMark lane={pin.status === 'upcoming' ? 'planned' : 'summit'} />
+              <TrailMark lane={pin.status === 'upcoming' ? 'planned' : 'summit'} summitTone="bronze" />
               <span className="min-w-0 flex-1 font-body text-ui">{pin.label}</span>
               <span className="font-data text-caption text-ink-muted tabular">
                 {pin.status === 'upcoming' ? 'planned, ' : ''}
@@ -63,10 +63,10 @@ function PinKey() {
   return (
     <p className="m-0 flex flex-wrap items-center gap-x-4 gap-y-1 font-body text-caption italic text-ink-muted">
       <span className="inline-flex items-center gap-2">
-        <TrailMark lane="summit" /> done
+        <TrailMark lane="summit" summitTone="bronze" /> done
       </span>
       <span className="inline-flex items-center gap-2">
-        <TrailMark lane="planned" /> planned
+        <TrailMark lane="planned" summitTone="bronze" /> planned
       </span>
       <span className="hidden md:inline">Select a pin for its journal entry.</span>
     </p>
@@ -84,9 +84,9 @@ export function AtlasSection() {
     <section
       id="atlas"
       aria-labelledby="atlas-title"
-      className="journal-grid gap-y-8 pt-24 md:pt-32 lg:gap-y-12"
+      className="journal-grid gap-y-8 pt-[calc(var(--nav-clear)+1.5rem)] md:pt-[calc(var(--nav-clear)+3.5rem)] lg:gap-y-12"
     >
-      <div className="col-[content-start/content-end] lg:col-[2/span_11]">
+      <div className="col-[content-start/content-end]">
         <ChapterHeader as="h1" id="atlas-title">
           {ATLAS_COPY.headline}
         </ChapterHeader>
@@ -111,6 +111,7 @@ export function AtlasSection() {
           title={ATLAS_ALT}
           desc={`Pins mark the trailheads, west to east: ${PINS.map((pin) => pin.label).join(', ')}.`}
           labels="all"
+          className="plate-atlas"
         >
           <AtlasPins pins={PINS} />
         </ContourSheet>

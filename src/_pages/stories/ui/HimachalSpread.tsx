@@ -1,9 +1,8 @@
 import { getExpedition } from '@/entities/expedition';
 import { ChapterHeader } from '@/shared/ui/chapter-header';
 import { Log, Spread } from '@/shared/ui/journal';
-import { MediaSlot } from '@/shared/ui/media-slot';
+import { isMediaSlotShown, MediaSlot } from '@/shared/ui/media-slot';
 import { HIMACHAL_COPY } from '../config/treks';
-import { isSlotShown } from '../lib/media';
 import { highPointValue } from './trek-log';
 
 const CARD_SIZES = '(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 100vw';
@@ -39,18 +38,18 @@ export function HimachalSpread() {
         }
       />
 
-      <div className="journal-grid mt-12 lg:mt-16">
+      <div className="journal-grid mt-block">
         <ul
           role="list"
-          className="col-[content-start/content-end] m-0 grid list-none grid-cols-1 gap-x-6 gap-y-12 p-0 sm:grid-cols-3 lg:col-[5/span_9] lg:pr-24"
+          className="col-[content-start/content-end] m-0 grid list-none grid-cols-1 gap-x-6 gap-y-12 p-0 sm:grid-cols-3 lg:col-[5/span_9]"
         >
           {treks.map(({ exp, slot }) => {
             const headingId = `himachal-${exp.id}`;
             return (
               <li key={exp.id} className="flex min-w-0 flex-col">
                 <article aria-labelledby={headingId} className="flex flex-col">
-                  {isSlotShown(slot) ? (
-                    <MediaSlot id={slot} layout="standard" sizes={CARD_SIZES} caption="short" className="mb-5" />
+                  {isMediaSlotShown(slot, 'grid') ? (
+                    <MediaSlot id={slot} layout="grid" sizes={CARD_SIZES} caption="short" className="mb-5" />
                   ) : null}
                   <ChapterHeader as="h3" id={headingId}>
                     {exp.shortName}

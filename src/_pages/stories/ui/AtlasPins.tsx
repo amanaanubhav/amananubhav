@@ -33,7 +33,7 @@ function PinMark({ pin }: { pin: AtlasPinData }) {
           d="M8 1.6 14.6 13.4H1.4Z"
           strokeWidth={1.5}
           strokeLinejoin="round"
-          className={`signal-mark stroke-current ${pin.status === 'done' ? 'fill-current' : 'fill-ground'}`}
+          className={`signal-mark ${pin.status === 'done' ? 'fill-bronze stroke-bronze' : 'fill-[var(--plate-field,var(--ground))] stroke-line-strong'}`}
         />
       </svg>
     </span>
@@ -41,9 +41,9 @@ function PinMark({ pin }: { pin: AtlasPinData }) {
 }
 
 const LINK_CLASSES =
-  'inline-flex min-h-6 items-center rounded-control font-body text-ui text-ink underline decoration-signal decoration-1 ' +
-  'underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2 ' +
-  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-signal ' +
+  'inline-flex min-h-6 items-center rounded-control font-body text-ui text-ink underline decoration-link-underline decoration-1 ' +
+  'underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2 hover:decoration-action ' +
+  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-focus-ring ' +
   '[@media(pointer:coarse)]:min-h-11';
 
 /**
@@ -97,7 +97,7 @@ export function AtlasPins({ pins }: { pins: readonly AtlasPinData[] }) {
                 role="group"
                 aria-label={`${pin.label}, caption`}
                 hidden={!open}
-                className="absolute z-10 w-56 rounded-panel border border-line bg-surface p-4 shadow-float"
+                className="absolute z-10 w-56 glass-chrome glass-legend glass-steel rounded-panel p-4"
                 style={cardPlacement(pin)}
               >
                 <p className="m-0 font-display text-ui font-semibold text-ink">{pin.label}</p>

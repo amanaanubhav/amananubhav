@@ -19,6 +19,7 @@ import { Log, PlateFrame } from '@/shared/ui/journal';
 import { MediaFill, MediaSlot } from '@/shared/ui/media-slot';
 import { VisuallyHidden } from '@/shared/ui/visually-hidden';
 
+import { storyOpener } from '../model/story-reader-store';
 import { prepareStoryHtml, routeProfileDesc, routeProfilePoints, storyLog } from './reader-content';
 
 /** Scrubbed timelines run only when the OS allows motion (§C.4); `useMotionAllowed()` gates the rest. */
@@ -43,16 +44,11 @@ const PROSE_HEADINGS =
   '[&_h3]:mb-[0.5em] [&_h3]:mt-[1.75em] [&_h3]:text-[length:var(--step-2)] [&_h3]:leading-[1.3] [&_h3]:tracking-[-0.005em] ' +
   '[&_h2+h3]:mt-[0.75em]';
 
-/** The visible line under a pending cover ("Photo to come: ..."), as every other pending plate shows it. */
-function pendingCoverCaption(id: MediaSlotId | undefined): string | undefined {
-  if (!id) return undefined;
-  const entry = getMedia(id);
-  if (!entry || entry.status !== 'placeholder' || entry.optional || entry.hidden) return undefined;
-  const label = entry.kind === 'video' ? 'Clip to come' : entry.kind === 'screen' ? 'Screens to come' : 'Photo to come';
-  return `${label}: ${entry.short}`;
-}
-
-/** Slots that would render nothing (optional or hidden placeholders, data) never get a list item. */
+/**
+ * Slots that would render nothing (optional or hidden placeholders, data) never get a list item. Plates are grid
+ * cells (C-05): a pending one collapses in production through the cell's `empty:hidden`, so `?media=spec` can still
+ * bring it back, and the list hides with its top margin when no cell rendered. Development keeps the full plates.
+ */
 function rendersPlate(id: MediaSlotId): boolean {
   const entry = getMedia(id);
   if (!entry || entry.kind === 'data') return false;
@@ -95,12 +91,15 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
 
   // Focus: the title on open; on close, back to whatever opened the story (the card), unless the visitor
   // already moved focus on purpose (a navbar link that closes the story and navigates).
+  // The opener is captured by `openStory()` before the shell makes `<main>` inert (which drops focus to body).
   useLayoutEffect(() => {
+    const captured = storyOpener();
     const active = document.activeElement;
     const opener =
-      active instanceof HTMLElement && active !== document.body && !containerRef.current?.contains(active)
+      captured ??
+      (active instanceof HTMLElement && active !== document.body && !containerRef.current?.contains(active)
         ? active
-        : null;
+        : null);
     titleRef.current?.focus({ preventScroll: true });
     return () => {
       requestAnimationFrame(() => {
@@ -112,7 +111,7 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
   }, []);
 
   // Reading progress, scrubbed on the reader's own scroller: the trek profile's signal copy is revealed
-  // through `--profile-progress` (no React render per frame); other stories grow a 2 px signal line.
+  // through `--profile-progress` (no React render per frame); other stories grow a 2 px action line.
   // Under reduced motion or tier 0 (§C.4) nothing scrubs: the strip stays a plain profile, the line stays hidden.
   useGSAP(
     () => {
@@ -164,7 +163,6 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
     ) : undefined;
 
   const log = storyLog(story, expedition);
-  const coverCaption = pendingCoverCaption(story.coverSlot);
 
   return (
     <MotionConfig reducedMotion={motionForcedOff ? 'always' : 'user'}>
@@ -178,8 +176,8 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
         transition={motionOk ? { duration: MOTION.dur.ui, ease: MOTION.bezier.settle } : { duration: 0.15 }}
         className="scroll-pane fixed inset-0 z-reader overflow-y-auto overscroll-contain bg-ground text-ink"
       >
-        {/* The site navbar (z-navbar) covers the first 56 px; the reader's own bar sits directly under it. */}
-        <div className="sticky top-0 z-10 bg-ground pt-14">
+        {/* The site navbar (z-navbar) covers the first `--nav-h` (56 px); the reader's own bar sits directly under it. */}
+        <div className="sticky top-0 z-10 bg-ground pt-[var(--nav-h)]">
           <div className="relative border-b border-line">
             <div className="journal-grid h-14">
               <div className={cn(FULL, 'flex min-w-0 items-center gap-4')}>
@@ -224,44 +222,36 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
             </div>
             {expedition && hasProfile ? null : (
               <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -bottom-px h-0.5">
-                <div ref={lineRef} className="h-full origin-left scale-x-0 bg-signal" />
+                <div ref={lineRef} className="h-full origin-left scale-x-0 bg-action" />
               </div>
             )}
           </div>
         </div>
 
         <div className="journal-grid pb-24 pt-8 lg:pb-32 lg:pt-12">
-          {/* Cover: the exact shared-element structure of the story card (§G.4, §K.8). */}
-          <div className={cn(FULL, 'lg:col-[5/span_8] lg:row-start-1')}>
+          {/* Cover: the exact shared-element structure of the story card (§G.4, §K.8). From 1024 px its width follows
+              the window height (3:2, never under 60% of the column), so the title's first line is on screen when
+              the story opens, also on short laptops. */}
+          <div className={cn(FULL, 'lg:col-[5/span_8] lg:row-start-1 lg:max-w-[max(60%,calc((100svh_-_30rem)*1.5))]')}>
             <motion.div layoutId={layoutIds.container} className="relative w-full">
               <motion.div layoutId={layoutIds.image} className="relative w-full">
                 {story.coverSlot ? (
                   <MediaSlot
                     id={story.coverSlot}
                     ratio="3:2"
-                    layout="wide"
+                    layout="cover"
                     sizes={COVER_SIZES}
                     caption="none"
                     reveal="none"
                     fill={coverFill}
                   />
                 ) : (
-                  <PlateFrame ratio="3:2" tone="pending" ticks grid>
+                  <PlateFrame as="div" ratio="3:2" tone="pending">
                     {coverFill ?? <MediaFill kind="contour" seed={story.id} />}
                   </PlateFrame>
                 )}
               </motion.div>
             </motion.div>
-            {/* Outside the morph wrappers, so the card-to-reader morph keeps one box. The plate's own figcaption
-                (visually hidden) already carries this text for screen readers. */}
-            {coverCaption ? (
-              <p
-                aria-hidden="true"
-                className="m-0 mt-3 max-w-measure font-body text-caption italic text-ink-muted [text-wrap:pretty]"
-              >
-                {coverCaption}
-              </p>
-            ) : null}
           </div>
 
           {/* A plain div, not <header>: inside the dialog it would read as a second banner landmark. */}
@@ -287,7 +277,7 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
           <div
             className={cn(
               FULL,
-              'mt-6 lg:col-[2/span_3] lg:row-[2/span_2] lg:mt-12 lg:self-start lg:pt-2 xl:sticky xl:top-[136px]',
+              'mt-6 lg:col-[2/span_3] lg:row-[2/span_2] lg:mt-12 lg:self-start lg:pt-2 xl:sticky xl:top-[calc(var(--nav-h)+3.5rem+1.5rem)]',
             )}
           >
             <Log items={log} label="Field log" />
@@ -321,11 +311,11 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
             {plates.length > 0 ? (
               <ul
                 aria-label="Plates"
-                className="m-0 mt-16 grid list-none items-start gap-x-6 gap-y-10 p-0 sm:grid-cols-2"
+                className="m-0 mt-16 hidden list-none items-start gap-x-6 gap-y-10 p-0 has-[li:not(:empty)]:grid sm:grid-cols-2"
               >
                 {plates.map((id) => (
-                  <li key={id} className="min-w-0">
-                    <MediaSlot id={id} layout="standard" ratio={plateRatio(id)} sizes={PLATE_SIZES} caption="short" />
+                  <li key={id} className="min-w-0 empty:hidden">
+                    <MediaSlot id={id} layout="grid" ratio={plateRatio(id)} sizes={PLATE_SIZES} caption="short" />
                   </li>
                 ))}
               </ul>

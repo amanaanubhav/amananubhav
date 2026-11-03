@@ -17,7 +17,7 @@ interface MechanicalCardProps {
 }
 
 /**
- * One journal entry as a page on the stack (§G.4): `surface`, `rounded-panel`, `shadow-float`; a log
+ * One journal entry as a page on the stack (§G.4): a glass tile (`glass-tile`, steel rim), `rounded-panel`; a log
  * (date, category, place); the title and subtitle; the 3:2 cover. The cover sits in the exact shared-element
  * structure the story reader uses (`storyLayoutIds`: container > image > cover, plus the title), so opening
  * a card morphs into the reader (§K.8). The title's button is the card's one control; its hit area covers
@@ -34,12 +34,12 @@ export function MechanicalCard({ story, index, cover }: MechanicalCardProps) {
       <article
         aria-labelledby={titleId}
         className={
-          'group relative mx-auto grid w-full max-w-5xl gap-5 rounded-panel border border-line bg-surface p-4 shadow-float ' +
+          'group relative mx-auto grid w-full max-w-5xl gap-5 rounded-panel glass-chrome glass-tile glass-steel p-4 ' +
           'md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-8 md:p-6 lg:p-8 ' +
-          'has-[:focus-visible]:[outline-style:solid] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-[3px] has-[:focus-visible]:outline-signal'
+          'has-[:focus-visible]:[outline-style:solid] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-[3px] has-[:focus-visible]:outline-focus-ring'
         }
       >
-        <div data-fn-dim="" className="min-w-0 md:order-2">
+        <div data-fn-dim="" className="fn-cover min-w-0 md:order-2">
           <motion.div layoutId={ids.container} className="relative w-full">
             <motion.div layoutId={ids.image} className="relative w-full">
               {cover}
@@ -47,7 +47,9 @@ export function MechanicalCard({ story, index, cover }: MechanicalCardProps) {
           </motion.div>
         </div>
 
-        <div data-fn-dim="" className="flex min-w-0 flex-col md:order-1">
+        {/* The text column never dims: its Update 1.1 violet keys (4.54:1) and aqua readouts (4.89:1) have no
+            headroom for opacity, so a receded card recedes by its scale and its dimmed cover. */}
+        <div className="flex min-w-0 flex-col md:order-1">
           <Log
             layout="strip"
             label="Journal entry log"
@@ -67,8 +69,8 @@ export function MechanicalCard({ story, index, cover }: MechanicalCardProps) {
               onClick={() => openStory(story)}
               aria-haspopup="dialog"
               className={
-                'rounded-control text-left decoration-signal decoration-1 underline-offset-[0.12em] ' +
-                'group-hover:underline focus-visible:outline-none ' +
+                'rounded-control text-left decoration-link-underline decoration-1 underline-offset-[0.12em] ' +
+                'group-hover:underline group-hover:decoration-action focus-visible:outline-none ' +
                 "after:absolute after:inset-0 after:rounded-panel after:content-['']"
               }
             >
@@ -83,7 +85,7 @@ export function MechanicalCard({ story, index, cover }: MechanicalCardProps) {
             className="m-0 mt-auto hidden items-center gap-2 pt-6 font-display text-ui font-semibold text-ink md:flex"
           >
             Read the journal entry
-            <ArrowUpRight className="size-[18px] transition-transform duration-hover ease-settle group-hover:-translate-y-0.5 group-hover:translate-x-0.5" strokeWidth={1.75} />
+            <ArrowUpRight className="size-[18px] text-action transition-transform duration-hover ease-settle group-hover:-translate-y-0.5 group-hover:translate-x-0.5" strokeWidth={1.75} />
           </p>
         </div>
       </article>

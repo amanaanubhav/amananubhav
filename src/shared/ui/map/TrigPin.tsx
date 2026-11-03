@@ -22,7 +22,7 @@ const nf = new Intl.NumberFormat('en');
 
 /**
  * A survey trig point on a sheet: a <button aria-expanded aria-controls> whose triangle is filled for
- * a done trek and drawn in outline for an upcoming one. The open pin turns signal and keeps its
+ * a done trek and drawn in outline for an upcoming one. The open pin turns oxblood and keeps its
  * label visible, so state never rests on colour alone.
  */
 export function TrigPin({
@@ -51,7 +51,7 @@ export function TrigPin({
       className={clsx(
         'group absolute flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-control',
         '[@media(pointer:coarse)]:size-11',
-        'text-ink transition-colors duration-hover hover:text-signal aria-expanded:text-signal',
+        'text-ink',
       )}
       style={{ left: `${xPct}%`, top: `${yPct}%` }}
     >
@@ -60,9 +60,16 @@ export function TrigPin({
           d="M8 1.6 14.6 13.4H1.4Z"
           strokeWidth={1.5}
           strokeLinejoin="round"
-          className={clsx('signal-mark stroke-current', status === 'done' ? 'fill-current' : 'fill-ground')}
+          className={clsx(
+            'signal-mark',
+            status === 'done'
+              ? 'fill-bronze stroke-bronze group-focus-visible:fill-current group-hover:fill-oxblood group-aria-expanded:fill-oxblood'
+              : 'fill-[var(--plate-field,var(--ground))] stroke-line-strong',
+            // oxblood is graphics-only: the open or hovered pin paints its triangle, never the button's text colour
+            'transition-colors duration-hover group-focus-visible:stroke-current group-hover:stroke-oxblood group-aria-expanded:stroke-oxblood',
+          )}
         />
-        {status === 'done' && <circle cx={8} cy={9.4} r={1.4} className="fill-ground" />}
+        {status === 'done' && <circle cx={8} cy={9.4} r={1.4} className="fill-[var(--plate-field,var(--ground))]" />}
       </svg>
       <span
         aria-hidden="true"

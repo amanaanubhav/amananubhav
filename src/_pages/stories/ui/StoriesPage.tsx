@@ -26,7 +26,7 @@ export function StoriesPage() {
   return (
     <>
       <SectionDotNav sections={STORIES_SECTIONS} track={{ caption: STORIES_TRACK_CAPTION }} />
-      <div className="flex flex-col gap-32 lg:gap-48">
+      <div className="flex flex-col gap-section">
         <AtlasSection />
         <TrekSpread trek={ANNAPURNA} />
         <TrekSpread trek={KUN_TSO} />
