@@ -29,11 +29,15 @@ function prefersReducedMotion(): boolean {
  * - Lenis's stylesheet gives every prevent-marked element `overscroll-behavior: contain` on both axes; the
  *   `html.lenis` override (more specific than `.lenis [data-lenis-prevent-horizontal]`) keeps the x axis
  *   contained and lets the y axis chain to the page.
+ *
+ * Padding: `pt-2` above and `pb-4` below keep a focused card's ring (2 px + 3 px offset) inside the scroller,
+ * which clips on both axes (P-10). From 1024 px the strip bleeds left but stops at the rail band
+ * (`--rail-reserve`, C-13): its right edge is the journal grid's content-end, so no card runs under the rail.
  */
 const STRIP =
-  'scroll-pane relative m-0 flex list-none snap-x snap-mandatory scroll-px-4 gap-6 overflow-x-auto overflow-y-hidden overscroll-x-contain p-0 px-4 pb-4 ' +
+  'scroll-pane relative m-0 flex list-none snap-x snap-mandatory scroll-px-4 gap-6 overflow-x-auto overflow-y-hidden overscroll-x-contain p-0 px-4 pb-4 pt-2 ' +
   '[html.lenis_&]:[overscroll-behavior:contain_auto] ' +
-  'md:scroll-px-8 md:px-8 lg:mr-24 lg:scroll-px-[clamp(32px,4vw,72px)] lg:px-[clamp(32px,4vw,72px)]';
+  'md:scroll-px-8 md:px-8 lg:mr-[var(--rail-reserve)] lg:scroll-pl-[clamp(32px,4vw,72px)] lg:scroll-pr-0 lg:pl-[clamp(32px,4vw,72px)] lg:pr-0';
 
 /**
  * The altitude strip (§G.2): 3:2 mountain plates in a native horizontal scroller with mandatory snap.
@@ -100,7 +104,7 @@ export function AltitudeStrip({ label, children }: AltitudeStripProps) {
       <ul ref={listRef} aria-label={label} data-lenis-prevent-horizontal className={STRIP} onFocus={revealFocused}>
         {children}
       </ul>
-      <div className="mt-4 hidden justify-end gap-2 px-8 lg:flex lg:pr-28">
+      <div className="mt-4 hidden justify-end gap-2 px-8 lg:flex lg:pr-[var(--rail-reserve)]">
         <IconButton label="Previous plate" icon={ChevronLeft} variant="outline" disabled={atStart} onClick={() => step(-1)} />
         <IconButton label="Next plate" icon={ChevronRight} variant="outline" disabled={atEnd} onClick={() => step(1)} />
       </div>

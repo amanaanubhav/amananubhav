@@ -1,11 +1,12 @@
 import { ChapterHeader } from '@/shared/ui/chapter-header';
 import { Log, Spread } from '@/shared/ui/journal';
-import { MediaSlot } from '@/shared/ui/media-slot';
+import { getMedia } from '@/shared/config';
+import { MediaFill, MediaSlot } from '@/shared/ui/media-slot';
 import { VisuallyHidden } from '@/shared/ui/visually-hidden';
 import { VENTURES, VENTURES_CAPTION, VENTURES_TITLE, type Venture } from '../config/content';
 
-const LINK =
-  'rounded-control text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2';
+/** Component links: `link-ink` on a 1 px `link-underline`, 2 px on hover and focus (globals `.prose-link`). */
+const LINK = 'prose-link rounded-control';
 
 function VentureLinks({ venture }: { venture: Venture }) {
   if (venture.links.length === 0) return null;
@@ -32,9 +33,27 @@ function VentureLinks({ venture }: { venture: Venture }) {
  */
 const FULL_CONTENT = 'col-[content-start/content-end] p-0 text-left align-top font-normal';
 const NAME_CELL = `${FULL_CONTENT} lg:col-[5/span_5] lg:row-start-1`;
-const LOG_CELL = `${FULL_CONTENT} mt-3 lg:col-[2/span_3] lg:row-[1/span_2] lg:mt-0 lg:self-start lg:pt-2 xl:sticky xl:top-24`;
+const LOG_CELL = `${FULL_CONTENT} mt-3 lg:col-[2/span_3] lg:row-[1/span_2] lg:mt-0 lg:self-start lg:pt-2 xl:sticky xl:top-[calc(var(--nav-clear)+1.5rem)]`;
 const STORY_CELL = `${FULL_CONTENT} mt-4 lg:col-[5/span_5] lg:row-start-2 lg:self-start`;
-const PLATE_CELL = `${FULL_CONTENT} mt-8 lg:col-[10/span_4] lg:row-[1/span_2] lg:mt-0 lg:self-start`;
+const PLATE_CELL = `${FULL_CONTENT} mt-8 empty:hidden lg:col-[10/span_4] lg:row-[1/span_2] lg:mt-0 lg:self-start`;
+
+/**
+ * A venture's plate until its screen is supplied: the registry's glyph on a quiet 16:10 plate. Passed as `fill`,
+ * so production shows a finished glyph plate in the plate column (C-05) instead of a "Screens to come" line;
+ * the dev server and `?media=spec` keep the full pending plate.
+ */
+function VenturePlate({ venture }: { venture: Venture }) {
+  const entry = getMedia(venture.slotId);
+  return (
+    <MediaSlot
+      id={venture.slotId}
+      ratio="16:10"
+      className="max-w-[280px]"
+      sizes="280px"
+      fill={<MediaFill kind={entry.fill} seed={entry.id} glyph={entry.glyph} />}
+    />
+  );
+}
 
 /**
  * `#business`: Ventures (§G.2, [S-VENTURES]). A ledger of four rows: log (role, years), name, subtitle,
@@ -42,7 +61,7 @@ const PLATE_CELL = `${FULL_CONTENT} mt-8 lg:col-[10/span_4] lg:row-[1/span_2] lg
  */
 export function BusinessSection() {
   return (
-    <section id="business" aria-labelledby="business-title" className="pt-24 lg:pt-36">
+    <section id="business" aria-labelledby="business-title">
       <Spread
         as="div"
         plateSpan="none"
@@ -53,7 +72,7 @@ export function BusinessSection() {
         }
       />
 
-      <table role="table" className="mt-16 block w-full border-collapse lg:mt-24">
+      <table role="table" className="mt-block block w-full border-collapse">
         <caption className="sr-only">{VENTURES_CAPTION}</caption>
         <thead role="rowgroup" className="sr-only">
           <tr role="row">
@@ -71,7 +90,7 @@ export function BusinessSection() {
             </th>
           </tr>
         </thead>
-        <tbody role="rowgroup" className="flex flex-col gap-24 lg:gap-32">
+        <tbody role="rowgroup" className="flex flex-col gap-block">
           {VENTURES.map((venture) => (
             <tr key={venture.id} role="row" className="journal-grid lg:grid-rows-[auto_1fr]">
               <th role="rowheader" scope="row" className={NAME_CELL}>
@@ -94,7 +113,7 @@ export function BusinessSection() {
                 <VentureLinks venture={venture} />
               </td>
               <td role="cell" className={PLATE_CELL}>
-                <MediaSlot id={venture.slotId} ratio="16:10" className="max-w-[280px]" sizes="280px" />
+                <VenturePlate venture={venture} />
               </td>
             </tr>
           ))}

@@ -13,8 +13,8 @@ import { DisciplinePlate } from './sections/DisciplinePlate';
 import { JumpLink } from './sections/JumpLink';
 import { TrainingLog, type TrainingRow } from './sections/TrainingLog';
 
-const LINK =
-  'rounded-control text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2';
+/** Component links: `link-ink` on a 1 px `link-underline`, 2 px on hover and focus (globals `.prose-link`). */
+const LINK = 'prose-link rounded-control';
 
 const DISCIPLINES: readonly Activity[] = ACTIVITIES.filter((activity) => activity.group === 'discipline');
 
@@ -42,7 +42,7 @@ function spotHeight(plate: MountainPlate): { text: string; approx: boolean } | n
 function SurveyTriangle() {
   return (
     <svg aria-hidden="true" focusable="false" viewBox="0 0 10 9" className="mr-1.5 inline-block size-2.5 align-baseline">
-      <path d="M5 0.8 9.2 8.2H0.8Z" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinejoin="round" />
+      <path d="M5 0.8 9.2 8.2H0.8Z" className="stroke-bronze" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinejoin="round" />
     </svg>
   );
 }
@@ -61,7 +61,7 @@ function MountainCard({ plate }: { plate: MountainPlate }) {
   );
   return (
     <li className="w-[min(320px,80vw)] shrink-0 snap-start">
-      <MediaSlot id={plate.slotId} ratio="3:2" caption="none" sizes="320px" />
+      <MediaSlot id={plate.slotId} layout="cover" ratio="3:2" caption="none" sizes="320px" />
       <div className="mt-3 flex flex-col gap-1">
         <h3 className="m-0 font-display text-title font-semibold text-ink [text-wrap:balance]">{title}</h3>
         {spot ? (
@@ -87,7 +87,7 @@ function MountainCard({ plate }: { plate: MountainPlate }) {
 /** Mobile training list: each row carries its own 160 px plate beside the text; no sticky plate. */
 function TrainingListCompact({ plates }: { plates: Readonly<Partial<Record<ActivityId, ReactNode>>> }) {
   return (
-    <div className="journal-grid mt-16">
+    <div className="journal-grid mt-block">
       <ul
         aria-label={DISCIPLINE_INTRO.logLabel}
         className="col-[content-start/content-end] m-0 flex list-none flex-col border-t border-line p-0"
@@ -139,7 +139,7 @@ export function AthleticsSection() {
   }
 
   return (
-    <section id="athletics" aria-labelledby="athletics-title" className="pt-32 lg:pt-48">
+    <section id="athletics" aria-labelledby="athletics-title">
       <Spread
         as="div"
         plateSpan="none"
@@ -171,7 +171,7 @@ export function AthleticsSection() {
         <TrainingListCompact plates={rowPlates} />
       </div>
 
-      <div className="mt-24 lg:mt-32">
+      <div className="mt-block">
         <AltitudeStrip label={DISCIPLINE_INTRO.stripLabel}>
           {MOUNTAIN_PLATES.map((plate) => (
             <MountainCard key={plate.id} plate={plate} />

@@ -17,9 +17,9 @@ export interface SkyClockLogProps {
   label: string;
 }
 
-const KEY = 'font-body italic text-ink-muted';
-const VALUE_BASE = 'm-0 text-ink [font-variant-numeric:tabular-nums_slashed-zero]';
-const VALUE = `${VALUE_BASE} font-data`;
+const KEY = 'font-body italic text-accent-2';
+const VALUE_BASE = 'm-0 [font-variant-numeric:tabular-nums_slashed-zero]';
+const VALUE = `${VALUE_BASE} font-data text-aqua`;
 const ROW = 'flex items-baseline justify-between gap-4 border-t border-line py-2 first:border-t-0 first:pt-0';
 
 /**
@@ -53,7 +53,7 @@ export function SkyClockLog({
         </div>
         <div className={ROW}>
           <dt className={KEY}>looking</dt>
-          <dd className={`${VALUE_BASE} font-body`}>south</dd>
+          <dd className={`${VALUE_BASE} font-body text-ink`}>south</dd>
         </div>
         <div className={ROW}>
           <dt className={KEY}>
@@ -73,7 +73,9 @@ export function SkyClockLog({
             <span
               ref={starRef}
               aria-hidden="true"
-              className="text-signal opacity-0 transition-opacity duration-overlay ease-settle [grid-area:1/1] group-data-[phase=stars]/alt:opacity-100"
+              // The star line is ink; a small oxblood bead marks it as the "here" of the sky (Update 1.1: oxblood only
+              // where it means the trek or a "here", never as text).
+              className="text-ink opacity-0 transition-opacity duration-overlay ease-settle [grid-area:1/1] before:mr-1.5 before:inline-block before:size-1.5 before:rounded-full before:bg-oxblood before:align-middle before:content-[''] group-data-[phase=stars]/alt:opacity-100"
             >
               {SKY_ZENITH_TEXT}
             </span>

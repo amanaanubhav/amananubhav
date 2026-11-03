@@ -1,5 +1,6 @@
 import { useId, type CSSProperties, type ReactElement } from 'react';
 import { clsx } from 'clsx';
+import { starTintFor, type StarTint } from '@/shared/lib/astro';
 import { cn } from '@/shared/lib/cn';
 import type { CSSVars } from '@/shared/lib/css';
 import { LabelLayer, OverlayBox, type LayerLabel } from './SheetLabels';
@@ -27,17 +28,25 @@ export function starChartSourceNote(data: Pick<StarChartData, 'source'>): string
 const NON_SCALING = 'non-scaling-stroke' as const;
 const r1 = (v: number) => Math.round(v * 10) / 10;
 
-/** Ink tinted at most 12% toward water (blue, tint < 0) or signal (warm, tint > 0). */
-const TINTS: readonly { max: number; fill: string }[] = [
-  { max: -0.6, fill: 'color-mix(in srgb, rgb(var(--c-water)) 12%, rgb(var(--c-ink)))' },
-  { max: -0.2, fill: 'color-mix(in srgb, rgb(var(--c-water)) 6%, rgb(var(--c-ink)))' },
-  { max: 0.2, fill: 'rgb(var(--c-ink))' },
-  { max: 0.6, fill: 'color-mix(in srgb, rgb(var(--c-signal)) 6%, rgb(var(--c-ink)))' },
-  { max: Infinity, fill: 'color-mix(in srgb, rgb(var(--c-signal)) 12%, rgb(var(--c-ink)))' },
+/**
+ * Star colour by B-V (PALETTE-SPEC §4.12): hot stars `star-hot` (steel blue), sun-like `star-sun` (= ink),
+ * K/M stars `star-cool` (warm parchment), with a half step between each. The tints sit close to ink in
+ * lightness, so the chart reads as one ink with temperature in it, never as coloured confetti.
+ */
+const STEPS: readonly StarTint[] = [
+  { role: 'star-hot', towardSun: 0 },
+  { role: 'star-hot', towardSun: 0.5 },
+  { role: 'star-sun', towardSun: 0 },
+  { role: 'star-cool', towardSun: 0.5 },
+  { role: 'star-cool', towardSun: 0 },
 ];
+/** The bands come from `starTintFor` (@/shared/lib/astro), the one classification every star renderer shares. */
+const TINTS: readonly { fill: string }[] = STEPS.map(({ role, towardSun }) => ({
+  fill: towardSun ? `color-mix(in oklab, var(--${role}) 50%, var(--star-sun))` : `var(--${role})`,
+}));
 function tintBucket(t: number): number {
-  const v = Number.isFinite(t) ? Math.max(-1, Math.min(1, t)) : 0;
-  return TINTS.findIndex((b) => v <= b.max);
+  const { role, towardSun } = starTintFor(t);
+  return STEPS.findIndex((s) => s.role === role && s.towardSun === towardSun);
 }
 /** Brightest first: radius 2.0 and up, 1.2 to 2.0, below 1.2 (radius grows with brightness). */
 function magGroup(r: number): 0 | 1 | 2 {

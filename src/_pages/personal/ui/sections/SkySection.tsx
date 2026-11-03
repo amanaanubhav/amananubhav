@@ -34,8 +34,12 @@ export interface SkySectionProps {
 /*
  * Layout (§G.2, §C.4). Text never sits on the slot's box (the stage canvas paints behind the page).
  *
- * >= 1024 px: a 250svh track in one grid row. The slot is 100svh, sticky, in cols 5-12 bleeding right; the text
- * column (copy, clock log, toggle) sticks in cols 1-4 on the ground.
+ * >= 1024 px: one grid row, as long as the sticky slot (100svh) plus the scrub run: 150svh, capped at 1200 px so a
+ * tall screen does not scroll twice as far for the same dusk-to-dawn night (P-12). The slot is 100svh, sticky, in
+ * cols 5-12 bleeding right (a picture: the floating navbar may sit over it). The text column (copy, clock log,
+ * toggle) sticks in cols 1-4 on the ground, from the navbar's clearance down (P-09): `top: --nav-clear`, the rest
+ * of the viewport tall, centred with `safe` so a column taller than that (short screen, text zoom) starts at its
+ * top under the navbar instead of losing its heading above the viewport.
  *
  * < 1024 px: four rows, `copy | band | panel | scrub run`. The copy scrolls past first; then the band (the slot)
  * sticks at the top and the panel (clock log and toggle, on `surface`) sticks right under it, so the sky and its
@@ -52,7 +56,7 @@ export interface SkySectionProps {
  * Tailwind cannot build class names at runtime, so every static override is spelled out for both attributes.
  */
 const TRACK =
-  'journal-grid relative max-lg:grid-rows-[auto_var(--sky-band)_auto_150svh] lg:h-[250svh] lg:grid-rows-[minmax(0,1fr)] ' +
+  'journal-grid relative max-lg:grid-rows-[auto_var(--sky-band)_auto_150svh] lg:h-[min(250svh,calc(100svh+1200px))] lg:grid-rows-[minmax(0,1fr)] ' +
   '[html[data-motion=off]_&]:h-auto [html[data-motion=off]_&]:grid-rows-none ' +
   "[html[data-lite='1']_&]:h-auto [html[data-lite='1']_&]:grid-rows-none";
 
@@ -70,7 +74,8 @@ const SLOT =
   "max-lg:[html[data-motion=off]_&]:row-[2] max-lg:[html[data-lite='1']_&]:row-[2]";
 
 const TEXT =
-  'max-lg:contents lg:sticky lg:top-0 lg:col-[2/span_4] lg:row-start-1 lg:flex lg:h-svh lg:flex-col lg:justify-center lg:pr-4 ' +
+  'max-lg:contents lg:sticky lg:top-[var(--nav-clear)] lg:col-[2/span_4] lg:row-start-1 lg:flex lg:h-[calc(100svh-var(--nav-clear))] ' +
+  'lg:flex-col lg:[justify-content:safe_center] lg:pb-6 lg:pr-4 ' +
   '[html[data-motion=off]_&]:static [html[data-motion=off]_&]:h-auto ' +
   "[html[data-lite='1']_&]:static [html[data-lite='1']_&]:h-auto";
 
@@ -78,7 +83,8 @@ const COPY = 'max-lg:col-[content-start/content-end] max-lg:row-start-1 max-lg:p
 
 const PANEL =
   'max-lg:col-[full-start/full-end] max-lg:row-[3/5] max-lg:self-start max-lg:sticky max-lg:top-[var(--sky-band)] ' +
-  'max-lg:bg-surface max-lg:px-4 max-lg:pb-[calc(1rem+72px)] max-lg:pt-5 md:max-lg:px-8 ' +
+  // The panel's foot clears the phone dock band (`--dock-h`, published by SectionDotNav below 1024 px).
+  'max-lg:bg-surface max-lg:px-4 max-lg:pb-[calc(1rem+var(--dock-h))] max-lg:pt-5 md:max-lg:px-8 ' +
   "[html[data-motion=off]_&]:static [html[data-lite='1']_&]:static " +
   "max-lg:[html[data-motion=off]_&]:row-[3] max-lg:[html[data-lite='1']_&]:row-[3] " +
   "max-lg:[html[data-motion=off]_&]:pb-8 max-lg:[html[data-lite='1']_&]:pb-8";
@@ -87,7 +93,7 @@ const PANEL =
 const NARROW = '(max-width: 1023.98px)';
 
 /** Compass letters pinned at the slot edges (DOM, not projected); shown only once the scene is live. */
-const COMPASS = 'pointer-events-none absolute bg-ground px-1 font-display text-caption font-semibold text-ink-muted opacity-0 transition-opacity duration-ui [[data-stage-live]_&]:opacity-100';
+const COMPASS = 'pointer-events-none absolute bg-ground-sky px-1 font-display text-caption font-semibold text-ink-muted opacity-0 transition-opacity duration-ui [[data-stage-live]_&]:opacity-100';
 
 /** The band never pushes the panel off a short phone: 60svh, or what the panel leaves of the viewport. */
 const TRACK_STYLE = { '--sky-band': 'min(60svh, calc(100svh - var(--sky-panel-h, 18rem)))' } as CSSProperties;
@@ -162,7 +168,7 @@ export function SkySection({
   }, []);
 
   return (
-    <section ref={sectionRef} id="sky" aria-labelledby="sky-title" className="group/sky relative pt-32 lg:pt-48">
+    <section ref={sectionRef} id="sky" aria-labelledby="sky-title" className="group/sky relative">
       <div ref={trackRef} className={TRACK} style={TRACK_STYLE}>
         <div ref={rangeRef} aria-hidden="true" className={RANGE} />
 
@@ -173,7 +179,7 @@ export function SkySection({
           <span aria-hidden="true" className={`${COMPASS} left-3 top-1/2 -translate-y-1/2`}>
             E
           </span>
-          <span aria-hidden="true" className={`${COMPASS} right-3 top-1/2 -translate-y-1/2 lg:right-28`}>
+          <span aria-hidden="true" className={`${COMPASS} right-3 top-1/2 -translate-y-1/2 lg:right-[var(--rail-reserve)]`}>
             W
           </span>
         </StageSlot>

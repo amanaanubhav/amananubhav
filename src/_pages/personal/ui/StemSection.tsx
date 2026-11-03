@@ -38,7 +38,7 @@ function BuildPlate({ build }: { build: EarlyBuild }): ReactNode {
  */
 export function StemSection() {
   return (
-    <section id="stem" aria-labelledby="stem-title" className="pt-32 lg:pt-48">
+    <section id="stem" aria-labelledby="stem-title">
       <Spread
         as="div"
         plateSpan="none"
@@ -51,7 +51,7 @@ export function StemSection() {
         <p className="m-0 max-w-measure font-body text-lead text-ink [text-wrap:pretty]">{STEM_INTRO.lead}</p>
       </Spread>
 
-      <ol className="m-0 mt-24 flex list-none flex-col gap-24 p-0 lg:mt-32 lg:gap-32">
+      <ol className="m-0 mt-block flex list-none flex-col gap-block p-0">
         {EARLY_BUILDS.map((build) => (
           <Spread
             key={build.id}

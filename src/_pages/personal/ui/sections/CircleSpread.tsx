@@ -6,7 +6,7 @@ import { CIRCLE_COPY, CIRCLE_SLOTS } from '../../config/content';
 /** "The people who say yes." ([S-LIFE-CIRCLE]): first names only; friends' photos only with consent (Q-60). */
 export function CircleSpread() {
   return (
-    <div className="mt-32 lg:mt-48">
+    <div className="mt-section">
       <Spread
         as="article"
         labelledBy="circle-title"
@@ -19,7 +19,7 @@ export function CircleSpread() {
       >
         <p className="m-0 max-w-measure font-body text-body text-ink [text-wrap:pretty]">{CIRCLE_COPY.body}</p>
       </Spread>
-      <JournalGrid className="mt-12 empty:hidden">
+      <JournalGrid className="mt-block empty:hidden">
         {CIRCLE_SLOTS.map((id) => (
           <MediaSlot key={id} id={id} className="col-[content-start/content-end] lg:col-[5/span_5]" />
         ))}

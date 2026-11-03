@@ -71,11 +71,11 @@ function useReducedMotion(): boolean {
 }
 
 const CONTROL =
-  'inline-flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-control border border-line-strong bg-transparent px-2.5 ' +
+  'satin-steel inline-flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-control border border-line-strong bg-transparent px-2.5 ' +
   'font-display text-caption font-semibold text-ink transition-colors duration-hover ease-settle ' +
-  'hover:bg-surface-2 aria-pressed:border-ink aria-pressed:bg-surface-2 ' +
-  'aria-pressed:shadow-[inset_0_-2px_0_rgb(var(--c-signal))] aria-disabled:cursor-not-allowed ' +
-  'aria-disabled:border-line aria-disabled:text-ink-muted aria-disabled:hover:bg-transparent';
+  'hover:bg-surface-2 aria-pressed:border-line-strong aria-pressed:bg-action-soft ' +
+  'aria-pressed:shadow-[inset_0_-2px_0_var(--action-line)] aria-disabled:cursor-not-allowed ' +
+  'aria-disabled:border-disabled-edge aria-disabled:text-disabled-ink aria-disabled:hover:bg-transparent';
 
 export interface BlinkComparatorProps {
   className?: string;
@@ -139,7 +139,7 @@ export function BlinkComparator({ className }: BlinkComparatorProps) {
           role="img"
           aria-labelledby={`${id}-t`}
           aria-describedby={`${id}-d`}
-          className="absolute inset-0 block size-full text-ink"
+          className="absolute inset-0 block size-full text-accent-2"
         >
           <title id={`${id}-t`}>{`Blink comparator, frame ${frame + 1} of ${FRAMES}`}</title>
           <desc id={`${id}-d`}>
@@ -176,7 +176,7 @@ export function BlinkComparator({ className }: BlinkComparatorProps) {
             <ChevronRight aria-hidden="true" size={16} strokeWidth={1.5} />
           </button>
           <p
-            className="ml-auto font-data text-caption tabular text-ink-muted"
+            className="ml-auto font-data text-caption tabular text-aqua"
             aria-live={running ? 'off' : 'polite'}
             aria-atomic="true"
           >

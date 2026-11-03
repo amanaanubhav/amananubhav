@@ -1,5 +1,5 @@
 import { DrawOnView } from '@/shared/ui/draw';
-import { INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, ROUTE, WATER, polyline, r1 } from './svg';
+import { INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, ROUTE, WATER, WATER_LABEL, polyline, r1 } from './svg';
 
 const W = 360;
 const H = 240;
@@ -105,7 +105,7 @@ export function RakshakPlate({ className }: RakshakPlateProps) {
         />
 
         <g data-draw-label>
-          <text x={24} y={CY - BANK + 16} className="font-body italic fill-water">
+          <text x={24} y={CY - BANK + 16} className={WATER_LABEL}>
             river flow
           </text>
           <path d={`M96 ${CY - BANK + 12}h20m-4-3.5 4 3.5-4 3.5`} style={{ ...WATER, strokeWidth: 1 }} vectorEffect={NS} />

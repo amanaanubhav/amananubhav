@@ -46,7 +46,7 @@ export interface SkyReadoutRefs {
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, Number.isFinite(v) ? v : 0));
 
-/** 0 at both ends of the track, 1 through the middle: the ground blend toward `ground-sky`. */
+/** 0 at both ends of the track, 1 through the middle: the ground blend toward `sky-zenith`. */
 export function skyGroundMix(progress: number): number {
   const p = clamp01(progress);
   if (p < GROUND_FADE) return p / GROUND_FADE;
@@ -109,7 +109,8 @@ export interface SkyProgressOptions {
 }
 
 /**
- * The Night ground crossfade `ground` -> `ground-sky` (§G.2). The stage canvas sits behind the page with a transparent
+ * The Night ground crossfade `ground` -> `sky-zenith` (§G.2; `sky-zenith` = `ground-sky`, mixed in oklab so the
+ * midpoint stays a clean neutral instead of an sRGB-muddy one). The stage canvas sits behind the page with a transparent
  * clear, so a background on the section would hide the scene; the blend is painted on the body instead, which
  * is only visible through the track while 0 < p < 1 (the track then fills the viewport). Writes only when the
  * rounded percentage changes; `null` restores the stylesheet ground.
@@ -132,7 +133,7 @@ function createGroundPainter(): GroundPainter {
     if (pct === last) return;
     last = pct;
     document.body.style.backgroundColor =
-      pct === 0 ? '' : `color-mix(in srgb, var(--ground-sky) ${pct}%, var(--ground))`;
+      pct === 0 ? '' : `color-mix(in oklab, var(--sky-zenith) ${pct}%, var(--ground))`;
   };
 
   // A theme switch mid-track repaints at once instead of waiting for the next scroll update.

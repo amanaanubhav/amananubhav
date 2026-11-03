@@ -42,8 +42,15 @@ export const ROUTE: CSSProperties = {
   strokeLinejoin: 'round',
 };
 
-/** Water: rivers, the sea and their italic labels (a map convention, not an accent). */
-export const WATER: CSSProperties = { ...INK, stroke: 'var(--water)' };
+/**
+ * Water: rivers, the sea and their italic labels (a map convention, not an accent). Strokes take the map's
+ * shoreline token (`map-lake-edge`: aqua, >= 3:1 on every ground in both themes; the lake fill `map-lake` is too
+ * light for a 1 px line on Day paper); labels take `map-lake-text` (`WATER_LABEL`).
+ */
+export const WATER: CSSProperties = { ...INK, stroke: 'var(--map-lake-edge)' };
+
+/** The italic label of a river or the sea (Literata, `map-lake-text`). */
+export const WATER_LABEL = 'font-body italic fill-map-lake-text';
 
 /** Label classes (§B.4.3): built things in Archivo, natural features in Literata italic, data in Plex Mono. */
 export const LABEL = 'font-display fill-current';
@@ -74,7 +81,7 @@ export function PlateSvg({ width, height, title, desc, className, children }: Pl
       role="img"
       aria-labelledby={titleId}
       aria-describedby={descId}
-      className={cn('block h-auto w-full text-ink', className)}
+      className={cn('block h-auto w-full text-accent-2', className)}
       fontSize={13}
     >
       <title id={titleId}>{title}</title>

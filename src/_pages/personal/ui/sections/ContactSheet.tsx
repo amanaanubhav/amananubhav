@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { getMedia, mediaRatioValue, type MediaSlotId } from '@/shared/config';
-import { MediaSlot } from '@/shared/ui/media-slot';
+import { isMediaSlotShown, MediaSlot } from '@/shared/ui/media-slot';
 import { VisuallyHidden } from '@/shared/ui/visually-hidden';
 import { ContactSheetReveal } from './ContactSheetReveal';
 
@@ -15,9 +15,13 @@ export interface ContactSheetProps {
  * the trailing spacer stops the last row from stretching. On a phone the basis (150 px) is lower than the target
  * so most rows pair two frames and grow to roughly 150-210 px; --row-max caps a frame left alone on its row at
  * 1.3x the target, so a lone landscape or a 9:16 clip never stretches into a full-width feed plate. Frame numbers are the real sequence; captions are
- * the registry's drafts (Q-09); clips keep their in-view play/pause and their visible pause button.
+ * the registry's drafts (Q-09); clips keep their in-view play/pause and their visible pause button. A frame that
+ * would render nothing (a pending album slot in production, C-05) is left out before numbering, so no frame
+ * number ever stands over an empty cell.
  */
-export function ContactSheet({ frames, label }: ContactSheetProps) {
+export function ContactSheet({ frames: allFrames, label }: ContactSheetProps) {
+  const frames = allFrames.filter((id) => isMediaSlotShown(id, 'album'));
+  if (frames.length === 0) return null;
   return (
     <ContactSheetReveal>
       <ol

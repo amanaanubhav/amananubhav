@@ -6,8 +6,10 @@ export {
   equatorialToHorizontal,
   equatorialToHorizontalMatrix,
   bvToRgb,
+  bvToTintIndex,
+  starTintFor,
   skyTimeAt,
   formatIST,
   brightestAbove,
 } from './astro';
-export type { NamedStar } from './astro';
+export type { NamedStar, StarTint, StarTintRole } from './astro';

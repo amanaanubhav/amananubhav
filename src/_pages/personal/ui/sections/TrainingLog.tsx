@@ -39,7 +39,7 @@ export function TrainingLog({ rows, plates, label, soonLabel, linkLabel }: Train
   const shown = preview ?? selected;
 
   return (
-    <div className="journal-grid mt-16 lg:mt-24">
+    <div className="journal-grid mt-block">
       <ul
         aria-label={label}
         className="col-[content-start/content-end] m-0 list-none border-t border-line p-0 lg:col-[2/span_7]"
@@ -61,11 +61,11 @@ export function TrainingLog({ rows, plates, label, soonLabel, linkLabel }: Train
                 onBlur={() => setPreview(null)}
                 className={cn(
                   'relative grid w-full grid-cols-[32px_minmax(0,1fr)] items-start gap-x-4 px-3 py-4 text-left',
-                  'transition-colors duration-hover ease-settle hover:bg-surface-2',
-                  'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal',
-                  "before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-signal before:opacity-0 before:content-['']",
-                  'aria-pressed:bg-surface-2 aria-pressed:before:opacity-100',
-                  // Forced colors flatten both the row tint and the signal rule; keep the pressed marker as Highlight.
+                  'transition-colors duration-hover ease-settle hover:bg-[var(--hover-wash)] active:bg-[var(--press-wash)]',
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring',
+                  "before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-action-line before:opacity-0 before:content-['']",
+                  'aria-pressed:bg-action-soft aria-pressed:hover:bg-action-soft aria-pressed:before:opacity-100',
+                  // Forced colors flatten both the row tint and the action rule; keep the pressed marker as Highlight.
                   'forced-colors:before:[forced-color-adjust:none] forced-colors:before:bg-[Highlight]',
                 )}
               >
@@ -88,7 +88,7 @@ export function TrainingLog({ rows, plates, label, soonLabel, linkLabel }: Train
                 <p className="m-0 pb-4 pl-[60px]">
                   <Link
                     href={row.href}
-                    className="rounded-control font-body text-ui text-ink underline decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] duration-hover hover:decoration-2"
+                    className="prose-link rounded-control font-body text-ui"
                   >
                     {linkLabel}
                   </Link>

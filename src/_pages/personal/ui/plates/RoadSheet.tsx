@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import type { RoadPlace, Ride } from '../../config/content';
 import { DrawOnView } from '@/shared/ui/draw';
-import { INK, LABEL, LABEL_MUTED, MUTED, NS, ROUTE, WATER, polyline } from './svg';
+import { INK, LABEL, LABEL_MUTED, MUTED, NS, ROUTE, WATER, WATER_LABEL, polyline } from './svg';
 
 const W = 640;
 const H = 360;
@@ -81,7 +81,7 @@ export function RoadSheet({ rides, className }: RoadSheetProps) {
         role="img"
         aria-labelledby={`${id}-t`}
         aria-describedby={`${id}-d`}
-        className="block h-auto w-full text-ink [font-size:24px] sm:[font-size:15px] md:[font-size:12px]"
+        className="block h-auto w-full text-accent-2 [font-size:24px] sm:[font-size:15px] md:[font-size:12px]"
       >
         <title id={`${id}-t`}>Road sheet: my rides around Bhubaneswar</title>
         <desc id={`${id}-d`}>{desc}</desc>
@@ -122,7 +122,7 @@ export function RoadSheet({ rides, className }: RoadSheetProps) {
             }
             return (
               <g key={key} opacity={active ? 1 : 0.6}>
-                <circle cx={place.x} cy={place.y} r={place.kind === 'city' ? 5 : 4} className="fill-current" />
+                <circle cx={place.x} cy={place.y} r={place.kind === 'city' ? 5 : 4} className="fill-aqua" />
                 <text
                   x={place.x + (place.kind === 'city' ? 12 : -12)}
                   y={place.y + (place.kind === 'city' ? -8 : 5)}
@@ -135,7 +135,7 @@ export function RoadSheet({ rides, className }: RoadSheetProps) {
             );
           })}
 
-          <text x={436} y={318} className="font-body italic fill-water" fontSize="1.15em">
+          <text x={436} y={318} className={WATER_LABEL} fontSize="1.15em">
             Bay of Bengal
           </text>
 

@@ -100,7 +100,7 @@ export function SchrodingerPlate({ className }: SchrodingerPlateProps) {
           />
         </g>
         <path d={`M${CX - 6} ${CY}H${CX + 6}M${CX} ${CY - 6}V${CY + 6}`} style={{ ...INK, strokeWidth: 1 }} vectorEffect={NS} />
-        <circle cx={CX} cy={CY} r={2.6} className="fill-current" />
+        <circle cx={CX} cy={CY} r={2.6} className="fill-aqua" />
         <circle
           data-draw
           cx={CX}

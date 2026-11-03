@@ -223,6 +223,46 @@ export function bvToRgb(bv: number): readonly [number, number, number] {
 }
 
 /* ------------------------------------------------------------------------------------------------
+ * Star tint tokens (PALETTE-SPEC §4.12)
+ * --------------------------------------------------------------------------------------------- */
+
+/**
+ * The palette's three star colours: hot (steel blue), sun-like (= ink) and cool (warm parchment). The names are
+ * the CSS custom properties (`var(--star-hot)`) and the `THEME_EXTENDED` keys, so a reader resolves them in its
+ * own medium; this module stays dependency-free.
+ */
+export type StarTintRole = 'star-hot' | 'star-sun' | 'star-cool';
+
+/** One palette step of a star: its role, and how far it mixes toward `star-sun` (0, or 0.5 for a half step). */
+export interface StarTint {
+  readonly role: StarTintRole;
+  readonly towardSun: 0 | 0.5;
+}
+
+/**
+ * B-V to the chart's tint index, -1 (hot) .. 1 (cool), 0 at a sun-like 0.6: the value the generated star charts
+ * store per star (`scripts/posters/sky-charts.mjs`). Non-finite B-V reads as sun-like.
+ */
+export function bvToTintIndex(bv: number): number {
+  const b = Number.isFinite(bv) ? bv : 0.6;
+  return Math.max(-1, Math.min(1, (b - 0.6) / 0.9));
+}
+
+/**
+ * The five palette steps a star is drawn in, by tint index (StarChart's bands): hot, half hot, sun, half cool,
+ * cool. The tints sit close to ink in lightness, so a sky reads as one ink with temperature in it. Resolve a step
+ * as `color-mix(in oklab, var(--<role>) 50%, var(--star-sun))` for a half step, `var(--<role>)` otherwise.
+ */
+export function starTintFor(tintIndex: number): StarTint {
+  const t = Number.isFinite(tintIndex) ? tintIndex : 0;
+  if (t <= -0.6) return { role: 'star-hot', towardSun: 0 };
+  if (t <= -0.2) return { role: 'star-hot', towardSun: 0.5 };
+  if (t <= 0.2) return { role: 'star-sun', towardSun: 0 };
+  if (t <= 0.6) return { role: 'star-cool', towardSun: 0.5 };
+  return { role: 'star-cool', towardSun: 0 };
+}
+
+/* ------------------------------------------------------------------------------------------------
  * Readouts
  * --------------------------------------------------------------------------------------------- */
 
