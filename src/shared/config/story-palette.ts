@@ -1,14 +1,17 @@
-import { THEME_PALETTE, type ThemeName } from './palette';
+import { STORY_THEME, type StoryThemeTokens, type ThemeName } from './palette';
 
 /*
- * The home story map's colours (design pass 3, §6). One source for the relief scene's uniforms and
- * the DOM legend (its ramp bar uses the same hexes as the shader stops). No three.js here: this
- * module is safe in the initial chunk.
+ * The home story map's colours (PALETTE-SPEC §4.11, §5.7, R28). One source for the relief scene's
+ * uniforms, the SSR plan sheet and the DOM legend (its ramp bar uses the same hexes as the shader
+ * stops). Every value is generated from scripts/palette/palette.json (`npm run palette:emit`), so this
+ * module holds no colour of its own. No three.js here: it is safe in the initial chunk.
  *
  * Elevation: a 6-stop hypsometric ramp (moss valleys -> olive -> sand -> stone -> slate -> ice),
- * lightness-monotonic at about 1.15x luminance per 500 m band. Temperature: one teal family of
- * isotherms (0 °C bold, -10 °C fine), a neutral +10 °C hairline, a cold wash and frost stipple.
- * The walked route and the head are the theme's signal colours; side trips are a dusty violet.
+ * lightness-monotonic. Temperature: a diverging glacier -> dusk violet -> oxblood ramp about +5 °C,
+ * aqua isotherms (0 °C bold, -10 °C fine), a neutral +10 °C hairline and a cold wash.
+ * His walked route and the head are the signal family; side trips are violet (`branch`); lake discs
+ * are `lake` and lake labels `lakeText`. The map draws no casing, halo or outline: the generated
+ * `routeCasing` / `labelHalo` tokens are not used here (7a5ed17's fine line work and labels).
  */
 
 /** Altitudes (m) of the hypsometric ramp stops. */
@@ -16,79 +19,10 @@ export const STORY_HYPSO_STOPS_M = [800, 2000, 3500, 4500, 5500, 7000] as const;
 /** Temperatures (°C) of the temperature-emphasis ramp stops. */
 export const STORY_TEMP_STOPS_C = [-25, -10, 0, 5, 12, 22] as const;
 
-type Hex = `#${string}`;
-type Ramp = readonly [Hex, Hex, Hex, Hex, Hex, Hex];
+/** The map's colours for one theme (the generated `map` group of the palette). */
+export type StoryThemeColors = StoryThemeTokens;
 
-export interface StoryThemeColors {
-  /** Page ground (the sheet fades into it) and ink (contours, peak marks). */
-  readonly ground: Hex;
-  readonly ink: Hex;
-  /** Walked route (core) and the head marker / "here" accent. */
-  readonly route: Hex;
-  readonly head: Hex;
-  /** Side-trip branches and lake discs; the lighter tone is for lake label text. */
-  readonly branch: Hex;
-  readonly branchText: Hex;
-  /** A main stretch not walked (dotted); none at present. */
-  readonly jeep: Hex;
-  /** Isotherms: +10 °C hairline, 0 °C, -10 °C; the cold wash below 0 °C. */
-  readonly isoWarm: Hex;
-  readonly isoZero: Hex;
-  readonly isoCold: Hex;
-  readonly coldTint: Hex;
-  /** Aerial perspective: warm valleys -> cold at altitude. */
-  readonly fog: Hex;
-  readonly fogCold: Hex;
-  readonly hypso: Ramp;
-  readonly temp: Ramp;
-  /** Contour alphas (100 m minor, 500 m index) and hillshade strength. */
-  readonly minor: number;
-  readonly index: number;
-  readonly shade: number;
-}
-
-export const STORY_PALETTE: Readonly<Record<ThemeName, StoryThemeColors>> = {
-  night: {
-    ground: THEME_PALETTE.night.ground,
-    ink: THEME_PALETTE.night.ink,
-    route: THEME_PALETTE.night['signal-line'],
-    head: THEME_PALETTE.night.signal,
-    branch: THEME_PALETTE.night.water,
-    branchText: '#C2B8DD',
-    jeep: '#8E929B',
-    isoWarm: '#9A948C',
-    isoZero: '#5FC0C2',
-    isoCold: '#9AD6D0',
-    coldTint: '#1C3236',
-    fog: '#14161B',
-    fogCold: '#121721',
-    hypso: ['#112015', '#202618', '#332E22', '#3C362E', '#37434E', '#4E5661'],
-    temp: ['#8C93A3', '#4D5263', '#343846', '#2B2740', '#2F2228', '#4A2528'],
-    minor: 0.075,
-    index: 0.2,
-    shade: 0.6,
-  },
-  day: {
-    ground: THEME_PALETTE.day.ground,
-    ink: THEME_PALETTE.day.ink,
-    route: THEME_PALETTE.day['signal-line'],
-    head: THEME_PALETTE.day.signal,
-    branch: '#6B5A9C',
-    branchText: '#6B5A9C',
-    jeep: '#6A7069',
-    isoWarm: '#857E75',
-    isoZero: '#0F6A70',
-    isoCold: '#4E9DA0',
-    coldTint: '#CFE2E1',
-    fog: '#E9ECEA',
-    fogCold: '#E4E9EF',
-    hypso: ['#D8ECDB', '#D7E0C7', '#D6CEB9', '#CBC0B5', '#A6B6C5', '#98A5B6'],
-    temp: ['#F4F6F9', '#D8DFEA', '#C3CBD9', '#CCC3DD', '#DCC6CB', '#DDB1A6'],
-    minor: 0.12,
-    index: 0.3,
-    shade: 0.45,
-  },
-};
+export const STORY_PALETTE: Readonly<Record<ThemeName, StoryThemeColors>> = STORY_THEME;
 
 /** CSS `linear-gradient` for the legend bar, from the same stops the shader uses. */
 export function storyRampGradient(theme: ThemeName, layer: 'alt' | 'temp'): string {

@@ -32,35 +32,35 @@ export const THEME_PALETTE: Readonly<Record<ThemeName, ThemeTokens>> = {
     ground: '#121316',
     surface: '#191A1E',
     'surface-2': '#212227',
-    'ground-sky': '#0C0B10',
+    'ground-sky': '#0C0C10',
     line: '#2E2F36',
     'line-strong': '#71757E',
     ink: '#DEDEE2',
     'ink-muted': '#A3A7B0',
-    signal: '#CB7C75',
+    signal: '#D37F7D',
     'signal-line': '#B3595C',
     'on-signal': '#121316',
-    water: '#9D8FBE',
-    success: '#8FB89B',
-    warning: '#CDB37C',
-    error: '#EC9A9C',
+    water: '#75BEB2',
+    success: '#A5CEA2',
+    warning: '#D0B37C',
+    error: '#F7B8C7',
   },
   day: {
     ground: '#EEF0EA',
     surface: '#F9FAF6',
     'surface-2': '#E1E5DC',
     'ground-sky': '#E6E9EE',
-    line: '#C9CEC2',
-    'line-strong': '#788072',
-    ink: '#1B1E1C',
-    'ink-muted': '#50564F',
-    signal: '#A63B09',
-    'signal-line': '#CF4D0B',
-    'on-signal': '#FFFFFF',
-    water: '#2C5F86',
-    success: '#2E6B33',
-    warning: '#7A5600',
-    error: '#A8203F',
+    line: '#CFD1D6',
+    'line-strong': '#71757E',
+    ink: '#212227',
+    'ink-muted': '#565962',
+    signal: '#993D3B',
+    'signal-line': '#8F2C32',
+    'on-signal': '#F9FAF6',
+    water: '#0C6C68',
+    success: '#456844',
+    warning: '#7E5404',
+    error: '#813258',
   },
 };
 
@@ -79,30 +79,792 @@ export function hexToRgb01(hex: string): [number, number, number] {
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
-/** @deprecated legacy meander colors; delete when no file imports PALETTE. */
-export const PALETTE = {
-  cyan500: '#06b6d4',
-  cyan400: '#22d3ee',
-  violet500: '#8b5cf6',
-  pink500: '#ec4899',
-  blue500: '#3b82f6',
-  deepSpace: '#030014',
-  white: '#ffffff',
-  zinc50: '#fafafa',
-  zinc300: '#d4d4d8',
-  zinc400: '#a1a1aa',
-  zinc500: '#71717a',
-  zinc900: '#18181b',
-} as const satisfies Readonly<Record<string, string>>;
-
-/** @deprecated */
-export type PaletteColor = keyof typeof PALETTE;
-
-/** @deprecated `#rrggbb` + alpha -> `rgba(r, g, b, alpha)` (same spacing as the legacy Meander helpers). */
-export function rgba(hex: string, alpha: number): string {
-  const value = hex.replace('#', '');
-  const r = parseInt(value.slice(0, 2), 16);
-  const g = parseInt(value.slice(2, 4), 16);
-  const b = parseInt(value.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+/**
+ * A colour at an alpha, resolved for WebGL and canvas. In CSS the same token reads
+ * `rgb(var(--c-<role>) / var(--alpha-<step>))`.
+ */
+export interface ThemeComposite {
+  readonly hex: `#${string}`;
+  readonly alpha: number;
 }
+
+/**
+ * Extended colours (PALETTE-SPEC §4): every hex or var() alias of `extended.<theme>` plus each ramp member as
+ * `<ramp>-<n>`. CSS: `var(--<name>)` or `rgb(var(--c-<name>) / var(--alpha-<step>))`; Tailwind: `bg-<name>`.
+ */
+export type ExtendedRole =
+  | 'accent-2'
+  | 'accent-2-line'
+  | 'accent-2-soft'
+  | 'on-accent-2'
+  | 'aqua'
+  | 'aqua-line'
+  | 'aqua-deep'
+  | 'aqua-soft'
+  | 'on-aqua'
+  | 'signal-hover'
+  | 'signal-pressed'
+  | 'signal-deep'
+  | 'on-signal-deep'
+  | 'signal-soft'
+  | 'success-soft'
+  | 'warning-soft'
+  | 'error-soft'
+  | 'metal-50'
+  | 'metal-100'
+  | 'metal-150'
+  | 'metal-200'
+  | 'metal-300'
+  | 'metal-400'
+  | 'metal-500'
+  | 'metal-600'
+  | 'metal-700'
+  | 'metal-750'
+  | 'metal-775'
+  | 'metal-800'
+  | 'metal-850'
+  | 'metal-900'
+  | 'metal-950'
+  | 'paper-0'
+  | 'paper-50'
+  | 'paper-100'
+  | 'paper-150'
+  | 'paper-sky'
+  | 'bronze-200'
+  | 'bronze-400'
+  | 'bronze-600'
+  | 'bronze-800'
+  | 'bronze'
+  | 'titanium-violet'
+  | 'titanium-aqua'
+  | 'glass-bead'
+  | 'glass-fallback'
+  | 'focus-ring'
+  | 'focus-ring-inverse'
+  | 'selection-bg'
+  | 'selection-ink'
+  | 'link-ink'
+  | 'link-underline'
+  | 'link-muted'
+  | 'link-muted-underline'
+  | 'caret'
+  | 'placeholder'
+  | 'theme-color'
+  | 'scrollbar-thumb'
+  | 'scrollbar-thumb-hover'
+  | 'surface-3'
+  | 'disabled-ink'
+  | 'disabled-edge'
+  | 'disabled-fill'
+  | 'stamp-outline'
+  | 'chart-1'
+  | 'chart-2'
+  | 'chart-3'
+  | 'chart-4'
+  | 'chart-5'
+  | 'chart-6'
+  | 'chart-highlight'
+  | 'chart-grid'
+  | 'chart-axis'
+  | 'chart-label'
+  | 'chart-value'
+  | 'chart-sequential-1'
+  | 'chart-sequential-2'
+  | 'chart-sequential-3'
+  | 'chart-sequential-4'
+  | 'chart-sequential-5'
+  | 'chart-diverging-1'
+  | 'chart-diverging-2'
+  | 'chart-diverging-3'
+  | 'chart-diverging-4'
+  | 'chart-diverging-5'
+  | 'chart-diverging-6'
+  | 'chart-diverging-7'
+  | 'term-bg'
+  | 'term-panel'
+  | 'term-field'
+  | 'term-code-bg'
+  | 'term-prompt'
+  | 'term-cursor'
+  | 'you-solid'
+  | 'live'
+  | 'ansi-black'
+  | 'ansi-red'
+  | 'ansi-green'
+  | 'ansi-yellow'
+  | 'ansi-blue'
+  | 'ansi-magenta'
+  | 'ansi-cyan'
+  | 'ansi-white'
+  | 'ansi-bright-black'
+  | 'ansi-bright-red'
+  | 'ansi-bright-green'
+  | 'ansi-bright-yellow'
+  | 'ansi-bright-blue'
+  | 'ansi-bright-magenta'
+  | 'ansi-bright-cyan'
+  | 'ansi-bright-white'
+  | 'map-ground'
+  | 'map-ink'
+  | 'map-route'
+  | 'map-head'
+  | 'map-branch'
+  | 'map-branch-text'
+  | 'map-lake'
+  | 'map-lake-edge'
+  | 'map-lake-text'
+  | 'map-label-halo'
+  | 'map-jeep'
+  | 'map-iso-warm'
+  | 'map-iso-zero'
+  | 'map-iso-cold'
+  | 'map-cold-tint'
+  | 'map-fog'
+  | 'map-fog-cold'
+  | 'map-hypso-1'
+  | 'map-hypso-2'
+  | 'map-hypso-3'
+  | 'map-hypso-4'
+  | 'map-hypso-5'
+  | 'map-hypso-6'
+  | 'map-temp-1'
+  | 'map-temp-2'
+  | 'map-temp-3'
+  | 'map-temp-4'
+  | 'map-temp-5'
+  | 'map-temp-6'
+  | 'sky-zenith'
+  | 'sky-horizon'
+  | 'star-hot'
+  | 'star-sun'
+  | 'star-cool'
+  | 'scene-sky-top'
+  | 'scene-sky-mid'
+  | 'scene-sky-horizon'
+  | 'scene-glow'
+  | 'scene-far-snow'
+  | 'scene-hi-snow'
+  | 'scene-rock'
+  | 'scene-dry'
+  | 'scene-veg-light'
+  | 'scene-veg-1'
+  | 'scene-veg-2'
+  | 'scene-veg-3'
+  | 'scene-water'
+  | 'scene-ripple'
+  | 'scene-lamp'
+  | 'scene-yak'
+  | 'scene-flower-1'
+  | 'scene-flower-2'
+  | 'scene-flower-3'
+  | 'scene-flower-4'
+  | 'scene-flower-5'
+  | 'action'
+  | 'action-hover'
+  | 'action-pressed'
+  | 'on-action'
+  | 'action-line'
+  | 'action-soft'
+  | 'focus-ring-action'
+  | 'oxblood'
+  | 'oxblood-deep'
+  | 'on-oxblood'
+  | 'steel'
+  | 'ground-steel'
+  | 'surface-steel'
+  | 'surface-2-steel'
+  | 'surface-3-steel';
+
+/** Resolved hexes of the extended colours, per theme (aliases followed to their source). */
+export const THEME_EXTENDED: Readonly<Record<ThemeName, Readonly<Record<ExtendedRole, `#${string}`>>>> = {
+  night: {
+    'accent-2': '#9F89B8',
+    'accent-2-line': '#8871A4',
+    'accent-2-soft': '#292730',
+    'on-accent-2': '#121316',
+    aqua: '#75BEB2',
+    'aqua-line': '#479D92',
+    'aqua-deep': '#1F514B',
+    'aqua-soft': '#242E30',
+    'on-aqua': '#121316',
+    'signal-hover': '#DA8683',
+    'signal-pressed': '#CB7976',
+    'signal-deep': '#773638',
+    'on-signal-deep': '#DEDEE2',
+    'signal-soft': '#2F2629',
+    'success-soft': '#272C2C',
+    'warning-soft': '#2D2A27',
+    'error-soft': '#2F2A2F',
+    'metal-50': '#F3F3F6',
+    'metal-100': '#DEDEE2',
+    'metal-150': '#CFD1D6',
+    'metal-200': '#C0C2C9',
+    'metal-300': '#A3A7B0',
+    'metal-400': '#898E97',
+    'metal-500': '#71757E',
+    'metal-600': '#565962',
+    'metal-700': '#3D3F47',
+    'metal-750': '#2E2F36',
+    'metal-775': '#26272D',
+    'metal-800': '#212227',
+    'metal-850': '#191A1E',
+    'metal-900': '#121316',
+    'metal-950': '#0C0C10',
+    'paper-0': '#F9FAF6',
+    'paper-50': '#EEF0EA',
+    'paper-100': '#E1E5DC',
+    'paper-150': '#DADED5',
+    'paper-sky': '#E6E9EE',
+    'bronze-200': '#D9B4AA',
+    'bronze-400': '#AD7F74',
+    'bronze-600': '#8A5F57',
+    'bronze-800': '#66433D',
+    bronze: '#AD7F74',
+    'titanium-violet': '#AAA0B6',
+    'titanium-aqua': '#94B2AC',
+    'glass-bead': '#0F1C1A',
+    'glass-fallback': '#191A1E',
+    'focus-ring': '#D37F7D',
+    'focus-ring-inverse': '#DEDEE2',
+    'selection-bg': '#1F514B',
+    'selection-ink': '#DEDEE2',
+    'link-ink': '#DEDEE2',
+    'link-underline': '#D37F7D',
+    'link-muted': '#A3A7B0',
+    'link-muted-underline': '#71757E',
+    caret: '#D37F7D',
+    placeholder: '#A3A7B0',
+    'theme-color': '#121316',
+    'scrollbar-thumb': '#71757E',
+    'scrollbar-thumb-hover': '#898E97',
+    'surface-3': '#26272D',
+    'disabled-ink': '#A3A7B0',
+    'disabled-edge': '#2E2F36',
+    'disabled-fill': '#212227',
+    'stamp-outline': '#71757E',
+    'chart-1': '#77C2B3',
+    'chart-2': '#B79ED3',
+    'chart-3': '#F4CE8E',
+    'chart-4': '#8AB27D',
+    'chart-5': '#4D7297',
+    'chart-6': '#83868C',
+    'chart-highlight': '#B3595C',
+    'chart-grid': '#2E2F36',
+    'chart-axis': '#71757E',
+    'chart-label': '#A3A7B0',
+    'chart-value': '#DEDEE2',
+    'chart-sequential-1': '#1D3837',
+    'chart-sequential-2': '#2F5C58',
+    'chart-sequential-3': '#438179',
+    'chart-sequential-4': '#5FA89C',
+    'chart-sequential-5': '#91CFC2',
+    'chart-diverging-1': '#D17E7A',
+    'chart-diverging-2': '#965856',
+    'chart-diverging-3': '#5A3C3B',
+    'chart-diverging-4': '#2A2B2F',
+    'chart-diverging-5': '#2D4F4B',
+    'chart-diverging-6': '#407B72',
+    'chart-diverging-7': '#65A798',
+    'term-bg': '#191A1E',
+    'term-panel': '#212227',
+    'term-field': '#212227',
+    'term-code-bg': '#121316',
+    'term-prompt': '#D37F7D',
+    'term-cursor': '#D37F7D',
+    'you-solid': '#242E30',
+    live: '#479D92',
+    'ansi-black': '#3D3F47',
+    'ansi-red': '#D37F7D',
+    'ansi-green': '#A5CEA2',
+    'ansi-yellow': '#D0B37C',
+    'ansi-blue': '#88A8C9',
+    'ansi-magenta': '#9F89B8',
+    'ansi-cyan': '#75BEB2',
+    'ansi-white': '#A3A7B0',
+    'ansi-bright-black': '#898E97',
+    'ansi-bright-red': '#DA8683',
+    'ansi-bright-green': '#BAE0BB',
+    'ansi-bright-yellow': '#EFD098',
+    'ansi-bright-blue': '#A9C4E0',
+    'ansi-bright-magenta': '#C4B1DA',
+    'ansi-bright-cyan': '#A2DBD2',
+    'ansi-bright-white': '#DEDEE2',
+    'map-ground': '#121316',
+    'map-ink': '#DEDEE2',
+    'map-route': '#B3595C',
+    'map-head': '#D37F7D',
+    'map-branch': '#8871A4',
+    'map-branch-text': '#9F89B8',
+    'map-lake': '#468F85',
+    'map-lake-edge': '#75BEB2',
+    'map-lake-text': '#75BEB2',
+    'map-label-halo': '#121316',
+    'map-jeep': '#898E97',
+    'map-iso-warm': '#9B9082',
+    'map-iso-zero': '#75BEB2',
+    'map-iso-cold': '#ABDDD7',
+    'map-cold-tint': '#1C3838',
+    'map-fog': '#141518',
+    'map-fog-cold': '#11181D',
+    'map-hypso-1': '#122014',
+    'map-hypso-2': '#212416',
+    'map-hypso-3': '#332B1F',
+    'map-hypso-4': '#38332E',
+    'map-hypso-5': '#383B42',
+    'map-hypso-6': '#404A55',
+    'map-temp-1': '#3B6365',
+    'map-temp-2': '#2C4B51',
+    'map-temp-3': '#23323D',
+    'map-temp-4': '#292333',
+    'map-temp-5': '#46252B',
+    'map-temp-6': '#612E2C',
+    'sky-zenith': '#0C0C10',
+    'sky-horizon': '#18161D',
+    'star-hot': '#C9DAEB',
+    'star-sun': '#DEDEE2',
+    'star-cool': '#E5CBB7',
+    'scene-sky-top': '#0C0C10',
+    'scene-sky-mid': '#121117',
+    'scene-sky-horizon': '#221B26',
+    'scene-glow': '#D37F7D',
+    'scene-far-snow': '#A5ABB5',
+    'scene-hi-snow': '#BABEC6',
+    'scene-rock': '#3D3C42',
+    'scene-dry': '#332D21',
+    'scene-veg-light': '#344532',
+    'scene-veg-1': '#213324',
+    'scene-veg-2': '#19281A',
+    'scene-veg-3': '#101F13',
+    'scene-water': '#1B4844',
+    'scene-ripple': '#479D92',
+    'scene-lamp': '#D0B37C',
+    'scene-yak': '#121316',
+    'scene-flower-1': '#9F89B8',
+    'scene-flower-2': '#D37F7D',
+    'scene-flower-3': '#D0B37C',
+    'scene-flower-4': '#75BEB2',
+    'scene-flower-5': '#C0C2C9',
+    action: '#7EC9AF',
+    'action-hover': '#8DD4BB',
+    'action-pressed': '#7CBAA4',
+    'on-action': '#121316',
+    'action-line': '#59A28E',
+    'action-soft': '#20322C',
+    'focus-ring-action': '#7EC9AF',
+    oxblood: '#B3595C',
+    'oxblood-deep': '#6A3638',
+    'on-oxblood': '#DEDEE2',
+    steel: '#898E97',
+    'ground-steel': '#10151B',
+    'surface-steel': '#171D24',
+    'surface-2-steel': '#1F262E',
+    'surface-3-steel': '#242C35',
+  },
+  day: {
+    'accent-2': '#6D5387',
+    'accent-2-line': '#7E649C',
+    'accent-2-soft': '#E8E6E9',
+    'on-accent-2': '#F9FAF6',
+    aqua: '#0C6C68',
+    'aqua-line': '#27847F',
+    'aqua-deep': '#085955',
+    'aqua-soft': '#DDE9E5',
+    'on-aqua': '#F9FAF6',
+    'signal-hover': '#913434',
+    'signal-pressed': '#862C2D',
+    'signal-deep': '#6B1D23',
+    'on-signal-deep': '#F9FAF6',
+    'signal-soft': '#EDE3E0',
+    'success-soft': '#EBEEE8',
+    'warning-soft': '#EFEDE3',
+    'error-soft': '#EFEAE9',
+    'metal-50': '#F3F3F6',
+    'metal-100': '#DEDEE2',
+    'metal-150': '#CFD1D6',
+    'metal-200': '#C0C2C9',
+    'metal-300': '#A3A7B0',
+    'metal-400': '#898E97',
+    'metal-500': '#71757E',
+    'metal-600': '#565962',
+    'metal-700': '#3D3F47',
+    'metal-750': '#2E2F36',
+    'metal-775': '#26272D',
+    'metal-800': '#212227',
+    'metal-850': '#191A1E',
+    'metal-900': '#121316',
+    'metal-950': '#0C0C10',
+    'paper-0': '#F9FAF6',
+    'paper-50': '#EEF0EA',
+    'paper-100': '#E1E5DC',
+    'paper-150': '#DADED5',
+    'paper-sky': '#E6E9EE',
+    'bronze-200': '#C9A095',
+    'bronze-400': '#AC7B70',
+    'bronze-600': '#935F56',
+    'bronze-800': '#613833',
+    bronze: '#935F56',
+    'titanium-violet': '#988CA6',
+    'titanium-aqua': '#7CA19E',
+    'glass-bead': '#E8F7F5',
+    'glass-fallback': '#F9FAF6',
+    'focus-ring': '#993D3B',
+    'focus-ring-inverse': '#212227',
+    'selection-bg': '#B5E0DB',
+    'selection-ink': '#212227',
+    'link-ink': '#212227',
+    'link-underline': '#993D3B',
+    'link-muted': '#565962',
+    'link-muted-underline': '#71757E',
+    caret: '#993D3B',
+    placeholder: '#565962',
+    'theme-color': '#EEF0EA',
+    'scrollbar-thumb': '#71757E',
+    'scrollbar-thumb-hover': '#565962',
+    'surface-3': '#DADED5',
+    'disabled-ink': '#565962',
+    'disabled-edge': '#CFD1D6',
+    'disabled-fill': '#E1E5DC',
+    'stamp-outline': '#71757E',
+    'chart-1': '#006262',
+    'chart-2': '#71558B',
+    'chart-3': '#805301',
+    'chart-4': '#558956',
+    'chart-5': '#123A5F',
+    'chart-6': '#787C84',
+    'chart-highlight': '#8F2C32',
+    'chart-grid': '#CFD1D6',
+    'chart-axis': '#71757E',
+    'chart-label': '#565962',
+    'chart-value': '#212227',
+    'chart-sequential-1': '#CCE8E6',
+    'chart-sequential-2': '#96C5C3',
+    'chart-sequential-3': '#5BA09F',
+    'chart-sequential-4': '#267D7D',
+    'chart-sequential-5': '#00595A',
+    'chart-diverging-1': '#8E2E30',
+    'chart-diverging-2': '#B26866',
+    'chart-diverging-3': '#D0AAA7',
+    'chart-diverging-4': '#E6E9E5',
+    'chart-diverging-5': '#9BC0BE',
+    'chart-diverging-6': '#4C918F',
+    'chart-diverging-7': '#006566',
+    'term-bg': '#F9FAF6',
+    'term-panel': '#E1E5DC',
+    'term-field': '#F9FAF6',
+    'term-code-bg': '#E1E5DC',
+    'term-prompt': '#993D3B',
+    'term-cursor': '#993D3B',
+    'you-solid': '#DDE9E5',
+    live: '#27847F',
+    'ansi-black': '#212227',
+    'ansi-red': '#993D3B',
+    'ansi-green': '#456844',
+    'ansi-yellow': '#7E5404',
+    'ansi-blue': '#325780',
+    'ansi-magenta': '#6D5387',
+    'ansi-cyan': '#0C6C68',
+    'ansi-white': '#565962',
+    'ansi-bright-black': '#565962',
+    'ansi-bright-red': '#913434',
+    'ansi-bright-green': '#325832',
+    'ansi-bright-yellow': '#6E4604',
+    'ansi-bright-blue': '#214977',
+    'ansi-bright-magenta': '#5D4179',
+    'ansi-bright-cyan': '#085955',
+    'ansi-bright-white': '#3D3F47',
+    'map-ground': '#EEF0EA',
+    'map-ink': '#212227',
+    'map-route': '#8F2C32',
+    'map-head': '#993D3B',
+    'map-branch': '#7E649C',
+    'map-branch-text': '#6D5387',
+    'map-lake': '#569A95',
+    'map-lake-edge': '#085955',
+    'map-lake-text': '#0C6C68',
+    'map-label-halo': '#EEF0EA',
+    'map-jeep': '#565962',
+    'map-iso-warm': '#7D7365',
+    'map-iso-zero': '#0C6C68',
+    'map-iso-cold': '#5B928E',
+    'map-cold-tint': '#CAE4E3',
+    'map-fog': '#E9ECEA',
+    'map-fog-cold': '#E4E9EF',
+    'map-hypso-1': '#D6EDDB',
+    'map-hypso-2': '#D4DBC4',
+    'map-hypso-3': '#D0C6B5',
+    'map-hypso-4': '#BBBCC4',
+    'map-hypso-5': '#A8B2C0',
+    'map-hypso-6': '#8FA7B0',
+    'map-temp-1': '#99C3C8',
+    'map-temp-2': '#B5D4DC',
+    'map-temp-3': '#D3E0EA',
+    'map-temp-4': '#E9E6F1',
+    'map-temp-5': '#EDCED3',
+    'map-temp-6': '#E3B4B0',
+    'sky-zenith': '#E6E9EE',
+    'sky-horizon': '#F8EEEA',
+    'star-hot': '#374F67',
+    'star-sun': '#212227',
+    'star-cool': '#704B36',
+    'scene-sky-top': '#A5BACD',
+    'scene-sky-mid': '#C4D4DF',
+    'scene-sky-horizon': '#F2E4E1',
+    'scene-glow': '#913434',
+    'scene-far-snow': '#F5F7F9',
+    'scene-hi-snow': '#EDF0F4',
+    'scene-rock': '#857F79',
+    'scene-dry': '#AB9D7F',
+    'scene-veg-light': '#8FA76D',
+    'scene-veg-1': '#5A7D52',
+    'scene-veg-2': '#4F6D45',
+    'scene-veg-3': '#415B3B',
+    'scene-water': '#55938F',
+    'scene-ripple': '#27847F',
+    'scene-lamp': '#7E5404',
+    'scene-yak': '#322D29',
+    'scene-flower-1': '#6D5387',
+    'scene-flower-2': '#993D3B',
+    'scene-flower-3': '#7E5404',
+    'scene-flower-4': '#0C6C68',
+    'scene-flower-5': '#565962',
+    action: '#0D5F51',
+    'action-hover': '#085448',
+    'action-pressed': '#074B41',
+    'on-action': '#F9FAF6',
+    'action-line': '#318574',
+    'action-soft': '#D8EBE4',
+    'focus-ring-action': '#0D5F51',
+    oxblood: '#8F2C32',
+    'oxblood-deep': '#62282B',
+    'on-oxblood': '#F9FAF6',
+    steel: '#71757E',
+    'ground-steel': '#EEF0EA',
+    'surface-steel': '#F9FAF6',
+    'surface-2-steel': '#E1E5DC',
+    'surface-3-steel': '#DADED5',
+  },
+};
+
+/** The alpha ladder (`--alpha-*`, PALETTE-SPEC §4.5): the only alphas a wash, rim, scrim or glass may use. */
+export type AlphaStep =
+  | 'alpha-hair'
+  | 'alpha-faint'
+  | 'alpha-wash'
+  | 'alpha-rim'
+  | 'alpha-spec'
+  | 'alpha-edge'
+  | 'alpha-glint'
+  | 'alpha-line'
+  | 'alpha-heavy'
+  | 'alpha-scrim'
+  | 'alpha-glass'
+  | 'alpha-sheet';
+
+/** Alpha ladder values, per theme. */
+export const THEME_ALPHA: Readonly<Record<ThemeName, Readonly<Record<AlphaStep, number>>>> = {
+  night: {
+    'alpha-hair': 0.06,
+    'alpha-faint': 0.1,
+    'alpha-wash': 0.12,
+    'alpha-rim': 0.13,
+    'alpha-spec': 0.16,
+    'alpha-edge': 0.24,
+    'alpha-glint': 0.36,
+    'alpha-line': 0.55,
+    'alpha-heavy': 0.72,
+    'alpha-scrim': 0.78,
+    'alpha-glass': 0.86,
+    'alpha-sheet': 0.94,
+  },
+  day: {
+    'alpha-hair': 0.05,
+    'alpha-faint': 0.08,
+    'alpha-wash': 0.12,
+    'alpha-rim': 0.11,
+    'alpha-spec': 0.16,
+    'alpha-edge': 0.2,
+    'alpha-glint': 0.9,
+    'alpha-line': 0.55,
+    'alpha-heavy': 0.8,
+    'alpha-scrim': 0.72,
+    'alpha-glass': 0.86,
+    'alpha-sheet': 0.92,
+  },
+};
+
+/** Composite tokens: a colour at a ladder alpha (washes, glass light, scrims, the terminal rims, the route casing). */
+export type CompositeRole =
+  | 'accent-2-wash'
+  | 'aqua-wash'
+  | 'signal-wash'
+  | 'glass-fill'
+  | 'glass-fill-strong'
+  | 'glass-bead-fill'
+  | 'glass-rim'
+  | 'glass-highlight'
+  | 'glass-refract'
+  | 'glass-caustic'
+  | 'glass-glint'
+  | 'glass-shadow'
+  | 'glass-scrim'
+  | 'glass-active-rim'
+  | 'tap-highlight'
+  | 'hover-wash'
+  | 'press-wash'
+  | 'term-rail'
+  | 'term-rim'
+  | 'term-lantern'
+  | 'you-fill'
+  | 'you-rim'
+  | 'map-route-casing'
+  | 'action-wash'
+  | 'action-rim'
+  | 'steel-rim';
+
+/** Composite tokens resolved to { hex, alpha }, per theme, for WebGL uniforms and canvas drawing. */
+export const THEME_COMPOSITE: Readonly<Record<ThemeName, Readonly<Record<CompositeRole, ThemeComposite>>>> = {
+  night: {
+    'accent-2-wash': { hex: '#9F89B8', alpha: 0.12 },
+    'aqua-wash': { hex: '#75BEB2', alpha: 0.1 },
+    'signal-wash': { hex: '#D37F7D', alpha: 0.12 },
+    'glass-fill': { hex: '#191A1E', alpha: 0.86 },
+    'glass-fill-strong': { hex: '#191A1E', alpha: 0.94 },
+    'glass-bead-fill': { hex: '#0F1C1A', alpha: 0.86 },
+    'glass-rim': { hex: '#DEDEE2', alpha: 0.13 },
+    'glass-highlight': { hex: '#F3F3F6', alpha: 0.16 },
+    'glass-refract': { hex: '#9F89B8', alpha: 0.13 },
+    'glass-caustic': { hex: '#75BEB2', alpha: 0.12 },
+    'glass-glint': { hex: '#F3F3F6', alpha: 0.36 },
+    'glass-shadow': { hex: '#0C0C10', alpha: 0.72 },
+    'glass-scrim': { hex: '#0C0C10', alpha: 0.78 },
+    'glass-active-rim': { hex: '#D37F7D', alpha: 0.55 },
+    'tap-highlight': { hex: '#D37F7D', alpha: 0.16 },
+    'hover-wash': { hex: '#DEDEE2', alpha: 0.06 },
+    'press-wash': { hex: '#DEDEE2', alpha: 0.1 },
+    'term-rail': { hex: '#121316', alpha: 0.55 },
+    'term-rim': { hex: '#DEDEE2', alpha: 0.1 },
+    'term-lantern': { hex: '#D37F7D', alpha: 0.24 },
+    'you-fill': { hex: '#75BEB2', alpha: 0.12 },
+    'you-rim': { hex: '#75BEB2', alpha: 0.24 },
+    'map-route-casing': { hex: '#121316', alpha: 0.72 },
+    'action-wash': { hex: '#7EC9AF', alpha: 0.12 },
+    'action-rim': { hex: '#7EC9AF', alpha: 0.55 },
+    'steel-rim': { hex: '#A3A7B0', alpha: 0.24 },
+  },
+  day: {
+    'accent-2-wash': { hex: '#6D5387', alpha: 0.12 },
+    'aqua-wash': { hex: '#0C6C68', alpha: 0.08 },
+    'signal-wash': { hex: '#993D3B', alpha: 0.12 },
+    'glass-fill': { hex: '#F9FAF6', alpha: 0.86 },
+    'glass-fill-strong': { hex: '#F9FAF6', alpha: 0.92 },
+    'glass-bead-fill': { hex: '#E8F7F5', alpha: 0.86 },
+    'glass-rim': { hex: '#212227', alpha: 0.11 },
+    'glass-highlight': { hex: '#F9FAF6', alpha: 0.9 },
+    'glass-refract': { hex: '#6D5387', alpha: 0.08 },
+    'glass-caustic': { hex: '#0C6C68', alpha: 0.08 },
+    'glass-glint': { hex: '#F9FAF6', alpha: 0.9 },
+    'glass-shadow': { hex: '#212227', alpha: 0.2 },
+    'glass-scrim': { hex: '#EEF0EA', alpha: 0.72 },
+    'glass-active-rim': { hex: '#993D3B', alpha: 0.55 },
+    'tap-highlight': { hex: '#993D3B', alpha: 0.16 },
+    'hover-wash': { hex: '#212227', alpha: 0.05 },
+    'press-wash': { hex: '#212227', alpha: 0.08 },
+    'term-rail': { hex: '#EEF0EA', alpha: 0.55 },
+    'term-rim': { hex: '#212227', alpha: 0.08 },
+    'term-lantern': { hex: '#993D3B', alpha: 0.2 },
+    'you-fill': { hex: '#0C6C68', alpha: 0.12 },
+    'you-rim': { hex: '#0C6C68', alpha: 0.2 },
+    'map-route-casing': { hex: '#F9FAF6', alpha: 0.8 },
+    'action-wash': { hex: '#0D5F51', alpha: 0.12 },
+    'action-rim': { hex: '#0D5F51', alpha: 0.55 },
+    'steel-rim': { hex: '#71757E', alpha: 0.2 },
+  },
+};
+
+/**
+ * The home story map's colours (`extended.<theme>.map`, camel-cased: `map-route-casing` -> `routeCasing`), for the
+ * relief scene's uniforms and the DOM legend. `hypso` holds the 800 / 2000 / 3500 / 4500 / 5500 / 7000 m stops and
+ * `temp` the -25 / -10 / 0 / +5 / +12 / +22 °C stops; `minor` and `index` are contour alphas, `shade` the hillshade.
+ */
+export interface StoryThemeTokens {
+  readonly ground: `#${string}`;
+  readonly ink: `#${string}`;
+  readonly route: `#${string}`;
+  readonly head: `#${string}`;
+  readonly routeCasing: ThemeComposite;
+  readonly branch: `#${string}`;
+  readonly branchText: `#${string}`;
+  readonly lake: `#${string}`;
+  readonly lakeEdge: `#${string}`;
+  readonly lakeText: `#${string}`;
+  readonly labelHalo: `#${string}`;
+  readonly labelHaloWidth: string;
+  readonly jeep: `#${string}`;
+  readonly isoWarm: `#${string}`;
+  readonly isoZero: `#${string}`;
+  readonly isoCold: `#${string}`;
+  readonly coldTint: `#${string}`;
+  readonly fog: `#${string}`;
+  readonly fogCold: `#${string}`;
+  readonly hypso: readonly [`#${string}`, `#${string}`, `#${string}`, `#${string}`, `#${string}`, `#${string}`];
+  readonly temp: readonly [`#${string}`, `#${string}`, `#${string}`, `#${string}`, `#${string}`, `#${string}`];
+  readonly minor: number;
+  readonly index: number;
+  readonly shade: number;
+}
+
+/** StoryThemeColors data per theme, for STORY_PALETTE in story-palette.ts (PALETTE-SPEC §8.4, R28). */
+export const STORY_THEME: Readonly<Record<ThemeName, StoryThemeTokens>> = {
+  night: {
+    ground: '#121316',
+    ink: '#DEDEE2',
+    route: '#B3595C',
+    head: '#D37F7D',
+    routeCasing: { hex: '#121316', alpha: 0.72 },
+    branch: '#8871A4',
+    branchText: '#9F89B8',
+    lake: '#468F85',
+    lakeEdge: '#75BEB2',
+    lakeText: '#75BEB2',
+    labelHalo: '#121316',
+    labelHaloWidth: '3px',
+    jeep: '#898E97',
+    isoWarm: '#9B9082',
+    isoZero: '#75BEB2',
+    isoCold: '#ABDDD7',
+    coldTint: '#1C3838',
+    fog: '#141518',
+    fogCold: '#11181D',
+    hypso: ['#122014', '#212416', '#332B1F', '#38332E', '#383B42', '#404A55'],
+    temp: ['#3B6365', '#2C4B51', '#23323D', '#292333', '#46252B', '#612E2C'],
+    minor: 0.075,
+    index: 0.2,
+    shade: 0.6,
+  },
+  day: {
+    ground: '#EEF0EA',
+    ink: '#212227',
+    route: '#8F2C32',
+    head: '#993D3B',
+    routeCasing: { hex: '#F9FAF6', alpha: 0.8 },
+    branch: '#7E649C',
+    branchText: '#6D5387',
+    lake: '#569A95',
+    lakeEdge: '#085955',
+    lakeText: '#0C6C68',
+    labelHalo: '#EEF0EA',
+    labelHaloWidth: '3px',
+    jeep: '#565962',
+    isoWarm: '#7D7365',
+    isoZero: '#0C6C68',
+    isoCold: '#5B928E',
+    coldTint: '#CAE4E3',
+    fog: '#E9ECEA',
+    fogCold: '#E4E9EF',
+    hypso: ['#D6EDDB', '#D4DBC4', '#D0C6B5', '#BBBCC4', '#A8B2C0', '#8FA7B0'],
+    temp: ['#99C3C8', '#B5D4DC', '#D3E0EA', '#E9E6F1', '#EDCED3', '#E3B4B0'],
+    minor: 0.12,
+    index: 0.3,
+    shade: 0.45,
+  },
+};
