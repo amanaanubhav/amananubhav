@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { contours } from 'd3-contour';
 
 import { contourLines, gaussianBlur, polylinesToPath, r1, simplify, simplifyClosed } from './geometry.mjs';
+import { PREVIEW, mixHex } from './preview-palette.mjs';
 
 /** Band and index step (m): the shader's band step and the legend ticks. */
 export const BAND_STEP_M = 500;
@@ -234,47 +235,50 @@ export function legendCopy(entity, road = []) {
 }
 
 /* ------------------------------------------------------------------------------------------------
- * QA preview (--preview): the sheet with the Night ramp of the story map, never written into src/.
+ * QA preview (--preview): the sheet in the story map's Night tokens (PREVIEW, resolved from
+ * scripts/palette/palette.json), never written into src/.
  * --------------------------------------------------------------------------------------------- */
 
+/** The hypsometric stops (m) of the story map's ramp: map-hypso-1 ... map-hypso-6. */
 const HYPSO_AT = [800, 2000, 3500, 4500, 5500, 7000];
-const HYPSO_NIGHT = ['#112015', '#202618', '#332E22', '#3C362E', '#37434E', '#4E5661'];
-const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 function ramp(m) {
   let i = HYPSO_AT.findIndex((_, k) => k < HYPSO_AT.length - 1 && m < HYPSO_AT[k + 1]);
   if (i < 0) i = HYPSO_AT.length - 2;
   const t = Math.max(0, Math.min(1, (m - HYPSO_AT[i]) / (HYPSO_AT[i + 1] - HYPSO_AT[i])));
-  const [a, b] = [hex(HYPSO_NIGHT[i]), hex(HYPSO_NIGHT[i + 1])];
-  return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(',')})`;
+  return mixHex(PREVIEW.hypso[i], PREVIEW.hypso[i + 1], t);
 }
 
 export function previewPlanSvg(data) {
   const [w, h] = data.viewBox;
+  const P = PREVIEW;
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const lbl = (l) => {
     const alt = typeof l.altitudeM === 'number' ? ` ${l.approx ? '~' : ''}${l.altitudeM.toLocaleString('en')} m` : '';
     const italic = l.kind === 'water';
     const anchor = l.anchor === 'end' ? 'end' : l.anchor === 'middle' ? 'middle' : 'start';
     const dx = anchor === 'start' ? 10 : anchor === 'end' ? -10 : 0;
-    return `<text x="${l.x + dx}" y="${l.y}" font-size="19" font-family="Arial" ${italic ? 'font-style="italic"' : ''} fill="${l.kind === 'water' ? '#C2B8DD' : '#DEDEE2'}" text-anchor="${anchor}" dominant-baseline="middle" stroke="#121316" stroke-width="4" paint-order="stroke">${esc(l.text + alt)}</text>`;
+    // The halo is map-label-halo at map-label-halo-width outside the glyph (paint-order stroke: twice the width).
+    return `<text x="${l.x + dx}" y="${l.y}" font-size="19" font-family="Arial" ${italic ? 'font-style="italic"' : ''} fill="${l.kind === 'water' ? P.lakeText : P.ink}" text-anchor="${anchor}" dominant-baseline="middle" stroke="${P.halo}" stroke-width="${P.haloWidth * 2}" stroke-linejoin="round" paint-order="stroke">${esc(l.text + alt)}</text>`;
   };
   const mk = (m) => {
-    if (m.kind === 'peak') return `<path d="M${m.x} ${m.y - 7}l6 11h-12z" fill="none" stroke="#DEDEE2" stroke-width="1.5"/>`;
-    if (m.kind === 'lake') return `<circle cx="${m.x}" cy="${m.y}" r="6" fill="#9D8FBE" stroke="#121316" stroke-width="1.5"/>`;
-    if (m.kind === 'pass') return `<circle cx="${m.x}" cy="${m.y}" r="8" fill="none" stroke="#DEDEE2" stroke-width="1.5"/><circle cx="${m.x}" cy="${m.y}" r="4" fill="#B3595C"/>`;
-    if (m.kind === 'stay' || m.kind === 'landmark') return `<circle cx="${m.x}" cy="${m.y}" r="5" fill="#B3595C" stroke="#121316" stroke-width="1.5"/>`;
-    return `<circle cx="${m.x}" cy="${m.y}" r="3.5" fill="#121316" stroke="#B3595C" stroke-width="1.5"/>`;
+    if (m.kind === 'peak') return `<path d="M${m.x} ${m.y - 7}l6 11h-12z" fill="none" stroke="${P.ink}" stroke-width="1.5"/>`;
+    if (m.kind === 'lake') return `<circle cx="${m.x}" cy="${m.y}" r="6" fill="${P.lake}" stroke="${P.lakeEdge}" stroke-width="1"/>`;
+    if (m.kind === 'pass') return `<circle cx="${m.x}" cy="${m.y}" r="8" fill="none" stroke="${P.ink}" stroke-width="1.5"/><circle cx="${m.x}" cy="${m.y}" r="4" fill="${P.route}"/>`;
+    if (m.kind === 'stay' || m.kind === 'landmark') return `<circle cx="${m.x}" cy="${m.y}" r="5" fill="${P.route}" stroke="${P.ground}" stroke-width="1.5"/>`;
+    return `<circle cx="${m.x}" cy="${m.y}" r="3.5" fill="${P.ground}" stroke="${P.route}" stroke-width="1.5"/>`;
   };
+  const iso = (c) => (c === 0 ? P.isoZero : c < 0 ? P.isoCold : P.isoWarm);
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`,
-    `<rect width="${w}" height="${h}" fill="#121316"/>`,
+    `<rect width="${w}" height="${h}" fill="${P.ground}"/>`,
     `<rect x="${data.frame.x}" y="${data.frame.y}" width="${data.frame.w}" height="${data.frame.h}" fill="${ramp(BAND_STEP_M)}"/>`,
     ...data.bands.map((b) => `<path d="${b.d}" fill="${ramp(b.m + BAND_STEP_M / 2)}" fill-rule="evenodd"/>`),
-    `<path d="${data.minor.join(' ')}" fill="none" stroke="#DEDEE2" stroke-opacity="0.075"/>`,
-    `<path d="${data.index.join(' ')}" fill="none" stroke="#DEDEE2" stroke-opacity="0.2"/>`,
-    ...data.isotherms.map((t) => `<path d="${t.d}" fill="none" stroke="${t.c === 0 ? '#5FC0C2' : t.c < 0 ? '#9AD6D0' : '#9A948C'}" stroke-width="${t.c === 0 ? 1.8 : 1}" stroke-opacity="0.8"/>`),
-    ...data.road.map((r) => `<path d="${r.d}" fill="none" stroke="#8E929B" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>`),
-    ...data.routes.map((r) => `<path d="${r.d}" fill="none" stroke="#121316" stroke-width="${r.kind === 'main' ? 6.5 : 5}" stroke-linecap="round" stroke-linejoin="round"/><path d="${r.d}" fill="none" stroke="${r.kind === 'main' ? '#B3595C' : '#9D8FBE'}" stroke-width="${r.kind === 'main' ? 4 : 2.6}" stroke-linecap="round" stroke-linejoin="round"/>`),
+    `<path d="${data.minor.join(' ')}" fill="none" stroke="${P.ink}" stroke-opacity="${P.minor}"/>`,
+    `<path d="${data.index.join(' ')}" fill="none" stroke="${P.ink}" stroke-opacity="${P.index}"/>`,
+    ...data.isotherms.map((t) => `<path d="${t.d}" fill="none" stroke="${iso(t.c)}" stroke-width="${t.c === 0 ? 1.8 : 1}" stroke-opacity="0.8"/>`),
+    ...data.road.map((r) => `<path d="${r.d}" fill="none" stroke="${P.jeep}" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>`),
+    // Route and side trips ride one casing (map-route-casing); a side trip is the branch colour at about 0.6x width.
+    ...data.routes.map((r) => `<path d="${r.d}" fill="none" stroke="${P.casing.hex}" stroke-opacity="${P.casing.alpha}" stroke-width="${r.kind === 'main' ? 6.5 : 5}" stroke-linecap="round" stroke-linejoin="round"/><path d="${r.d}" fill="none" stroke="${r.kind === 'main' ? P.route : P.branch}" stroke-width="${r.kind === 'main' ? 4 : 2.6}" stroke-linecap="round" stroke-linejoin="round"/>`),
     ...data.markers.map(mk),
     ...data.labels.map(lbl),
     '</svg>',

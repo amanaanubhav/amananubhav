@@ -1,6 +1,7 @@
 // G-12: the OG card, 1200 × 630. The ridge is the Annapurna Circuit's altitude profile (ANNAPURNA_ROUTE,
 // commonly cited altitudes; x by great-circle distance between the drawing coordinates), drawn as the
-// route in signal over seeded contour lines in ink at 18%. A lit tent marks base camp at the trailhead,
+// route in signal-line over seeded contour lines in the Night contour ink at its minor alpha (palette.json
+// contour.night). A lit tent marks base camp at the trailhead,
 // where the route leaves from (the site's home chapter is "Base camp"); the trekker of the signature ridge
 // mark (G-11) stands on the highest pass, so the card's ridge and figure are the mark drawn to scale.
 import { trekkerOnSummit } from './mark.mjs';
@@ -91,7 +92,7 @@ function polyline(samples) {
 
 /**
  * The card's drawing (everything except the type) as one SVG string. `rand` is a seeded mulberry32.
- * Colors come from the Night palette; contour ink uses the token alpha (§B.1: 18%).
+ * Colors come from the Night palette in scripts/palette/palette.json; contour ink uses its minor alpha.
  */
 export function ogArtworkSvg({ layout, palette, rand, contourRgba }) {
   const n = palette.night;
