@@ -1,9 +1,15 @@
 /*
- * Global styles: "Field Journal, climbed" (DESIGN-SPEC §B, §C.1, §C.4, §C.8).
- * Colors come only from the generated tokens (tokens.css, written by `npm run palette:emit`).
- * Order: tokens -> Tailwind base -> element defaults -> Tailwind components -> shared classes ->
- * Tailwind utilities -> overrides that must win (motion layout switch, chrome dim, reduced motion,
- * contrast, forced colors).
+ * Global styles: "Field Journal, climbed" (DESIGN-SPEC §B, §C.1, §C.4, §C.8) on the Narrowband Alpenglow palette
+ * (docs/redesign/palette/PALETTE-SPEC.md §4.5-§6) and the layout system of docs/redesign/audit/FIX-PLAN.md §1
+ * (SYS-1 type, SYS-2 line masks, SYS-3 chrome clearance, SYS-4 spacing, SYS-8 glass).
+ * Colours come only from the generated tokens (tokens.css, written by `npm run palette:emit`): this file holds no
+ * literal colour (`npm run check:colors`), and never re-declares a palette token or a `--c-*` triplet on an element
+ * (aliases resolve at :root). Two scoped exceptions: Update 1.1 re-points role aliases and the Night steel grounds at
+ * :root itself (below), and the cyanotype plates re-declare only the contour inks (--ink-contour, --ink-contour-index)
+ * for their own subtree.
+ * Order: tokens -> Tailwind base -> element defaults and global states -> Tailwind components -> shared classes and
+ * utilities (grid, glass, sheens, line masks) -> Tailwind utilities -> overrides that must win (motion layout switch,
+ * chrome dim, reduced motion, glass fallbacks, more contrast, forced colors).
  */
 @import './tokens.css';
 
@@ -41,25 +47,11 @@
   src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('Arimo Bold');
   size-adjust: 97.75%; ascent-override: 105.88%; descent-override: 34.68%; line-gap-override: 0%; }
 
-/* ─── Variables (hand-written; colors live in tokens.css) ───────────────────────────────────────── */
+/* ─── Variables (hand-written; colours live in tokens.css) ──────────────────────────────────────── */
 
 :root {
-  /* Legacy aliases (B.2.3): keep un-migrated components readable until wave 1 rewrites them.
-     Remove once `grep -rn "bg-primary\|text-primary\|card-bg\|border-subtle\|accent-metallic" src` is empty. */
-  --bg-primary: var(--ground);
-  --bg-primary-rgb: 18, 19, 22;            /* night; day block below */
-  --bg-secondary: var(--surface);
-  --surface-card: var(--surface);
-  --text-primary: var(--ink);
-  --text-secondary: var(--ink-muted);
-  --text-muted: var(--ink-muted);
-  --card-bg: var(--surface);
-  --card-bg-rgb: 25, 26, 30;
-  --border-subtle: var(--line);
-  --accent-metallic: var(--line-strong);
-  --accent-glow: transparent;
-
-  /* Type scale (§B.4.2), fluid between 375 and 1440 px */
+  /* Type scale (§B.4.2), fluid between 375 and 1440 px. Each step is a clamp() whose middle term only grows with
+     the viewport, so no step ever shrinks across a breakpoint (SYS-1); each step's leading is in tailwind.config.ts. */
   --step--1: 0.875rem;
   --step-0: 1rem;
   --step-1: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
@@ -68,6 +60,31 @@
   --step-4: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
   --step-5: clamp(2.25rem, 1.75rem + 2.2vw, 3.75rem);
   --step-6: clamp(3rem, 2rem + 4.5vw, 6rem);
+
+  /* Section rhythm (SYS-4). A section owns only its top (or its parent sets gap-section), the last section before
+     the footer has no bottom padding, and the footer's padding-top: var(--space-seam) is the one seam above it.
+     Tailwind spacing keys: section, block, item, seam (pt-section, gap-block, mt-item, pt-seam ...). */
+  --space-section: clamp(6rem, 4rem + 6vw, 12rem);  /* between sections: 96 px phone, 150 px at 1440 */
+  --space-block: clamp(3rem, 2rem + 3vw, 6rem);      /* between blocks inside a section: 48 / 75 px */
+  --space-item: clamp(1rem, 0.75rem + 1vw, 2rem);    /* between items of a list or grid: 16 / 26 px */
+  --space-seam: clamp(3.5rem, 2.5rem + 3vw, 5rem);   /* last content line to the footer: 56 / 80 px */
+
+  /* Fixed-chrome clearance (SYS-3); TS mirror: CHROME in src/shared/config/ui-tokens.ts.
+     --nav-h is the navbar band (its 8 px top inset plus the 48 px pill); --nav-clear is where content, sticky
+     columns and scroll targets may start. --rail-reserve is the desktop rail's band (24 px inset, 160 px rail, 24 px
+     gap): .journal-grid keeps it clear on pages with the rail. --bar-h is the bottom dock bar below 1024 px.
+     --legend-h (the home legend) and --dock-h (the dock, below 1024 px) are published on :root at runtime. */
+  --nav-h: 56px;
+  --nav-clear: calc(var(--nav-h) + 16px);
+  --rail-reserve: 13rem;
+  --bar-h: 52px;
+  --legend-h: 0px;
+  --dock-h: 0px;
+
+  /* The chat bead's corner (chat design §3): `--chat-stack` is the bead's top plus 12 px, where fixed chrome above
+     it (the home legend) and the desktop window stop; `--chat-clearance` keeps in-flow content clear of it. */
+  --chat-stack: calc(76px + env(safe-area-inset-bottom, 0px));
+  --chat-clearance: 88px;
 
   /* Motion (§B.8); TS mirror in src/shared/config/ui-tokens.ts */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);     /* arriving: overlays, text lines, photo develop, count-ups */
@@ -78,39 +95,112 @@
   --dur-micro: 120ms; --dur-hover: 180ms; --dur-ui: 280ms;
   --dur-overlay: 450ms; --dur-overlay-out: 300ms; --dur-reveal: 800ms;
   --dur-theme: 700ms; --dur-hero: 2400ms;
-
-  /* The chat bead's corner (chat design §3): `--chat-stack` is the bead's top plus 12 px, where fixed chrome above
-     it (the home legend) and the desktop window stop; `--chat-clearance` keeps in-flow content clear of it. */
-  --chat-stack: calc(76px + env(safe-area-inset-bottom, 0px));
-  --chat-clearance: 88px;
-
-  /* Primary button hover (§B.10): lighter on Night, darker on Day */
-  --btn-hover-filter: brightness(1.06);
 }
 @media (min-width: 640px) { :root { --chat-stack: 84px; --chat-clearance: 96px; } }
 @media (min-width: 1024px) { :root { --chat-stack: 88px; } }
-:root[data-theme='day'] {
-  --bg-primary-rgb: 238, 240, 234;
-  --card-bg-rgb: 249, 250, 246;
-  --btn-hover-filter: brightness(0.94);
+/* Docked (html[data-dock], below 1024 px; contracts/dock.md §3) the bead sits 12 px + the safe area up at the bar's
+   height at every width, so 640-1023 px keep the phone value instead of the free bead's 84 px. */
+:root[data-dock] { --chat-stack: calc(76px + env(safe-area-inset-bottom, 0px)); }
+
+/* ─── Update 1.1 role aliases and the Night steel cast (PALETTE-SPEC §11; APPLICATION-V2 R0, R1) ──── */
+
+/* R0: the interface roles read the action tier. The old tokens keep their values; only these aliases move, so every
+   consumer of focus-ring, link-underline (globals links, decoration-link-underline, the footer), caret, tap-highlight
+   and the open-glass rim turns aquamarine in both themes. `:root[data-theme]` matches the theme blocks of tokens.css
+   and comes after them, so it wins in Night and Day; each value still resolves per theme. The home story's legend
+   control keeps its signal underline in story.module.css. */
+:root, :root[data-theme] {
+  --c-focus-ring: var(--c-focus-ring-action); --focus-ring: var(--focus-ring-action);
+  --c-link-underline: var(--c-action-line);   --link-underline: var(--action-line);
+  --c-caret: var(--c-action);                 --caret: var(--action);
+  --tap-highlight: var(--action-wash);
+  --glass-active-rim: var(--action-rim);
+}
+/* R1: Night is steel, not charcoal, on every page but / (the home scene fades into its own ground; #home-title is the
+   home hero's h1, so `:not(:has(#home-title))` is "not the home page"). Same lightness, a cool blue-steel hue. Set on
+   the root element itself, so every root token built on them (glass fill, on-action, halos) follows. Day's steel
+   tokens alias the core values, so Day is left alone (and would otherwise be a var() cycle). */
+:root:not([data-theme='day']):not(:has(#home-title)) {
+  --c-ground: var(--c-ground-steel);       --ground: var(--ground-steel);
+  --c-surface: var(--c-surface-steel);     --surface: var(--surface-steel);
+  --c-surface-2: var(--c-surface-2-steel); --surface-2: var(--surface-2-steel);
+  --c-surface-3: var(--c-surface-3-steel); --surface-3: var(--surface-3-steel);
 }
 
-/* ─── Browser surfaces (§B.9) ───────────────────────────────────────────────────────────────────── */
+/* ─── Browser surfaces and global states (PALETTE-SPEC §4.8, §5.3) ──────────────────────────────── */
 
-html { background: var(--ground); color: var(--ink); scrollbar-gutter: stable; -webkit-text-size-adjust: 100%;
-  scroll-padding-top: 72px; }                       /* focus never lands under the 56 px navbar (WCAG 2.4.11) */
-html { scroll-padding-bottom: var(--chat-clearance); }   /* nor under the section chip or the chat bead (2.4.11) */
-html { scrollbar-color: var(--line-strong) var(--ground); -webkit-tap-highlight-color: rgb(var(--c-signal) / 0.16); }
+html {
+  background: var(--ground);
+  color: var(--ink);
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--scrollbar-thumb) var(--ground); /* the page scrollbar keeps the ground as its track */
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: var(--tap-highlight);
+  /* Focus and anchor jumps never land under fixed chrome (WCAG 2.4.11): the navbar band at the top; the chat bead
+     (from 1024 px) or the dock bar and the bead (below it) at the bottom. Lenis reads scroll-padding-top as well. */
+  scroll-padding-top: var(--nav-clear);
+  scroll-padding-bottom: var(--chat-clearance);
+}
+@media (max-width: 1023px) { html { scroll-padding-bottom: calc(var(--bar-h) + var(--chat-stack)); } }
 body { margin: 0; background: var(--ground); font-family: var(--font-text), Georgia, serif; overflow-x: clip; }
-::selection { background: var(--signal); color: var(--on-signal); }
-:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
-.btn-primary:focus-visible { outline-color: var(--ink); outline-offset: 2px; }
-input, textarea, [contenteditable] { caret-color: var(--signal); }
-input::placeholder, textarea::placeholder { color: var(--ink-muted); opacity: 1; }
-.scroll-pane { scrollbar-color: var(--line-strong) transparent; scrollbar-width: thin; }
-a.prose-link, .prose-journal a { color: var(--ink); text-decoration: underline 1px var(--signal); text-underline-offset: 0.22em;
-  transition: text-decoration-thickness var(--dur-hover) var(--ease-settle); }
-a.prose-link:hover, a.prose-link:focus-visible, .prose-journal a:hover, .prose-journal a:focus-visible { text-decoration-thickness: 2px; }
+
+/* Selection is aqua, the "you" colour (ink on it: 6.70 Night, 11.08 Day). */
+::selection { background: var(--selection-bg); color: var(--selection-ink); }
+
+/* Focus: a 2 px action (aquamarine) ring 3 px off the element, everywhere (R0). On an action or signal fill the ring
+   would merge with the fill, so it turns ink (focus-ring-inverse). */
+:focus-visible { outline: var(--focus-width) solid var(--focus-ring); outline-offset: var(--focus-offset); }
+:is(
+  .btn-primary,
+  .skip-link,
+  :is(a, button, summary, [role='button']):is(
+    .bg-action, .bg-action-hover, .bg-action-pressed, .bg-signal, .bg-signal-hover, .bg-signal-pressed
+  )
+):focus-visible {
+  outline-color: var(--focus-ring-inverse);
+}
+
+input, textarea, [contenteditable] { caret-color: var(--caret); }
+/* Two type selectors: they must outrank preflight's own input/textarea::placeholder rule. */
+input::placeholder, textarea::placeholder { color: var(--placeholder); opacity: 1; }
+
+/* Every scroll pane: a thin thumb on a transparent track that brightens while the pane is hovered. */
+.scroll-pane { scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); scrollbar-width: thin; }
+@media (hover: hover) { .scroll-pane:hover { scrollbar-color: var(--scrollbar-thumb-hover) var(--scrollbar-track); } }
+
+/* Links: ink text with a 1 px action-line underline (R0), 2 px and full action on hover and focus; never action or
+   aqua text, no visited colour. The default covers unclassed links in running text (story HTML, generated copy); a
+   component opts in with .prose-link, or .prose-link-muted for a secondary link (link-muted on a line-strong
+   underline, action-line on hover). A Tailwind link (decoration-link-underline) adds hover:decoration-action. */
+a:not([class]), a.prose-link, .prose-journal a {
+  color: var(--link-ink);
+  text-decoration: underline var(--link-underline-width) var(--link-underline);
+  text-underline-offset: 0.22em;
+  transition:
+    text-decoration-thickness var(--dur-hover) var(--ease-settle),
+    text-decoration-color var(--dur-hover) var(--ease-settle);
+}
+a.prose-link-muted {
+  color: var(--link-muted);
+  text-decoration: underline var(--link-underline-width) var(--link-muted-underline);
+  text-underline-offset: 0.22em;
+  transition:
+    text-decoration-thickness var(--dur-hover) var(--ease-settle),
+    text-decoration-color var(--dur-hover) var(--ease-settle);
+}
+:is(a:not([class]), a.prose-link, .prose-journal a, a.prose-link-muted):focus-visible {
+  text-decoration-thickness: var(--link-underline-width-hover);
+}
+:is(a:not([class]), a.prose-link, .prose-journal a):focus-visible { text-decoration-color: var(--action); }
+a.prose-link-muted:focus-visible { text-decoration-color: var(--link-underline); }
+@media (hover: hover) {
+  :is(a:not([class]), a.prose-link, .prose-journal a, a.prose-link-muted):hover {
+    text-decoration-thickness: var(--link-underline-width-hover);
+  }
+  :is(a:not([class]), a.prose-link, .prose-journal a):hover { text-decoration-color: var(--action); }
+  a.prose-link-muted:hover { text-decoration-color: var(--link-underline); }
+}
+
 .tabular { font-variant-numeric: tabular-nums slashed-zero; }
 .stage-slot[data-stage-live] .stage-poster { opacity: 0; transition: opacity 400ms var(--ease-settle); }
 
@@ -118,15 +208,29 @@ a.prose-link:hover, a.prose-link:focus-visible, .prose-journal a:hover, .prose-j
 h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
 p, li, dd, figcaption, blockquote { text-wrap: pretty; }
 
-/* ─── Interaction states, shared parts (§B.10) ──────────────────────────────────────────────────── */
+/* ─── Interaction states, shared parts (§B.10, PALETTE-SPEC §5.3) ───────────────────────────────── */
 
 [aria-invalid='true'] { border-color: var(--error); }
 :disabled, [aria-disabled='true'] { cursor: not-allowed; }
-.btn-primary { transition: filter var(--dur-hover) var(--ease-settle), transform var(--dur-micro) var(--ease-settle); }
-@media (hover: hover) and (pointer: fine) {
-  .btn-primary:not(:disabled):not([aria-disabled='true']):hover { filter: var(--btn-hover-filter); }
+/* The primary button is the action (Update 1.1 M6): Button sets `bg-action text-on-action`, and this steps it to its
+   solved fills (on-action >= 7.22:1 on all three), never a brightness filter. A metal gloss (a pale top edge, a dark
+   lower edge) makes it a pressed-steel key, not a flat chip; the focus ring is an outline, so the gloss never hides
+   it. */
+.btn-primary {
+  transition: background-color var(--dur-hover) var(--ease-settle), transform var(--dur-micro) var(--ease-settle);
 }
-.btn-primary:not(:disabled):not([aria-disabled='true']):active { transform: scale(0.98); }
+.btn-primary:not(:disabled):not([aria-disabled='true']) {
+  box-shadow:
+    inset 0 1px 0 rgb(var(--c-metal-50) / var(--alpha-edge)),
+    inset 0 -1px 0 rgb(var(--c-ground-sky) / var(--alpha-edge));
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:not(:disabled):not([aria-disabled='true']):hover { background-color: var(--action-hover); }
+}
+.btn-primary:not(:disabled):not([aria-disabled='true']):active {
+  background-color: var(--action-pressed);
+  transform: scale(0.98);
+}
 
 @tailwind components;
 
@@ -165,7 +269,7 @@ p, li, dd, figcaption, blockquote { text-wrap: pretty; }
 .prose-journal blockquote { position: relative; margin: 1.5em 0; padding-left: 2em; font-style: italic;
   font-size: var(--step-2); line-height: 1.5; }
 .prose-journal blockquote::before { content: '\201C'; position: absolute; left: 0; top: -0.1em; font-size: 2.4em;
-  line-height: 1; font-style: normal; color: var(--ink-muted); }
+  line-height: 1; font-style: normal; color: var(--accent-2); }
 .prose-journal blockquote p:last-child { margin-bottom: 0; }
 .prose-journal figure { margin: 2em 0; }
 .prose-journal figcaption { margin-top: 0.6em; font-size: var(--step--1); line-height: 1.45; letter-spacing: 0.01em;
@@ -174,24 +278,34 @@ p, li, dd, figcaption, blockquote { text-wrap: pretty; }
 .prose-journal code { padding: 0.1em 0.35em; border-radius: 2px; background: var(--surface-2);
   font-family: var(--font-data), ui-monospace, monospace; font-size: 0.875rem; }
 .prose-journal pre { margin: 0 0 1em; padding: 1em; overflow-x: auto; border-radius: 2px; background: var(--surface-2);
-  font-size: 0.875rem; line-height: 1.6; scrollbar-color: var(--line-strong) transparent; scrollbar-width: thin; }
+  font-size: 0.875rem; line-height: 1.6; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); scrollbar-width: thin; }
 .prose-journal pre code { padding: 0; background: none; }
 .prose-journal strong, .prose-journal b { font-weight: 600; }
 .prose-journal hr { margin: 2.5em 0; border: 0; border-top: 1px solid var(--line); }
 
-/* The journal grid (§B.5). Content column n is grid track n + 1; Spread places its parts with explicit lines. */
+/* The journal grid (§B.5). Content column n is grid track n + 1; Spread places its parts with explicit lines.
+   On a page with the desktop rail the content tracks end --rail-reserve from the window's right edge from 1024 px
+   (SYS-3, C-13), so no text runs under the rail, while full-bleed rows (full-start / full-end) still reach the edge
+   and wide windows stay centred. The rail marks itself with data-rail (SectionDotNav's desktop nav). A grid whose right
+   side is map or plate space by design opts out with data-rail-overlay. */
 .journal-grid {
   --cols: 4; --gutter: 16px; --margin: 16px;
+  --margin-end: var(--margin);
   display: grid;
   column-gap: var(--gutter);
   grid-template-columns:
     [full-start] minmax(calc(var(--margin) - var(--gutter)), 1fr)
     [content-start] repeat(var(--cols),
       minmax(0, calc((1440px - 2 * var(--margin) - (var(--cols) - 1) * var(--gutter)) / var(--cols))))
-    [content-end] minmax(calc(var(--margin) - var(--gutter)), 1fr) [full-end];
+    [content-end] minmax(calc(var(--margin-end) - var(--gutter)), 1fr) [full-end];
 }
 @media (min-width: 768px) { .journal-grid { --cols: 8; --gutter: 20px; --margin: 32px; } }
-@media (min-width: 1024px) { .journal-grid { --cols: 12; } }
+@media (min-width: 1024px) {
+  .journal-grid { --cols: 12; }
+  :root:has([data-rail]) main .journal-grid:not([data-rail-overlay]) {
+    --margin-end: max(var(--margin), var(--rail-reserve));
+  }
+}
 @media (min-width: 1280px) { .journal-grid { --gutter: 24px; --margin: clamp(32px, 4vw, 72px); } }
 
 /* Plates (§B.6, §C.7): printed plates have no radius and no border; one static grade on ready photos. */
@@ -218,12 +332,13 @@ html[data-grain='on'] body::before { content: ''; position: fixed; inset: 0; z-i
   opacity: var(--grain-opacity); }
 html[data-motion='off'] body::before, html[data-lite='1'] body::before { display: none; }
 
-/* Skip link: the first focusable element of the shell; off-screen until focused. */
+/* Skip link: the first focusable element of the shell; off-screen until focused. An action fill, so its ring is ink. */
 .skip-link { position: fixed; top: 12px; left: 16px; z-index: 130; display: inline-flex; align-items: center;
-  min-height: 44px; padding: 0 20px; border-radius: 2px; background: var(--signal); color: var(--on-signal);
+  min-height: 44px; padding: 0 20px; border-radius: 2px; background: var(--action); color: var(--on-action);
   font-family: var(--font-display), 'Arial Narrow', sans-serif; font-size: var(--step-0); font-weight: 600;
   text-decoration: none; transform: translateY(calc(-100% - 24px)); transition: transform var(--dur-ui) var(--ease-settle); }
-.skip-link:focus, .skip-link:focus-visible { transform: none; outline: 2px solid var(--ink); outline-offset: 2px; }
+.skip-link:focus, .skip-link:focus-visible { transform: none;
+  outline: var(--focus-width) solid var(--focus-ring-inverse); outline-offset: var(--focus-offset); }
 
 /* Theme sweep (§C.1): runThemeSweep wraps the toggle in a View Transition. The new view is clipped in over
    --dur-theme; Night -> Day rises from the bottom edge (sunrise), Day -> Night falls from the top (sunset).
@@ -238,12 +353,295 @@ html[data-motion='off'] body::before, html[data-lite='1'] body::before { display
    the dim rule itself is in the overrides below. */
 [data-chrome] { transition: opacity 300ms var(--ease-settle); }
 
-/* Legacy helper kept for un-migrated horizontal carousels (GallerySection, ArchiveDrawer) until wave 1 rewrites them;
-   the replacement for new code is `.scroll-pane` with a visible thin scrollbar. */
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
+/* ─── Liquid glass (PALETTE-SPEC §4.7, §5.4; SYS-8) ─────────────────────────────────────────────── */
+
+/*
+ * The one floating-chrome material. Colour lives on solid layers; the glass carries only light: a wet top edge
+ * (glass-highlight), violet refraction along the lower rim (glass-refract) and aqua light pooled under the body
+ * (glass-caustic). Signal never tints it: on glass the action is a state marker (the active rim), never text.
+ * No pseudo-elements and no `position`, so a component keeps ::before / ::after (a dock scrim) and its own
+ * fixed / sticky / absolute placement; radius, padding and layout are the component's.
+ * Materials (R18-proven: ink-muted >= 4.6:1 over every backdrop, the signal marker >= 3:1), set with one modifier:
+ *   .glass-chrome              chrome: navbar pill, dock, chip   glass-fill        blur 24  saturate 1.5 / 1.4
+ *   .glass-chrome.glass-tile   tiles                             glass-fill        blur 16
+ *   .glass-chrome.glass-legend the map legend                    glass-fill        saturate-soft 1.2 / 1.15
+ *   .glass-chrome.glass-sheet  sheets: chat window, panels       glass-fill-strong blur 32
+ *   .glass-chrome.glass-bead   the chat launcher bead            glass-bead-fill   opaque fallback glass-bead
+ * Solid fallbacks (glass-fallback, or glass-bead for the bead) without backdrop-filter, under
+ * prefers-reduced-transparency and prefers-contrast; Canvas / CanvasText under forced colors (overrides below).
+ * The open state ([data-state='open'] or [aria-expanded='true'] on the glass itself) swaps the refraction for the
+ * active rim. Text on glass is ink or ink-muted; Night signal / violet text only at 18 px bold or 24 px+.
+ */
+.glass-chrome {
+  --gc-fill: var(--glass-fill);
+  --gc-blur: var(--glass-blur);
+  --gc-saturate: var(--glass-saturate);
+  --gc-fallback: var(--glass-fallback);
+  background-color: var(--gc-fill);
+  background-image: radial-gradient(70% 120% at 50% 130%, var(--glass-caustic), transparent 70%);
+  -webkit-backdrop-filter: blur(var(--gc-blur)) saturate(var(--gc-saturate));
+  backdrop-filter: blur(var(--gc-blur)) saturate(var(--gc-saturate));
+  border: 1px solid var(--glass-rim);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -1px 0 var(--glass-refract),
+    0 14px 32px -16px var(--glass-shadow),
+    0 2px 8px -4px var(--glass-shadow);
+}
+.glass-tile { --gc-blur: var(--glass-blur-soft); }
+.glass-legend { --gc-saturate: var(--glass-saturate-soft); }
+.glass-sheet { --gc-fill: var(--glass-fill-strong); --gc-blur: var(--glass-blur-strong); }
+.glass-bead { --gc-fill: var(--glass-bead-fill); --gc-fallback: var(--glass-bead); }
+.glass-chrome:is([data-state='open'], [aria-expanded='true']) {
+  box-shadow:
+    inset 0 0 0 1px var(--glass-active-rim),
+    inset 0 1px 0 var(--glass-highlight),
+    0 14px 32px -16px var(--glass-shadow),
+    0 2px 8px -4px var(--glass-shadow);
+}
+
+/* ─── Metal sheens (PALETTE-SPEC §4.6, §5.5) ───────────────────────────────────────────────────── */
+
+/* Light moving across a surface. Every stop comes from a token; the angle is fixed per sheen. One sheen per view,
+   never behind body text and never a text fill (gradient text is banned; the terminal's Alpenglow label is the one
+   exception and lives in its own module). The ridge mark's sheen is SVG-only: stops var(--sheen-mark-1) ... -4. */
+/* brushed steel: the footer close band, dividers, select bevels */
+.sheen-steel { background-image: linear-gradient(100deg, var(--sheen-steel)); }
+/* rose-bronze: the summit cue (the trekker's lit state is a solid var(--bronze) fill) */
+.sheen-bronze { background-image: linear-gradient(135deg, var(--sheen-bronze)); }
+/* lacquer: the Alpenglow core band, which carries no text */
+.sheen-lacquer { background-image: linear-gradient(180deg, var(--sheen-lacquer)); }
+/* the Alpenglow sweep (red core, violet edges, pewter at rest) and the terminal caret (red into violet) */
+.gradient-alpenglow { background-image: linear-gradient(90deg, var(--gradient-alpenglow)); }
+.gradient-caret { background-image: linear-gradient(180deg, var(--gradient-caret)); }
+/* the footer close wash: one accent fading out by 70% */
+.gradient-close { background-image: linear-gradient(180deg, var(--gradient-close)); }
+/* Titanium edge: an alternative glass rim or the summit ridge highlight. border-image ignores border-radius, so it
+   is for square edges only (a rounded rim uses .glass-chrome's highlight and refraction). */
+.titanium-edge { border: 1px solid transparent; border-image: linear-gradient(180deg, var(--sheen-titanium)) 1; }
+
+/* ─── Line masks and optical trim (SYS-2, SYS-1) ───────────────────────────────────────────────── */
+
+/*
+ * A reveal mask that never cuts ink. The clip runs 0.14 em beyond the line box above and below (Archivo's 1.10 em
+ * content area already overhangs a 1.02 display line box by 0.04 em a side; accents and descenders need the rest) and
+ * is open on the inline axis for italic overhang and side bearings. It is a clip-path, not padding with negative
+ * margins: it takes no layout space at all, so a split heading has exactly the box of the unsplit one (stacked block
+ * masks would otherwise collapse their margins into extra line gap, and the parent would grow), and it needs no
+ * overflow-clip-margin (Safari lacks it).
+ * SplitText: `type: 'lines', mask: 'lines', linesClass: 'line'` names each mask wrapper `line-mask` (the line's class
+ * plus "-mask"); the !important lifts the overflow: clip that SplitText writes inline on the wrapper. Hide a waiting
+ * line below the 0.14 em overhang, not just below the box: animate from yPercent 125 (measured on a 96 px Archivo
+ * display line: at yPercent 100 the waiting line's ascender tops show in the overhang, 115 clears plain text, 125
+ * clears accented capitals such as Å and É).
+ */
+.line-mask {
+  overflow: visible !important;
+  clip-path: inset(-0.14em -100vmax);
+}
+@supports not (clip-path: inset(0)) { .line-mask { overflow: hidden !important; } }
+
+/* Optical trim: the box ends at the cap height and the baseline, so a heading's ink aligns with what sits beside or
+   above it. It removes the half-leading from layout; never on a heading while a line reveal is split (RevealText
+   reverts the split when it finishes). Browsers without text-box keep the full line box. */
+@supports (text-box: trim-both cap alphabetic) {
+  .trim-cap { text-box: trim-both cap alphabetic; }
+}
 
 @tailwind utilities;
+
+/* ─── Update 1.1 light and materials (PALETTE-SPEC §11; APPLICATION-V2 M1-M9) ─────────────────── */
+
+/*
+ * After the utilities on purpose: a material replaces the element's own colour classes (bg-surface, border-line ...)
+ * without a hunt for each one. Colour, tone and material only: background, border-color / border-image on borders that
+ * already exist, box-shadow, outline (outside layout), custom properties. Nothing here moves a box.
+ * Sheens sit on rules, tracks and rims, never behind letters; no gradient text.
+ * Page light (M1, M2) is off on / (`:not(:has(#home-title))`): the home story keeps its own ground and light.
+ */
+
+/* M1 Atmosphere: every first screen but / is lit. An aquamarine halo under the navbar, violet dusk behind the
+   headline (peak y 40), aqua cold behind the photo / map / plate column (peak y 300); Night adds a faint violet veil
+   over the first 600 px. Under any body-text line the lights sum to <= alpha-faint (contrast-v2.mjs). */
+:root:not(:has(#home-title)) #content {
+  background-image:
+    radial-gradient(900px 260px at 50% -30px, rgb(var(--c-action) / var(--alpha-wash)), transparent 72%),
+    radial-gradient(1100px 420px at 12% 40px, rgb(var(--c-accent-2) / var(--alpha-edge)), transparent 70%),
+    radial-gradient(900px 700px at 80% 300px, rgb(var(--c-aqua) / var(--alpha-spec)), transparent 70%);
+  background-repeat: no-repeat;
+}
+:root:not([data-theme='day']):not(:has(#home-title)) #content {
+  background-image:
+    radial-gradient(900px 260px at 50% -30px, rgb(var(--c-action) / var(--alpha-spec)), transparent 72%),
+    radial-gradient(1100px 420px at 12% 40px, rgb(var(--c-accent-2) / var(--alpha-edge)), transparent 70%),
+    radial-gradient(900px 700px at 80% 300px, rgb(var(--c-aqua) / var(--alpha-spec)), transparent 70%),
+    linear-gradient(180deg, rgb(var(--c-accent-2) / var(--alpha-faint)), transparent 600px);
+}
+/* phones: smaller lights over the headline block; the meta and body below it sit under the falloff */
+@media (max-width: 767px) {
+  :root:not(:has(#home-title)) #content {
+    background-image:
+      radial-gradient(420px 200px at 50% -20px, rgb(var(--c-action) / var(--alpha-wash)), transparent 72%),
+      radial-gradient(460px 220px at 15% 90px, rgb(var(--c-accent-2) / var(--alpha-edge)), transparent 70%),
+      radial-gradient(420px 300px at 95% 60px, rgb(var(--c-aqua) / var(--alpha-spec)), transparent 70%);
+  }
+  :root:not([data-theme='day']):not(:has(#home-title)) #content {
+    background-image:
+      radial-gradient(420px 200px at 50% -20px, rgb(var(--c-action) / var(--alpha-spec)), transparent 72%),
+      radial-gradient(460px 220px at 15% 90px, rgb(var(--c-accent-2) / var(--alpha-spec)), transparent 70%),
+      radial-gradient(420px 300px at 95% 60px, rgb(var(--c-aqua) / var(--alpha-spec)), transparent 70%);
+  }
+}
+
+/* M2 Section light: a family glow behind each page section's head after the first, violet then aqua. Centred 210 px
+   below the section top with a 300 px radius, so it is about 0 at the section edge (no seam). Day at alpha-faint;
+   Night violet at alpha-spec and aqua at alpha-wash (violet keys stay >= 4.77:1 on either peak). */
+:root:not(:has(#home-title)) #content section[aria-labelledby]:not(section section):not(:first-of-type) {
+  background-image: radial-gradient(820px 300px at 18% 210px, rgb(var(--c-accent-2) / var(--alpha-faint)), transparent 70%);
+  background-repeat: no-repeat;
+}
+:root:not(:has(#home-title)) #content section[aria-labelledby]:not(section section):not(:first-of-type):nth-of-type(odd) {
+  background-image: radial-gradient(820px 300px at 18% 210px, rgb(var(--c-aqua) / var(--alpha-faint)), transparent 70%);
+}
+:root:not([data-theme='day']):not(:has(#home-title)) #content section[aria-labelledby]:not(section section):not(:first-of-type) {
+  background-image: radial-gradient(820px 300px at 18% 210px, rgb(var(--c-accent-2) / var(--alpha-spec)), transparent 70%);
+}
+:root:not([data-theme='day']):not(:has(#home-title)) #content section[aria-labelledby]:not(section section):not(:first-of-type):nth-of-type(odd) {
+  background-image: radial-gradient(820px 300px at 18% 210px, rgb(var(--c-aqua) / var(--alpha-wash)), transparent 70%);
+}
+
+/* M3 Steel rules and tracks, drawn on borders and tracks that already exist (border-image keeps the width).
+   .rule-titanium  a section rule (border-t): titanium sheen, with a faint violet spill under it
+   .rule-steel     a row rule (border-t): brushed steel in Night, titanium in Day (Day steel is paper-pale)
+   .track-steel    a 1 px track (rail): steel sheen down it in Night, titanium in Day
+   .spine-steel    a track that stays solid steel in Day (ExperienceTrack spine): steel, brushed in Night
+   border-image ignores border-radius: square edges only. */
+.rule-titanium {
+  border-image: linear-gradient(100deg, var(--sheen-titanium)) 1;
+  background-image: linear-gradient(180deg, rgb(var(--c-accent-2) / var(--alpha-faint)), transparent 120px);
+  background-repeat: no-repeat;
+}
+.rule-steel { border-image: linear-gradient(100deg, var(--sheen-steel)) 1; }
+:root[data-theme='day'] .rule-steel { border-image: linear-gradient(100deg, var(--sheen-titanium)) 1; }
+.track-steel { background-image: linear-gradient(180deg, var(--sheen-steel)); }
+:root[data-theme='day'] .track-steel { background-image: linear-gradient(180deg, var(--sheen-titanium)); }
+.spine-steel { background-color: var(--steel); background-image: linear-gradient(180deg, var(--sheen-steel)); }
+:root[data-theme='day'] .spine-steel { background-image: none; }
+
+/* At-rest panels and cards (rounded-panel, not floating): a steel rim and a glass top light; the tone step stays the
+   separator. Keep the element's `border` width; this sets only its colour. */
+.panel-steel { border-color: var(--steel-rim); box-shadow: inset 0 1px 0 var(--glass-highlight); }
+
+/* M6 Secondary: a satin steel plate (surface-2, a steel rim, a glass top edge and a refracted lower edge); on hover the
+   rim turns to brushed steel (Night) or titanium (Day) through a border-box gradient, so the radius is kept and the
+   label (ink, >= 11.10:1 on surface-3) stays put. Pressed, open, disabled and error states keep their own classes. */
+.satin-steel:not([aria-pressed='true']):not([aria-expanded='true']):not(:disabled):not([aria-disabled='true']) {
+  background-color: var(--surface-2);
+  border-color: var(--steel);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-refract);
+}
+@media (hover: hover) and (pointer: fine) {
+  .satin-steel:not([aria-pressed='true']):not([aria-expanded='true']):not(:disabled):not([aria-disabled='true']):hover {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--surface-3), var(--surface-3)) padding-box,
+      linear-gradient(100deg, var(--sheen-steel)) border-box;
+  }
+  :root[data-theme='day'] .satin-steel:not([aria-pressed='true']):not([aria-expanded='true']):not(:disabled):not([aria-disabled='true']):hover {
+    background:
+      linear-gradient(var(--surface-3), var(--surface-3)) padding-box,
+      linear-gradient(100deg, var(--sheen-titanium)) border-box;
+  }
+}
+
+/* Metal light on a fill: .gloss-metal (a pale top edge and a dark lower edge: action keys, as on .btn-primary) and
+   .glint-metal (a top glint only: oxblood winner / trek stamps). */
+.gloss-metal {
+  box-shadow:
+    inset 0 1px 0 rgb(var(--c-metal-50) / var(--alpha-edge)),
+    inset 0 -1px 0 rgb(var(--c-ground-sky) / var(--alpha-edge));
+}
+.glint-metal { box-shadow: inset 0 1px 0 rgb(var(--c-metal-50) / var(--alpha-spec)); }
+
+/* The live dot's halo (M5): a 3 px aqua ring of light. */
+.live-halo { box-shadow: 0 0 0 3px var(--aqua-wash); }
+
+/* M7 Glass: .glass-steel on a .glass-chrome (usually .glass-tile) gives it a steel rim instead of the glass rim
+   (story cards, atlas popovers, MechanicalCard). .glass-chip is a label knockout made of glass: ground at alpha-heavy
+   with the soft blur, so it takes the light behind it (rail labels); solid ground under the fallbacks below. */
+.glass-chrome.glass-steel { border-color: var(--steel-rim); }
+.glass-chip {
+  background-color: rgb(var(--c-ground) / var(--alpha-heavy));
+  -webkit-backdrop-filter: blur(var(--glass-blur-soft));
+  backdrop-filter: blur(var(--glass-blur-soft));
+}
+
+/* M4 / M9 Plates. .steel-frame: a 1 px titanium-aqua frame drawn inside the plate edge (an outline, no layout).
+   .plate-cyanotype: the blueprint field (/professional sheets, pending plates): aqua-soft (Night adds an aqua wash),
+   an aqua survey grid and contours through --ink-contour, the frame, a glass top light and a violet floor glow. Its
+   SVG drops its own bg-surface; halos and hollow fills use var(--plate-field). Labels: ink 8.23 / ink-muted 4.58 min.
+   .plate-atlas: the /stories Atlas contour sheet as a cyanotype plate (Night deepened by ground-sky so the open
+   oxblood pin keeps 3:1), aqua minor / index contours, the frame, a violet floor and an aqua under-glow.
+   .plate-photo-lit: a photograph on steel: a titanium-aqua hairline and the aqua light it throws below (Night adds a
+   ground-sky contact edge and a violet glow off the left edge, both with negative spread, off the text column). */
+.steel-frame { outline: 1px solid rgb(var(--c-titanium-aqua) / var(--alpha-line)); outline-offset: -1px; }
+.plate-cyanotype {
+  --plate-field: var(--aqua-soft);
+  --ink-contour: rgb(var(--c-aqua) / var(--alpha-spec));
+  background-color: var(--aqua-soft);
+  outline: 1px solid rgb(var(--c-titanium-aqua) / var(--alpha-line));
+  outline-offset: -1px;
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -140px 160px -120px rgb(var(--c-accent-2) / var(--alpha-wash));
+}
+:root:not([data-theme='day']) .plate-cyanotype {
+  --ink-contour: rgb(var(--c-aqua) / var(--alpha-edge));
+  background-image: linear-gradient(rgb(var(--c-aqua) / var(--alpha-wash)), rgb(var(--c-aqua) / var(--alpha-wash)));
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -140px 160px -120px rgb(var(--c-accent-2) / var(--alpha-edge));
+}
+/* a survey-grid plate keeps its grid image on top of the Night wash */
+:root:not([data-theme='day']) .plate-cyanotype.survey-grid {
+  background-image:
+    linear-gradient(to right, var(--ink-contour) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ink-contour) 1px, transparent 1px),
+    linear-gradient(rgb(var(--c-aqua) / var(--alpha-wash)), rgb(var(--c-aqua) / var(--alpha-wash)));
+}
+.plate-atlas {
+  --plate-field: var(--aqua-soft);
+  --ink-contour: rgb(var(--c-aqua) / var(--alpha-spec));
+  --ink-contour-index: rgb(var(--c-aqua) / var(--alpha-glint));
+  background-color: var(--aqua-soft);
+  outline: 1px solid rgb(var(--c-titanium-aqua) / var(--alpha-line));
+  outline-offset: -1px;
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -160px 180px -140px rgb(var(--c-accent-2) / var(--alpha-faint)),
+    0 28px 64px -32px rgb(var(--c-aqua) / var(--alpha-edge));
+}
+:root:not([data-theme='day']) .plate-atlas {
+  --ink-contour: rgb(var(--c-aqua) / var(--alpha-edge));
+  --ink-contour-index: rgb(var(--c-aqua) / var(--alpha-line));
+  background-image: linear-gradient(rgb(var(--c-ground-sky) / var(--alpha-spec)), rgb(var(--c-ground-sky) / var(--alpha-spec)));
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    inset 0 -160px 180px -140px rgb(var(--c-accent-2) / var(--alpha-wash)),
+    0 28px 72px -28px rgb(var(--c-aqua) / var(--alpha-glint));
+}
+.plate-photo-lit {
+  outline: 1px solid rgb(var(--c-titanium-aqua) / var(--alpha-edge));
+  outline-offset: -1px;
+  box-shadow: 0 24px 56px -28px rgb(var(--c-aqua) / var(--alpha-edge));
+}
+:root:not([data-theme='day']) .plate-photo-lit {
+  outline-color: rgb(var(--c-titanium-aqua) / var(--alpha-line));
+  box-shadow:
+    0 0 0 1px rgb(var(--c-ground-sky) / var(--alpha-edge)),
+    0 32px 80px -28px rgb(var(--c-aqua) / var(--alpha-glint)),
+    -24px -8px 72px -36px rgb(var(--c-accent-2) / var(--alpha-glint));
+}
 
 /* ─── Overrides that must win over utilities ────────────────────────────────────────────────────── */
 
@@ -266,11 +664,37 @@ html[data-motion='off'] *, html[data-motion='off'] ::before, html[data-motion='o
   animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important;
 }
 
+/* Glass without backdrop-filter, with reduced transparency or more contrast: the solid material, no blur, no caustic. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-chrome { background-color: var(--gc-fallback); background-image: none; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .glass-chrome {
+    background-color: var(--gc-fallback);
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass-chip { background-color: var(--ground); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-chip { background-color: var(--ground); }
+}
+
 /* More contrast */
 @media (prefers-contrast: more) {
-  /* `:root[data-theme]` matches the specificity of the tokens' theme blocks so the override applies in both themes */
+  /* `:root[data-theme]` matches the specificity of the tokens' theme blocks so the override applies in both themes;
+     every alias of these roles (placeholder, link-muted, disabled-ink, chart-label ...) follows them at :root. */
   :root, :root[data-theme] { --c-ink-muted: var(--c-ink); --ink-muted: var(--ink); --c-line: var(--c-line-strong); --line: var(--line-strong); }
   html[data-grain] body::before { display: none; }
+  .glass-chrome, .glass-chrome.glass-steel { border-color: var(--line-strong); }
+  /* Update 1.1 light off: flat grounds, plain rules and solid plate fields (the frames stay). */
+  :root:not(:has(#home-title)) #content,
+  :root:not(:has(#home-title)) #content section[aria-labelledby],
+  .rule-titanium, .plate-cyanotype, .plate-atlas {
+    background-image: none !important;
+  }
+  :root:root :is(.rule-titanium, .rule-steel) { border-image: none; }
 }
 
 /* Forced colors (Windows high contrast) */
@@ -278,10 +702,31 @@ html[data-motion='off'] *, html[data-motion='off'] ::before, html[data-motion='o
   .stage-canvas, .plate-fill, html[data-grain] body::before { display: none !important; }
   .plate { border: 1px solid CanvasText; }
   .route-line, .signal-mark { forced-color-adjust: auto; }
-  :focus-visible, .btn-primary:focus-visible, .skip-link:focus-visible { outline-color: Highlight; }
+  /* The second selector repeats the inverse-ring list above at its specificity, so Highlight wins on fills too. */
+  :focus-visible,
+  :is(
+    .btn-primary,
+    .skip-link,
+    :is(a, button, summary, [role='button']):is(
+      .bg-action, .bg-action-hover, .bg-action-pressed, .bg-signal, .bg-signal-hover, .bg-signal-pressed
+    )
+  ):focus-visible {
+    outline-color: Highlight;
+  }
   [data-chrome] { opacity: 1 !important; }
-  /* Primary buttons are a signal fill, which forced colors flattens to Canvas: give them a boundary. */
-  .btn-primary, :is(button, a, [role='button']).bg-signal { border: 1px solid ButtonText; }
+  /* Glass is a plain system surface: no blur, no light, a CanvasText edge. */
+  .glass-chrome { background-color: Canvas; background-image: none; border-color: CanvasText;
+    -webkit-backdrop-filter: none; backdrop-filter: none; }
+  /* Update 1.1 light and materials: none; rules and tracks are plain system lines. */
+  :root:not(:has(#home-title)) #content,
+  :root:not(:has(#home-title)) #content section[aria-labelledby],
+  :is(.rule-titanium, .track-steel, .spine-steel, .plate-cyanotype, .plate-atlas) {
+    background-image: none !important;
+  }
+  :root:root :is(.rule-titanium, .rule-steel) { border-image: none; }
+  .glass-chip { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  /* Primary buttons are an action (or signal) fill, which forced colors flattens to Canvas: give them a boundary. */
+  .btn-primary, :is(button, a, [role='button']):is(.bg-action, .bg-signal) { border: 1px solid ButtonText; }
   /* Pressed and selected states otherwise collapse to the same CanvasText as their neighbours (§B.10). */
   [aria-pressed='true'], [role='tab'][aria-selected='true'], [role='option'][aria-selected='true'] {
     forced-color-adjust: none;

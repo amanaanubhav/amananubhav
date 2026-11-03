@@ -1,6 +1,7 @@
 /**
- * Motion and layering tokens (DESIGN-SPEC §B.7, §B.8): the TS mirror of the CSS variables in
- * src/_app/styles/globals.css (`--ease-*`, `--dur-*`) and of the Tailwind `z-*` keys. Hand-written.
+ * Motion, chrome and layering tokens (DESIGN-SPEC §B.7, §B.8): the TS mirror of the CSS variables in
+ * src/_app/styles/globals.css (`--ease-*`, `--dur-*`, the chrome clearances) and of the Tailwind `z-*` keys.
+ * Hand-written.
  * No overshoot anywhere; exits run at about 65% of the entrance; reveals travel 24 px at most.
  */
 export const MOTION = {
@@ -19,6 +20,24 @@ export const MOTION = {
   /** The one calm spring of the site (`spring-calm` in §H). Pass it as the motion `transition`. */
   spring: { type: 'spring', visualDuration: 0.45, bounce: 0 },
   lenis: { lerp: 0.09 },
+} as const;
+
+/**
+ * Fixed-chrome geometry: the TS mirror of the globals.css clearance tokens (FIX-PLAN SYS-3), in CSS px at the
+ * default 16 px root. CSS stays the source; read a value published at runtime (`--legend-h`, `--dock-h`) with
+ * getComputedStyle(document.documentElement).
+ */
+export const CHROME = {
+  /** `--nav-h`: the navbar band, its 8 px top inset plus the 48 px pill. */
+  navH: 56,
+  /** `--nav-clear`: navH + 16, where content, sticky columns and scroll targets may start. */
+  navClear: 72,
+  /** `--bar-h`: the bottom dock bar below `railFrom`. */
+  barH: 52,
+  /** `--rail-reserve` (13rem): the desktop rail's band, its 24 px inset, the 160 px rail and a 24 px gap. */
+  railReserve: 208,
+  /** The desktop rail exists from this width (Tailwind `lg`); the bottom dock below it. */
+  railFrom: 1024,
 } as const;
 
 /** One z-index scale for the whole site (§B.7); the Tailwind `z-*` keys carry the same numbers. */

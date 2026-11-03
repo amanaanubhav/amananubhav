@@ -35,8 +35,15 @@ function jump(target: HTMLElement | number, offset: number, immediate: boolean):
     lenis.scrollTo(target, { offset, duration: LENIS_JUMP_DURATION_S, immediate });
     return;
   }
+  // Lenis subtracts the root's scroll-padding-top (--nav-clear) and the target's scroll-margin-top;
+  // the native fallback does the same so a jump never lands under the navbar band (WCAG 2.4.11).
   const top =
-    typeof target === 'number' ? target : target.getBoundingClientRect().top + window.scrollY;
+    typeof target === 'number'
+      ? target
+      : target.getBoundingClientRect().top +
+        window.scrollY -
+        (parseFloat(getComputedStyle(target).scrollMarginTop) || 0) -
+        (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0);
   window.scrollTo({ top: Math.max(0, top + offset), behavior: immediate || prefersReducedMotion() ? 'auto' : 'smooth' });
 }
 

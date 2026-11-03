@@ -15,6 +15,8 @@ const twMerge = extendTailwindMerge({
       shadow: ['float'],
       ease: ['settle', 'glide', 'pen', 'depart', 'breath'],
       container: ['measure', 'content'],
+      // Layout rhythm (globals.css --space-*): pt-section, gap-block, gap-item, pt-seam.
+      spacing: ['section', 'block', 'item', 'seam'],
     },
     classGroups: {
       'outline-style': [{ outline: [''] }],
@@ -27,6 +29,10 @@ const twMerge = extendTailwindMerge({
         },
       ],
       duration: [{ duration: ['micro', 'hover', 'ui', 'overlay', 'reveal', 'theme'] }],
+      // The alpha ladder (--alpha-*): opacity-scrim; colour modifiers like bg-ink/hair need no entry.
+      opacity: [
+        { opacity: ['hair', 'faint', 'wash', 'rim', 'spec', 'edge', 'glint', 'line', 'heavy', 'scrim', 'glass', 'sheet'] },
+      ],
     },
   },
   override: {
