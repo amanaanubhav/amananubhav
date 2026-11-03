@@ -88,6 +88,29 @@ export function setSceneParam(id: SceneId, key: string, value: SceneParamValue):
 }
 
 /* ------------------------------------------------------------------------------------------------
+ * Page drivers that must run before the scenes in a frame (M-10). The renderer advances R3F from its
+ * own gsap.ticker callback; after a client-side return to a page, a page driver re-added to the ticker
+ * would run after it and the scene would draw the previous tick's params. The renderer calls these
+ * right before it advances, so a driver registered here (and on the ticker, deduplicated per frame by
+ * the driver itself) always lands in the same frame as the scroll.
+ * ---------------------------------------------------------------------------------------------- */
+
+const beforeAdvance = new Set<() => void>();
+
+/** Runs `callback` right before every stage advance (while the renderer draws); returns the unsubscribe. */
+export function onStageBeforeAdvance(callback: () => void): () => void {
+  beforeAdvance.add(callback);
+  return () => {
+    beforeAdvance.delete(callback);
+  };
+}
+
+/** The renderer's hook: called once per drawn frame, before R3F advances. */
+export function runStageBeforeAdvance(): void {
+  beforeAdvance.forEach((callback) => callback());
+}
+
+/* ------------------------------------------------------------------------------------------------
  * Scene -> page frames. A scene emits one frame object per rendered frame (the same object, mutated
  * in place); DOM overlays (labels, readouts) subscribe and write transforms in the same tick.
  * ---------------------------------------------------------------------------------------------- */

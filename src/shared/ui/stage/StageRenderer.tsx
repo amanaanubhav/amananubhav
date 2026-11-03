@@ -20,7 +20,7 @@ import { degradeStage } from '@/shared/lib/motion-tier';
 import { StageSceneRoot, markStageFailed } from '@/shared/ui/stage-three';
 
 import { onIdle } from './idle';
-import { hasVisibleScene, useStageEntries, type StageSceneEntry } from './registry';
+import { hasVisibleScene, runStageBeforeAdvance, useStageEntries, type StageSceneEntry } from './registry';
 import { ThemeUniforms } from './ThemeUniforms';
 
 /*
@@ -74,6 +74,8 @@ function TickerDriver({ paused, onResume }: { paused: boolean; onResume: () => v
       const active = !pausedRef.current && document.visibilityState === 'visible' && anyVisible;
       if (active) {
         if (!wasActive) onResumeRef.current();
+        // Page drivers first (M-10): the scene must read this tick's params, whatever the ticker order.
+        runStageBeforeAdvance();
         // Seconds: with frameloop="never", R3F derives useFrame's delta and clock.elapsedTime from
         // this timestamp as given, and scenes damp with delta in seconds.
         advance(time, true);

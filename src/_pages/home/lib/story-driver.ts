@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { setChromeDimmed } from '@/shared/lib/chrome';
 import { gsap } from '@/shared/lib/gsap';
-import { setSceneParam, setSceneProgress } from '@/shared/ui/stage';
+import { onStageBeforeAdvance, setSceneParam, setSceneProgress } from '@/shared/ui/stage';
 
 import { STORY_PARAM, STORY_SCENE_ID } from '../ui/scenes/story/frame';
 import { S_END } from '../ui/scenes/story/timeline';
@@ -19,7 +19,8 @@ import {
 } from './story-scroll';
 
 /*
- * The per-tick driver of the home story (one gsap.ticker callback, after Lenis):
+ * The per-tick driver of the home story (one gsap.ticker callback, after Lenis; the stage renderer also runs it
+ * right before it advances R3F, M-10, so the scene always reads this frame's params; it runs once per frame):
  *  - scroll -> s through the anchor map, sent raw to the scene (`progress = s / S_END`; the scene damps it),
  *    and a damped copy for the page's own readouts (legend line, numeral);
  *  - the recede pools (§9): every on-screen `[data-recede]` text box (padded 14 px) and the fixed chrome
@@ -81,6 +82,7 @@ export function useStoryDriver(enabled: boolean): void {
     let dirty = true;
     let damped = -1;
     let last = performance.now();
+    let lastFrame = -1;
     const rects = new Float32Array(MAX_RECTS * 4);
 
     const measure = () => {
@@ -106,6 +108,10 @@ export function useStoryDriver(enabled: boolean): void {
     void document.fonts?.ready.then(markDirty);
 
     const tick = () => {
+      // Once per frame: the ticker and the renderer's pre-advance hook both call it (M-10).
+      const frame = gsap.ticker.frame;
+      if (frame === lastFrame) return;
+      lastFrame = frame;
       if (dirty) measure();
       const now = performance.now();
       const dt = Math.min(0.1, (now - last) / 1000);
@@ -159,9 +165,11 @@ export function useStoryDriver(enabled: boolean): void {
     };
 
     gsap.ticker.add(tick);
+    const offAdvance = onStageBeforeAdvance(tick);
     tick();
     return () => {
       gsap.ticker.remove(tick);
+      offAdvance();
       resize.disconnect();
       window.removeEventListener('resize', markDirty);
       storyObstacles.text = [];
