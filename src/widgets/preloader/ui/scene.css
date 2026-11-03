@@ -1,39 +1,48 @@
 /*
- * The climb's scene (docs/redesign/preloader/design.md §3.2, v2.3): every colour token, Night first and Day under
- * html[data-theme=day], the scene's classes, and each layer box's variables (read by the generic .ly rule in
- * boot.css). The markup comes from scripts/preloader/scene.mjs; plain fills there name their token directly
- * (fill="var(--oak)"), so only strokes, opacities and blends need a rule here.
+ * The climb's scene (docs/redesign/preloader/design.md §3.2, v2.3; colour: PALETTE-SPEC §4.12, the scene-* tokens):
+ * every local colour name, the scene's classes, and each layer box's variables (read by the generic .ly rule in
+ * boot.css). Each local name points at a palette token, or at an oklab mix of two, so the scene follows the theme on
+ * its own: the Night line serves Day too unless a Day line below overrides it. The markup comes from
+ * scripts/preloader/scene.mjs; plain fills there name their local directly (fill="var(--oak)"), so only strokes,
+ * opacities and blends need a rule here. --lit is rim light (strokes and canopy glints), --f2 the white prayer flag.
  */
-.boot { --sky-lo-t: #121519; --sky-lo-b: #1B2421; --sky-sub-t: #131916; --sky-sub-b: #1E2B21;
-  --sky-hi-t: #0C0E1A; --sky-hi-b: #272C48; --star: #DEDEE2;
-  --far-snow: #AAB3C8; --far-rock: #262A39; --far-shade: #161A2C;
-  --hi-snow: #BCC4D4; --hi-rock: #34363F; --hi-shade: #14161F;
-  --dry: #383527; --dry-shade: #25231B; --dry-dot: #232619;
-  --gr: #213327; --gr-shade: #17251B; --gr-tree: #132017; --gr-terr: #30442F;
-  --gg: #1E3324; --gg-shade: #132218; --cliff: #2A332D; --gg-terr: #33462C; --fall: #A9B4C6;
-  --nA: #1C3020; --nB: #19291C; --n0: #16241A; --n1: #111D15; --n2: #2D2B21; --n3: #37342C; --n4: #434046;
-  --n5: #BCC4D5; --drift: #97A3C0; --rice: #2B4A2A; --paddy: #343C55; --river: #283047; --ripple: #9D8FBE;
-  --banana: #1A3420; --bamboo: #1C3521; --broad: #14281A; --roof: #1E1F25;
-  --oak: #122019; --wal: #15241A; --bloom: #CB7C75; --pine: #0D1912; --jun: #272A1D;
-  --rock: #4A474B; --rockh: #5F5C62; --house: #2A2A2F; --lamp: #CDB37C; --chorten: #8C8C93;
-  --yak: #151517; --wall: #3A383C;
-  --f1: #9D8FBE; --f2: #DEDEE2; --f3: #CB7C75; --f4: #8FB89B; --f5: #CDB37C;
-  --glow: #CB7C75; --b-ink: #DEDEE2; --b-muted: #A3A7B0; --halo: #121519; }
-html[data-theme='day'] .boot { --sky-lo-t: #DCE3D6; --sky-lo-b: #EEF0E4; --sky-sub-t: #DCE6D2; --sky-sub-b: #EEF2E2;
-  --sky-hi-t: #98B4D2; --sky-hi-b: #E3EBF2; --star: transparent;
-  --far-snow: #F7F9FB; --far-rock: #8D98AC; --far-shade: #9EAFC6;
-  --hi-snow: #F2F5F8; --hi-rock: #8A877F; --hi-shade: #4E5361;
-  --dry: #A69C79; --dry-shade: #7E7559; --dry-dot: #6E6A47;
-  --gr: #5E7C4E; --gr-shade: #45613D; --gr-tree: #3A5634; --gr-terr: #8FA36C;
-  --gg: #678D4C; --gg-shade: #4A6B3B; --cliff: #7D8A72; --gg-terr: #A9AF6A; --fall: #F5F8F7;
-  --nA: #5F8A45; --nB: #557A41; --n0: #4E6E40; --n1: #3B5934; --n2: #8C8160; --n3: #958B74; --n4: #8F8A84;
-  --n5: #F5F7F9; --drift: #B5C6DA; --rice: #8DB85E; --paddy: #BCD3CB; --river: #8FB2B6; --ripple: #EAF2F0;
-  --banana: #4F8B3E; --bamboo: #6A9548; --broad: #3E6936; --roof: #5E6E7E;
-  --oak: #3D5D35; --wal: #4A6937; --bloom: #A63B09; --pine: #2B462F; --jun: #666846;
-  --rock: #8A857D; --rockh: #A6A197; --house: #6A6157; --lamp: #3B3833; --chorten: #F3F0E8;
-  --yak: #2E2B28; --wall: #7C766D;
-  --f1: #2C5F86; --f2: #FFFFFF; --f3: #A63B09; --f4: #2E6B33; --f5: #B08A1E;
-  --glow: #D9876B; --b-ink: #1B1E1C; --b-muted: #50564F; --halo: #E3EBF2; }
+.boot { --sky-lo-t: var(--ground); --sky-lo-b: var(--metal-800); --sky-sub-t: var(--surface);
+  --sky-sub-b: var(--metal-800); --star: var(--star-sun); --lit: var(--ink);
+  --far-snow: var(--scene-far-snow); --far-rock: var(--metal-775); --far-shade: var(--metal-850);
+  --hi-snow: var(--scene-hi-snow); --hi-rock: color-mix(in oklab, var(--scene-rock) 85%, var(--scene-yak)); --hi-shade: var(--metal-850);
+  --dry: color-mix(in oklab, var(--scene-dry) 50%, var(--scene-rock)); --dry-shade: color-mix(in oklab, var(--scene-dry) 55%, var(--scene-yak));
+  --dry-dot: color-mix(in oklab, var(--scene-dry) 45%, var(--scene-veg-3));
+  --gr: var(--scene-veg-1); --gr-shade: var(--scene-veg-2); --gr-tree: var(--scene-veg-3); --gr-terr: var(--scene-veg-light);
+  --gg: var(--scene-veg-1); --gg-shade: var(--scene-veg-3); --cliff: var(--scene-dry); --gg-terr: var(--scene-veg-light);
+  --fall: color-mix(in oklab, var(--scene-far-snow) 30%, var(--scene-hi-snow));
+  --nA: var(--scene-veg-1); --nB: var(--scene-veg-2); --n0: var(--scene-veg-2); --n1: var(--scene-veg-3);
+  --n2: var(--scene-dry); --n3: color-mix(in oklab, var(--scene-rock) 30%, var(--scene-dry)); --n4: var(--metal-700); --n5: var(--scene-hi-snow);
+  --drift: var(--metal-300); --rice: var(--scene-veg-light); --paddy: color-mix(in oklab, var(--scene-ripple) 35%, var(--scene-sky-mid));
+  --river: var(--scene-water); --ripple: var(--scene-ripple);
+  --banana: var(--scene-veg-1); --bamboo: var(--scene-veg-1); --broad: var(--scene-veg-2); --roof: var(--metal-800);
+  --oak: var(--scene-veg-3); --wal: var(--scene-veg-2); --bloom: var(--scene-flower-2);
+  --pine: color-mix(in oklab, var(--scene-veg-3) 30%, var(--scene-yak)); --jun: color-mix(in oklab, var(--scene-dry) 65%, var(--scene-veg-3));
+  --rock: color-mix(in oklab, var(--scene-rock) 85%, var(--metal-300)); --rockh: var(--metal-600); --house: var(--metal-775);
+  --lamp: var(--scene-lamp); --chorten: var(--metal-400); --yak: var(--scene-yak); --wall: var(--scene-rock);
+  --f1: var(--scene-flower-1); --f2: var(--scene-flower-5); --f3: var(--scene-flower-2); --f4: var(--scene-flower-4);
+  --f5: var(--scene-flower-3); --glow: var(--scene-glow); --b-ink: var(--ink); --b-muted: var(--ink-muted);
+  --halo: var(--ground); }
+html[data-theme='day'] .boot { --sky-lo-t: var(--paper-100); --sky-lo-b: var(--paper-50); --sky-sub-t: var(--paper-100);
+  --sky-sub-b: var(--paper-50); --star: transparent; --lit: var(--paper-0);
+  --far-rock: color-mix(in oklab, var(--scene-yak) 20%, var(--scene-sky-top)); --far-shade: color-mix(in oklab, var(--metal-600) 10%, var(--scene-sky-top));
+  --hi-rock: color-mix(in oklab, var(--scene-rock) 80%, var(--scene-dry)); --hi-shade: color-mix(in oklab, var(--scene-yak) 10%, var(--metal-600));
+  --dry: var(--scene-dry); --dry-shade: color-mix(in oklab, var(--scene-dry) 65%, var(--scene-yak)); --dry-dot: color-mix(in oklab, var(--scene-dry) 25%, var(--scene-veg-3));
+  --gr-shade: color-mix(in oklab, var(--scene-veg-1) 10%, var(--scene-veg-3)); --gr-tree: color-mix(in oklab, var(--scene-veg-3) 90%, var(--scene-yak));
+  --gg: color-mix(in oklab, var(--scene-veg-1) 90%, var(--ground)); --gg-shade: var(--scene-veg-2); --cliff: color-mix(in oklab, var(--scene-dry) 80%, var(--scene-yak));
+  --fall: var(--scene-far-snow);
+  --nB: var(--scene-veg-1); --n2: color-mix(in oklab, var(--scene-dry) 75%, var(--scene-yak)); --n3: color-mix(in oklab, var(--scene-dry) 85%, var(--scene-yak));
+  --n4: color-mix(in oklab, var(--scene-rock) 85%, var(--metal-150)); --n5: var(--scene-far-snow);
+  --drift: color-mix(in oklab, var(--scene-far-snow) 15%, var(--scene-sky-top)); --paddy: color-mix(in oklab, var(--scene-water) 30%, var(--ground));
+  --river: color-mix(in oklab, var(--scene-water) 50%, var(--scene-sky-mid));
+  --bamboo: color-mix(in oklab, var(--scene-veg-1) 85%, var(--ground)); --roof: color-mix(in oklab, var(--metal-700) 60%, var(--scene-sky-top));
+  --pine: color-mix(in oklab, var(--scene-veg-2) 35%, var(--scene-yak)); --jun: color-mix(in oklab, var(--scene-dry) 20%, var(--scene-veg-3));
+  --rock: var(--scene-rock); --rockh: color-mix(in oklab, var(--scene-dry) 45%, var(--metal-300)); --house: color-mix(in oklab, var(--scene-rock) 65%, var(--scene-yak));
+  --chorten: color-mix(in oklab, var(--scene-dry) 10%, var(--paper-0)); --wall: color-mix(in oklab, var(--scene-rock) 90%, var(--scene-yak)); --halo: var(--paper-sky); }
 
 /* Layer boxes, back to front: base colour, height, bottom, viewBox ratio, minimum width in viewport widths. */
 .boot .ly-far { --base: var(--far-rock); --h: 46svh; --b: 22svh; --ar: 1800 / 420; --wm: 1.08;
@@ -69,10 +78,10 @@ html[data-theme='day'] .boot { --sky-lo-t: #DCE3D6; --sky-lo-b: #EEF0E4; --sky-s
 .boot .c-bloom { stroke: var(--bloom); stroke-width: 2.6; }
 .boot .dry-dot { stroke: var(--dry-dot); stroke-width: 4.5; }
 .boot .flag-line { stroke: var(--b-muted); stroke-width: .6; opacity: .8; }
-.boot .rim { stroke: var(--f2); stroke-opacity: .12; stroke-width: 2; }
+.boot .rim { stroke: var(--lit); stroke-opacity: .12; stroke-width: 2; }
 .boot .ripple { stroke: var(--ripple); stroke-opacity: .35; stroke-width: 1.2; }
-.boot .tuft { stroke: var(--f2); stroke-opacity: .14; }
-.boot .scree { stroke: var(--f2); stroke-opacity: .16; stroke-width: 2.2; }
+.boot .tuft { stroke: var(--lit); stroke-opacity: .14; }
+.boot .scree { stroke: var(--lit); stroke-opacity: .16; stroke-width: 2.2; }
 .boot .deck { stroke: var(--house); stroke-width: 2.2; } .boot .cable { stroke: var(--b-muted); stroke-width: .7; }
 .boot .glow-rim { stroke: var(--glow); stroke-width: 2.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .boot .glow-rim.crest { stroke-width: 2.6; }

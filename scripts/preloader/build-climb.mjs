@@ -22,6 +22,9 @@ const BOOT_DIR = join(ROOT, 'public', 'boot');
 const CONFIG_PATH = join(ROOT, 'src', 'widgets', 'preloader', 'config', 'climb.generated.ts');
 const RUNTIME_PATH = join(ROOT, 'src', 'widgets', 'preloader', 'lib', 'climb-runtime.js');
 const CSS_PATHS = ['boot.css', 'scene.css'].map((f) => join(ROOT, 'src', 'widgets', 'preloader', 'ui', f));
+// The palette's generated tokens (npm run palette:emit): the scene's colours resolve through them, so the preview
+// page carries them as the site does; they are not part of the curtain's CSS budget.
+const TOKENS_PATH = join(ROOT, 'src', '_app', 'styles', 'tokens.css');
 const KB = 1024;
 // V6 (design v2.1): the scene, its motion data, the runtime, the inline skeleton + gate, and both curtain stylesheets.
 const BUDGET = { scene: 9.5 * KB, motion: 0.6 * KB, runtime: 3.2 * KB, inline: 1.2 * KB, css: 2.8 * KB };
@@ -270,8 +273,8 @@ function previewPage(js, fonts) {
 @font-face{font-family:Manrope;src:url(${fonts}/manrope-latin-normal.woff2) format('woff2');font-weight:200 800}
 @font-face{font-family:'IBM Plex Mono';src:url(${fonts}/ibm-plex-mono-latin-normal-400.woff2) format('woff2')}
 :root{--font-display:Archivo;--font-text:Literata;--font-ui:Manrope;--font-data:'IBM Plex Mono'}
-html,body{margin:0;background:#121316;color:#DEDEE2}
-html[data-theme=day],html[data-theme=day] body{background:#EEF0EA;color:#1B1E1C}
+${readFileSync(TOKENS_PATH, 'utf8')}
+html,body{margin:0;background:var(--ground);color:var(--ink)}
 h1{font:750 72px/1 Archivo;margin:30svh 56px 0}
 ${cssSrc}</style>
 <script>(function(){var q=new URLSearchParams(location.search),h=document.documentElement;

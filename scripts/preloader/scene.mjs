@@ -219,7 +219,7 @@ export function buildScene({ ridge: RIDGE, trekker: TREK, route = { start: 760, 
       `<path ${paint} d="${d}"/></pattern>`;
   };
   const gC = canopyTile('gC', 104, 62, 8, 4, 7.5, 'fill="var(--nB)" fill-opacity=".3"', 14, 2);
-  const gD = canopyTile('gD', 71, 45, 6, 3, 6, 'fill="var(--f2)" fill-opacity=".05"', -27);
+  const gD = canopyTile('gD', 71, 45, 6, 3, 6, 'fill="var(--lit)" fill-opacity=".05"', -27);
   // Cliff bands: ragged slanted strips of exposed rock; the waterfall's own cliff under the notch.
   const cliff = (x0, x1, y0, y1, th) => {
     const pts = [];

@@ -6,6 +6,14 @@
  */
 .boot { display: none; }
 html[data-boot='run'] .boot, html[data-boot='exit'] .boot { display: block; }
+/* While the climb runs, the reserved scrollbar gutter beside the fixed curtain takes the curtain's base (the sky's
+   --sky-lo-b, named here because html sits outside .boot) with no thumb, and the page cannot be wheeled under it.
+   The gutter stays reserved, so nothing reflows at exit; exit and done release it. Never where the curtain is hidden. */
+@media screen and (forced-colors: none) {
+  html[data-boot='run'] { overflow: hidden; background: var(--metal-800);
+    scrollbar-color: transparent var(--metal-800); }
+  html[data-theme='day'][data-boot='run'] { background: var(--paper-50); scrollbar-color: transparent var(--paper-50); }
+}
 /* Failsafe: a climb script that never starts (blocked, offline, an error) cannot hold the page. */
 html[data-boot='run']:not([data-boot-live]) .boot { animation: boot-failsafe 0s 3s forwards; }
 @keyframes boot-failsafe { to { visibility: hidden; } }
@@ -19,7 +27,8 @@ html[data-motion='off']:not([data-boot-live]) .boot .alt { visibility: hidden; }
 .boot .sky, .boot .scn { position: absolute; inset: 0; }
 .boot .sky-lo { background: linear-gradient(var(--sky-lo-t), var(--sky-lo-b) 72%); }
 .boot .sky-sub { background: linear-gradient(var(--sky-sub-t), var(--sky-sub-b) 72%); }
-.boot .sky-hi { background: linear-gradient(var(--sky-hi-t), var(--sky-hi-b) 74%); opacity: 0; }
+.boot .sky-hi { background: linear-gradient(var(--scene-sky-top), var(--scene-sky-mid) 40%, var(--scene-sky-horizon) 74%);
+  opacity: 0; }
 
 /* Layers: bottom-anchored boxes at their viewBox ratio, stretched a little where a wide, short viewport needs more
    width than that for the layer's travel (--wm, in viewport widths); a block of the base colour below hides the sky. */
@@ -33,6 +42,9 @@ html[data-motion='off']:not([data-boot-live]) .boot .alt { visibility: hidden; }
 .boot .hud { position: absolute; inset: 0; pointer-events: none; padding: max(20px, 3.2svh) clamp(16px, 4vw, 56px); }
 .boot .top { display: flex; justify-content: space-between; gap: 16px; color: var(--b-muted);
   font: 400 14px/1.3 var(--font-ui), system-ui, sans-serif; }
+.boot .top > :last-child { text-align: right; }
+/* Day's high sky (scene-sky-top) leaves ink-muted near 3.5:1 for this unhaloed line: it takes the ink. */
+html[data-theme='day'] .boot .top { color: var(--b-ink); }
 .boot .who { display: inline-flex; align-items: center; gap: 10px; color: var(--b-ink);
   font: italic 400 16px/1 var(--font-text), Georgia, serif; }
 .boot .who svg { width: 40px; height: 20px; }
@@ -40,23 +52,27 @@ html[data-motion='off']:not([data-boot-live]) .boot .alt { visibility: hidden; }
   width: calc(100% - 32px); }
 .boot .alt svg { display: block; width: 100%; overflow: visible; paint-order: stroke; stroke: var(--halo);
   stroke-opacity: .72; stroke-linejoin: round; }
-.boot .alt-n { height: .74em; font: 750 clamp(64px, 11.5vw, 172px)/1 var(--font-display), 'Arial Narrow', sans-serif;
+/* The readout scales with the shorter side too, so a short laptop (1366x680) keeps it above the far ridge. */
+.boot .alt-n { height: .74em; font: 750 clamp(64px, min(11.5vw, 19svh), 172px)/1 var(--font-display), 'Arial Narrow', sans-serif;
   font-variation-settings: 'wdth' 75; letter-spacing: -.01em; font-variant-numeric: tabular-nums; fill: var(--b-ink);
   stroke-width: .06em; }
 .boot .alt-n .u { font: 400 .2em var(--font-data), ui-monospace, monospace; fill: var(--b-muted);
-  font-variation-settings: normal; letter-spacing: 0; }
+  font-variation-settings: normal; letter-spacing: 0; stroke-width: .12em; }
 .boot .alt-c { margin-top: clamp(10px, 1.6svh, 18px); height: 28px; fill: var(--b-muted); stroke-width: 5px;
   font: italic 400 clamp(16px, 1.5vw, 20px)/1 var(--font-text), Georgia, serif; }
 .boot .alt-c .d { font: 400 .8em var(--font-data), ui-monospace, monospace; }
 .boot .alt-c .w { fill: var(--b-ink); }
 .boot .skip { position: absolute; right: clamp(16px, 4vw, 56px); bottom: max(16px, 3svh); z-index: 2; opacity: 0;
-  visibility: hidden; transition: opacity .24s, visibility 0s .24s;
-  font: 500 14px/1 var(--font-ui), system-ui, sans-serif;
-  color: var(--b-ink); background: color-mix(in srgb, var(--sky-lo-t) 70%, transparent);
-  border: 1px solid color-mix(in srgb, var(--b-ink) 28%, transparent); border-radius: 999px; padding: 10px 16px;
-  cursor: pointer; }
-.boot .skip.on { opacity: 1; visibility: visible; transition: opacity .24s; }
-.boot .skip:focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
+  visibility: hidden; transition: opacity .24s, visibility 0s .24s, transform .16s cubic-bezier(.23,1,.32,1);
+  font: 500 14px/1 var(--font-ui), system-ui, sans-serif; min-height: 40px;
+  color: var(--b-ink); background: var(--glass-fill); border: 1px solid rgb(var(--c-ink) / var(--alpha-edge));
+  border-radius: 999px; padding: 12px 18px; cursor: pointer; -webkit-tap-highlight-color: var(--tap-highlight); }
+.boot .skip.on { opacity: 1; visibility: visible; transition: opacity .24s, transform .16s cubic-bezier(.23,1,.32,1); }
+@media (hover: hover) and (pointer: fine) {
+  .boot .skip:hover { background: var(--glass-fill-strong); border-color: var(--line-strong); }
+}
+.boot .skip:active { transform: scale(.97); }
+.boot .skip:focus-visible { outline: var(--focus-width) solid var(--focus-ring); outline-offset: var(--focus-offset); }
 .boot .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   margin: 0; }
 html[data-lite='1'] .boot .tx, html[data-lite='1'] .boot .stars { display: none; }

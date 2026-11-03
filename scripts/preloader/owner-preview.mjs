@@ -22,10 +22,10 @@ const bar = `<div id="pv" role="group" aria-label="Preview controls">
 <style>
 #pv{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:200;display:flex;gap:12px;align-items:center;
   flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);box-sizing:border-box;padding:8px 14px;
-  border-radius:999px;font:500 13px/1.2 Manrope,system-ui,sans-serif;color:#DEDEE2;background:rgba(18,19,22,.82);
-  border:1px solid rgba(222,222,226,.2)}
+  border-radius:999px;font:500 13px/1.2 Manrope,system-ui,sans-serif;color:var(--ink);background:var(--glass-fill);
+  border:1px solid var(--glass-rim)}
 #pv label{display:flex;gap:8px;align-items:center}#pv input{width:min(42vw,320px)}#pv output{min-width:3.6em}
-#pv button{font:inherit;color:inherit;background:transparent;border:1px solid rgba(222,222,226,.35);border-radius:999px;
+#pv button{font:inherit;color:inherit;background:transparent;border:1px solid var(--line-strong);border-radius:999px;
   padding:6px 12px;cursor:pointer}
 </style>
 <script>(function(){var q=new URLSearchParams(location.search),h=document.documentElement,p=document.getElementById('pv-p'),
