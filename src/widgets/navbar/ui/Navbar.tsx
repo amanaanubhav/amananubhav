@@ -26,6 +26,7 @@ import { NAV_ITEMS, navItemCurrent } from '../config/nav-items';
 import { isKeyboardFocus } from '../lib/is-keyboard-focus';
 import { useHideOnScroll } from '../model/use-hide-on-scroll';
 import { useLiquidHover } from '../model/use-liquid-hover';
+import { usePageFitsViewport } from '../model/use-page-fits-viewport';
 import { LiquidHover } from './LiquidHover';
 import styles from './Navbar.module.css';
 
@@ -73,7 +74,9 @@ const CONTROL = cn(
   styles.ctl,
   'relative inline-flex h-10 min-w-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full',
   'font-ui transition-colors duration-hover ease-settle',
-  'focus-visible:[outline-style:solid] focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-signal',
+  // The ring is the global one (2 px focus-ring); it hugs the 40 px control so it never runs into the glass rim
+  // or a neighbour, and reads as a solid ring outside the current link's 1 px bead rim (C-15).
+  'focus-visible:outline-offset-0',
 );
 
 // The type-scale class stays outside cn(): tailwind-merge would read `text-ui` as a color.
@@ -93,10 +96,12 @@ const action = (...extra: Parameters<typeof cn>) =>
 /**
  * The main navbar (§H.1, liquid-glass redesign): a stadium of frosted glass floating 8 px under the top edge,
  * centred, 48 px tall (44 px once past the hero), so it occupies the same 56 px band as the old strip.
+ * The glass is the shared `.glass-chrome` material (fill, blur, rim, light and every fallback); Navbar.module.css adds
+ * only the pill's own wet sheen, refractive rim and the hover drop.
  * The `<header>` is a click-through full-width band that carries `data-chrome` (the summit-hold dim, §C.8)
  * and z-navbar (above the story reader); the glass inside it springs in and out. Hides on scroll down and
  * shows on scroll up or near the top (`useHideOnScroll`, unchanged), and always shows while keyboard focus is
- * inside it (so a focus ring is never obscured) and while a story is open.
+ * inside it (so a focus ring is never obscured), while a story is open and on a page too short to scroll.
  */
 export function Navbar() {
   const visible = useHideOnScroll();
@@ -114,6 +119,8 @@ export function Navbar() {
   const [forcedReduce] = useReducedMotionPreference();
   const osReduce = useReducedMotion() ?? false;
   const liquid = useLiquidHover(forcedReduce || osReduce, pathname);
+  // A page that cannot scroll (e.g. /admin-chat) gives the hide-on-scroll hook nothing to read: always show there.
+  const pageFits = usePageFitsViewport(pathname);
   // No link prefetch while the home stage holds the network for its 3D chunk (load-in-3d §10), and never for
   // the current route. A flip re-mounts each link's prefetch, so links in view prefetch once it is released.
   const held = useStageHold();
@@ -161,7 +168,7 @@ export function Navbar() {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusWithin(false);
   };
 
-  const shown = visible || focusWithin || isReading;
+  const shown = visible || focusWithin || isReading || pageFits;
   const themeLabel = isDark ? 'Switch to day' : 'Switch to night';
   const ThemeIcon = isDark ? Sun : Moon;
 
@@ -186,6 +193,7 @@ export function Navbar() {
         data-compact={compact ? '' : undefined}
         {...liquid.handlers}
         className={cn(
+          'glass-chrome',
           styles.glass,
           'pointer-events-auto mx-auto flex items-center rounded-full',
           'w-full justify-between px-0.5 min-[360px]:gap-0.5 min-[360px]:px-1 min-[400px]:gap-1',
@@ -213,7 +221,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <span aria-hidden="true" className="hidden h-5 w-px shrink-0 bg-ink/[0.14] sm:block" />
+        <span aria-hidden="true" className="hidden h-5 w-px shrink-0 bg-ink/spec sm:block" />
 
         <nav aria-label="Main">
           <ul className="m-0 flex list-none items-center p-0 min-[360px]:gap-0.5 min-[400px]:gap-1">
@@ -252,7 +260,7 @@ export function Navbar() {
           </ul>
         </nav>
 
-        <span aria-hidden="true" className="hidden h-5 w-px shrink-0 bg-ink/[0.14] sm:block" />
+        <span aria-hidden="true" className="hidden h-5 w-px shrink-0 bg-ink/spec sm:block" />
 
         <div className="flex items-center min-[360px]:gap-0.5 min-[400px]:gap-1">
           <button
