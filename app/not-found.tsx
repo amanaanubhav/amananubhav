@@ -49,17 +49,16 @@ function TrailEndDrawing({ className }: { className?: string }) {
       </g>
       <path
         d={TRAIL}
-        className="route-line"
+        className="route-line stroke-signal-line"
         vectorEffect="non-scaling-stroke"
         style={{
-          stroke: 'rgb(var(--c-signal-line))',
           strokeWidth: 2,
           strokeLinecap: 'round',
           strokeLinejoin: 'round',
           strokeDasharray: '6 5',
         }}
       />
-      <circle cx={24} cy={276} r={4} className="fill-ground" style={{ stroke: 'rgb(var(--c-line-strong))', strokeWidth: 1.5 }} />
+      <circle cx={24} cy={276} r={4} className="fill-ground stroke-line-strong" style={{ strokeWidth: 1.5 }} />
       <g transform={`translate(${MARK_AT.x} ${MARK_AT.y})`} className="text-ink-muted">
         <RidgeMark size={MARK} lit />
       </g>
@@ -67,12 +66,17 @@ function TrailEndDrawing({ className }: { className?: string }) {
   );
 }
 
-/** 404 (§H.11, [S-UI-COPY]): "Off the trail." with a way back to base camp. Server component. */
+/**
+ * 404 (§H.11, [S-UI-COPY]): "Off the trail." with a way back to base camp. Server component.
+ * Sized by its content (C-12, SYS-4/5): it starts one block below the navbar band and owns no bottom padding, so the
+ * footer's seam follows the drawing instead of a fixed 80svh. Phones get a smaller drawing so the page and the
+ * footer's first line fit one screen.
+ */
 export default function NotFound() {
   return (
     <section
       aria-labelledby="not-found-title"
-      className="journal-grid min-h-[80svh] content-center gap-y-12 pb-24 pt-32 lg:pt-40"
+      className="journal-grid gap-y-block pt-[calc(var(--nav-clear)+var(--space-block))]"
     >
       <div className="col-[content-start/content-end] lg:col-[2/span_6] lg:row-start-1 lg:self-center">
         <ChapterHeader as="h1" id="not-found-title">
@@ -87,7 +91,7 @@ export default function NotFound() {
         </div>
       </div>
       <div className="col-[content-start/content-end] lg:col-[8/span_5] lg:row-start-1 lg:self-center">
-        <TrailEndDrawing className="block h-auto w-full max-w-md lg:max-w-none" />
+        <TrailEndDrawing className="block h-auto w-full max-w-[18rem] md:max-w-md lg:max-w-none" />
       </div>
     </section>
   );

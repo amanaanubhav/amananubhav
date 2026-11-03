@@ -3,7 +3,7 @@ import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-import { SITE, THEME_PALETTE } from '@/shared/config';
+import { SITE, THEME_EXTENDED } from '@/shared/config';
 import { BootCurtain } from '@/widgets/preloader';
 
 import { AppShell } from '../shell/AppShell';
@@ -22,7 +22,10 @@ export function RootLayout({ children }: { children: ReactNode }) {
       <head>
         {/* First in <head>: runs during the HTML parse, before first paint (see PrePaintScript). */}
         <PrePaintScript />
-        <meta name="theme-color" content={THEME_PALETTE.night.ground} />
+        {/* Night is the first paint: the browser bar and the canvas before the stylesheet are Night's. The shell
+            moves theme-color to the generated Day value on the switch; tokens.css sets the live color-scheme. */}
+        <meta name="theme-color" content={THEME_EXTENDED.night['theme-color']} />
+        <meta name="color-scheme" content="dark" />
       </head>
       <GoogleTagManager gtmId={SITE.gtmId} />
       <body>

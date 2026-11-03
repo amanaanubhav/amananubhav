@@ -7,7 +7,10 @@ import { Button } from '@/shared/ui/button';
 import { ChapterHeader } from '@/shared/ui/chapter-header';
 import { Log } from '@/shared/ui/journal';
 
-/** Route error boundary (§H.11): names the problem and both ways out; logs the error as before. */
+/**
+ * Route error boundary (§H.11): names the problem and both ways out; logs the error as before. Sized by its content
+ * (C-12): one block below the navbar band, no bottom padding (the footer's seam follows).
+ */
 export default function RouteError({
   error,
   reset,
@@ -20,7 +23,10 @@ export default function RouteError({
   }, [error]);
 
   return (
-    <section aria-labelledby="route-error-title" className="journal-grid min-h-[80svh] content-center pb-24 pt-32 lg:pt-40">
+    <section
+      aria-labelledby="route-error-title"
+      className="journal-grid pt-[calc(var(--nav-clear)+var(--space-block))]"
+    >
       <div className="col-[content-start/content-end] lg:col-[2/span_7]">
         <ChapterHeader as="h1" id="route-error-title" size="h2">
           Something went wrong on this page.

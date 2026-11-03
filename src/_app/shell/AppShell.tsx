@@ -7,7 +7,7 @@ import { closeTerminal, openTerminal, TerminalOverlay, useTerminalOpen } from '@
 import { StoryReaderHost, useSelectedStory } from '@/features/read-story';
 import { closeVault, openVault, SecureVault, useVaultOpen } from '@/features/secure-vault';
 import { FloatingChat } from '@/features/visitor-chat';
-import { ROUTES, THEME_PALETTE } from '@/shared/config';
+import { ROUTES, THEME_EXTENDED } from '@/shared/config';
 import { signalBootReady, useBootPhase } from '@/shared/lib/boot';
 import { useChromeProximity } from '@/shared/lib/chrome';
 import { cn } from '@/shared/lib/cn';
@@ -28,21 +28,24 @@ const readSaveData = () =>
   (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
 const serverSaveData = () => false;
 
-/** Night/Day on `<html data-theme>` and the browser bar color (§C.1, §B.9). Layout effect, so a
- * theme sweep's flushSync commit carries the new attribute into the new view. */
-function useThemeAttributeSync(isDark: boolean): void {
+/** Night/Day on `<html data-theme>` and the browser bar color (the generated `theme-color` role, §C.1, §B.9). Off the
+ * home page the bar takes `ground-steel`, the ground globals.css R1 paints there in Night (Day's is the core ground).
+ * Layout effect, so a theme sweep's flushSync commit carries the new attribute into the new view. */
+function useThemeAttributeSync(isDark: boolean, isHome: boolean): void {
   useLayoutEffect(() => {
     const theme = isDark ? 'night' : 'day';
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_PALETTE[theme].ground);
-  }, [isDark]);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', THEME_EXTENDED[theme][isHome ? 'theme-color' : 'ground-steel']);
+  }, [isDark, isHome]);
 }
 
 /**
  * The app shell (§C.9). DOM order and overlay gating are unchanged from the legacy layout: story
  * reader (outside the .dark wrapper), then the themed wrapper with the skip link, the stage canvas,
- * vault?, terminal, navbar?, the single <main>, footer, chat? and the theme-sweep edge. The paper grain
- * is body::before (z-grain), switched by `html[data-grain]`.
+ * vault?, terminal, navbar?, the single <main>, footer? and chat? (public pages only, never /admin-chat) and the
+ * theme-sweep edge. The paper grain is body::before (z-grain), switched by `html[data-grain]`.
  *
  * The first-load curtain (the climb, widgets/preloader) is not part of React: RootLayout renders its
  * skeleton and a script runs it. The shell follows its phase: the chrome is mounted but hidden under it, the stage
@@ -83,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useSmoothScrollRoot(tier > 0 && !isAdminRoute);
   useBodyScrollLock(isVaultOpen || isTerminalOpen);
-  useThemeAttributeSync(isDark);
+  useThemeAttributeSync(isDark, isHome);
   useChromeProximity();
 
   useEffect(() => {
@@ -139,9 +142,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             {children}
           </main>
 
-          <div className="contents" inert={isReading}>
-            <Footer />
-          </div>
+          {/* The footer, like the chat, is for the public pages; /admin-chat is his own inbox. */}
+          {!isAdminRoute && (
+            <div className="contents" inert={isReading}>
+              <Footer />
+            </div>
+          )}
         </div>
         {/* The chat is on every public page; /admin-chat is his own inbox. */}
         {showChrome && !isAdminRoute && (
