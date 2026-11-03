@@ -2,6 +2,7 @@
 
 import { ShieldCheck, ShieldOff, Trash2 } from 'lucide-react';
 
+import { cn } from '@/shared/lib/cn';
 import { Stamp } from '@/shared/ui/journal';
 
 import type { VaultUser, VaultUserStatus } from '../model/vault-types';
@@ -79,7 +80,7 @@ export function UsersPanel({ titleId, usersList, onToggleStatus, onDeleteUser }:
                         ) : null}
                       </td>
                       <td className="py-3 pr-4">
-                        <Stamp className={blocked ? 'border-error text-error' : undefined}>
+                        <Stamp className={blocked ? 'border-error bg-error-soft text-error' : undefined}>
                           {blocked ? 'Blocked' : 'Active'}
                         </Stamp>
                       </td>
@@ -88,7 +89,7 @@ export function UsersPanel({ titleId, usersList, onToggleStatus, onDeleteUser }:
                           <button
                             type="button"
                             onClick={() => onToggleStatus(u.id, u.status)}
-                            className={`${ROW_BUTTON} border-line-strong text-ink`}
+                            className={`${ROW_BUTTON} satin-steel border-line-strong text-ink`}
                           >
                             {blocked ? (
                               <ShieldCheck aria-hidden="true" focusable="false" className="size-4 shrink-0" strokeWidth={2} />
@@ -101,7 +102,10 @@ export function UsersPanel({ titleId, usersList, onToggleStatus, onDeleteUser }:
                           <button
                             type="button"
                             onClick={() => onDeleteUser(u.id)}
-                            className={`${ROW_BUTTON} border-error text-error`}
+                            className={cn(
+                              ROW_BUTTON,
+                              'border-error text-error hover:bg-error-soft focus-visible:bg-error-soft',
+                            )}
                           >
                             <Trash2 aria-hidden="true" focusable="false" className="size-4 shrink-0" strokeWidth={2} />
                             Delete<span className="sr-only"> {u.username}</span>

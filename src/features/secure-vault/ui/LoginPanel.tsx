@@ -27,7 +27,7 @@ export function LoginPanel({
 
   return (
     <VaultScrollPane>
-      <div className="w-full max-w-[28rem] px-5 py-10 sm:px-10 md:py-14">
+      <div className="w-full max-w-[30rem] md:my-auto px-5 py-10 sm:px-8 md:py-[clamp(1.5rem,5svh,3.5rem)]">
         <h2
           id={titleId}
           tabIndex={-1}
@@ -36,7 +36,7 @@ export function LoginPanel({
         >
           Vault
         </h2>
-        <p className="mt-3 font-body text-body text-ink-muted [text-wrap:pretty]">
+        <p className="mt-3 font-body text-body text-ink [text-wrap:pretty]">
           Your message is encrypted in your browser with AES-GCM and added to a hash-chained ledger before it is
           stored. It reaches my private inbox, not a public thread.
         </p>

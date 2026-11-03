@@ -28,7 +28,9 @@ function SidebarTab({
       className={
         'flex h-11 w-full items-center gap-3 rounded-control px-3 text-left font-body text-ui transition-colors duration-hover ' +
         'focus-visible:outline-offset-[-2px] ' +
-        (active ? 'bg-surface font-medium text-ink' : 'text-ink-muted hover:text-ink')
+        (active
+          ? 'bg-action-soft font-medium text-ink shadow-[inset_2px_0_0_var(--action-line)]'
+          : 'text-ink-muted hover:bg-[var(--hover-wash)] hover:text-ink')
       }
     >
       <Icon aria-hidden="true" focusable="false" className="size-[18px] shrink-0" strokeWidth={1.75} />
@@ -48,20 +50,27 @@ function CipherLog() {
     <dl className="flex flex-col gap-3">
       {rows.map(([key, value]) => (
         <div key={key}>
-          <dt className="font-body text-caption italic text-ink-muted">{key}</dt>
-          <dd className="font-data text-caption text-ink">{value}</dd>
+          <dt className="font-body text-caption italic text-accent-2">{key}</dt>
+          <dd className="font-data text-caption text-aqua">{value}</dd>
         </div>
       ))}
     </dl>
   );
 }
 
-/** Desktop sidebar (§H.7, ≥ 768 px): identity, role stamp, Messages / People, Sign out. */
+/**
+ * Desktop sidebar (§H.7, ≥ 768 px): identity, role stamp, Messages / People, Sign out. A solid surface-2 column on
+ * the glass sheet with its own scroller, so nothing is cut on short screens (O-02); truncated names carry a title.
+ */
 export function VaultSidebar({ currentUser, activeTab, onTabChange, onLogout }: VaultSidebarProps) {
   const isAdmin = currentUser?.role === 'admin';
 
   return (
-    <aside aria-label="Vault" className="hidden min-h-0 flex-col border-r border-line bg-surface-2 md:flex">
+    <aside
+      aria-label="Vault"
+      data-lenis-prevent=""
+      className="scroll-pane hidden min-h-0 flex-col overflow-y-auto overscroll-contain border-r border-transparent bg-[var(--term-rail)] md:flex [html[data-theme=day]_&]:bg-surface-2"
+    >
       <p className="flex items-center gap-2 px-6 pt-6 font-body text-caption italic text-ink-muted">
         <Lock aria-hidden="true" focusable="false" className="size-3.5 shrink-0" strokeWidth={2} />
         Encrypted in your browser
@@ -70,9 +79,13 @@ export function VaultSidebar({ currentUser, activeTab, onTabChange, onLogout }: 
       {currentUser ? (
         <>
           <div className="px-6 pt-8">
-            <p className="truncate font-display text-title font-semibold text-ink">{displayName(currentUser)}</p>
-            <p className="truncate font-data text-caption text-ink-muted">@{currentUser.username}</p>
-            <Stamp className="mt-3">{roleLabel(currentUser)}</Stamp>
+            <p title={displayName(currentUser)} className="truncate font-display text-title font-semibold text-ink">
+              {displayName(currentUser)}
+            </p>
+            <p title={`@${currentUser.username}`} className="truncate font-data text-caption text-ink-muted">
+              @{currentUser.username}
+            </p>
+            <Stamp className="mt-3" tone={isAdmin ? 'placed' : 'ink'}>{roleLabel(currentUser)}</Stamp>
           </div>
 
           <nav aria-label="Vault sections" className="mt-8 flex flex-col gap-1 px-3">
@@ -116,7 +129,9 @@ export function VaultMobileBar({ currentUser, activeTab, onTabChange, onLogout }
         className={
           'h-10 rounded-[1px] font-body text-ui transition-colors duration-hover focus-visible:outline-offset-[-2px] ' +
           '[@media(pointer:coarse)]:h-11 ' +
-          (active ? 'bg-surface-2 font-medium text-ink' : 'text-ink-muted hover:text-ink')
+          (active
+            ? 'bg-action-soft font-medium text-ink shadow-[inset_0_-2px_0_var(--action-line)]'
+            : 'text-ink-muted hover:bg-[var(--hover-wash)] hover:text-ink')
         }
       >
         {label}
@@ -127,8 +142,10 @@ export function VaultMobileBar({ currentUser, activeTab, onTabChange, onLogout }
   return (
     <div className="shrink-0 border-b border-line px-4 py-2 md:hidden">
       <div className="flex min-h-11 items-center gap-3">
-        <span className="min-w-0 truncate font-body text-ui font-medium text-ink">{displayName(currentUser)}</span>
-        <Stamp>{roleLabel(currentUser)}</Stamp>
+        <span title={displayName(currentUser)} className="min-w-0 truncate font-body text-ui font-medium text-ink">
+          {displayName(currentUser)}
+        </span>
+        <Stamp tone={isAdmin ? 'placed' : 'ink'}>{roleLabel(currentUser)}</Stamp>
         <Button variant="text" icon={LogOut} onClick={onLogout} className="ml-auto shrink-0">
           Sign out
         </Button>

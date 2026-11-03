@@ -26,8 +26,8 @@ export function VaultHelp({ children }: VaultHelpProps) {
           onClick={() => setOpen((v) => !v)}
           className={
             'inline-flex min-h-6 items-center gap-1.5 rounded-control font-body text-ui text-ink underline ' +
-            'decoration-signal decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] ' +
-            'duration-hover hover:decoration-2 [@media(pointer:coarse)]:min-h-11'
+            'decoration-link-underline decoration-1 underline-offset-[0.22em] transition-[text-decoration-thickness] ' +
+            'duration-hover hover:decoration-2 hover:decoration-action [@media(pointer:coarse)]:min-h-11'
           }
         >
           How this works
@@ -41,7 +41,7 @@ export function VaultHelp({ children }: VaultHelpProps) {
         <div className="ml-auto flex items-center">{children}</div>
       </div>
       <div id={panelId} hidden={!open} className="px-5 pb-5 sm:px-8">
-        <p className="max-w-measure font-body text-caption text-ink-muted [text-wrap:pretty]">
+        <p className="max-w-measure font-body text-caption text-ink [text-wrap:pretty]">
           Messages are encrypted in your browser with AES-GCM (256-bit) and chained so tampering is detectable. Your
           passphrase never leaves your device and cannot be recovered.
         </p>

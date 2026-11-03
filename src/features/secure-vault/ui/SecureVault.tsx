@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { X } from 'lucide-react';
 
@@ -16,6 +16,7 @@ import { LoginPanel } from './LoginPanel';
 import { RegisterPanel } from './RegisterPanel';
 import { UsersPanel } from './UsersPanel';
 import { VaultHelp } from './VaultHelp';
+import { VAULT_SCRIM_CLASS, vaultScrimHandoff } from './vault-scrim';
 import { VaultMobileBar, VaultSidebar } from './VaultSidebar';
 
 export interface SecureVaultProps {
@@ -24,7 +25,10 @@ export interface SecureVaultProps {
 
 /**
  * The Vault (§H.7, formerly "Secure contact"): a modal dialog at z-vault, mounted only while open (no isOpen prop).
- * Desktop: sidebar + main pane in one panel; below 768 px: a full-screen sheet with the mobile bar.
+ * Desktop: sidebar + main pane in one glass sheet over the glass scrim, sized min(720px, 100dvh - 48px) so the
+ * panels' padding shrinks before the actions leave the sheet (O-01); below 768 px: a full-screen sheet with the
+ * mobile bar. The sheet is `.glass-chrome glass-sheet`: solid fallback under reduced transparency, more contrast
+ * and forced colors (C-14 part 2).
  */
 export function SecureVault({ onClose }: SecureVaultProps) {
   const session = useVaultSession();
@@ -42,6 +46,8 @@ export function SecureVault({ onClose }: SecureVaultProps) {
   const initialFocusRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const motionOk = useMotionAllowed();
+  // The loading scrim was already on screen: start this one opaque so the page does not blink through.
+  const [scrimShown] = useState(() => vaultScrimHandoff.shown);
 
   // People is admin-only; a tab left on 'users' by an earlier admin session shows Messages instead.
   const isAdmin = currentUser?.role === 'admin';
@@ -80,8 +86,8 @@ export function SecureVault({ onClose }: SecureVaultProps) {
     <div className="fixed inset-0 z-vault flex items-stretch justify-center md:items-center md:p-6">
       <motion.div
         aria-hidden="true"
-        className="absolute inset-0 bg-ground/[0.92]"
-        initial={{ opacity: 0 }}
+        className={`absolute inset-0 ${VAULT_SCRIM_CLASS}`}
+        initial={{ opacity: scrimShown ? 1 : 0 }}
         animate={{ opacity: 1, transition: motionOk ? { duration: MOTION.dur.ui, ease: MOTION.bezier.settle } : fade }}
       />
 
@@ -91,9 +97,10 @@ export function SecureVault({ onClose }: SecureVaultProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         className={
-          'relative flex h-[100dvh] w-full flex-col overflow-hidden bg-surface text-ink pt-[env(safe-area-inset-top)] ' +
-          'md:grid md:h-[80vh] md:max-h-[calc(100dvh-48px)] md:min-h-[min(560px,calc(100dvh-48px))] md:max-w-[1040px] ' +
-          'md:grid-cols-[280px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)] md:rounded-panel md:border md:border-line md:pt-0 md:shadow-float'
+          'glass-chrome glass-sheet glass-steel relative flex h-[100dvh] w-full flex-col overflow-hidden text-ink ' +
+          'pt-[env(safe-area-inset-top)] max-md:border-0 ' +
+          'md:grid md:h-[min(720px,calc(100dvh-48px))] md:max-w-[1040px] ' +
+          'md:grid-cols-[280px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)] md:rounded-panel md:pt-0'
         }
         {...panelMotion}
       >

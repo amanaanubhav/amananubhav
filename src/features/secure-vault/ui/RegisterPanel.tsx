@@ -35,7 +35,7 @@ export function RegisterPanel({
 
   return (
     <VaultScrollPane>
-      <div className="w-full max-w-[40rem] px-5 py-10 sm:px-10 md:py-14">
+      <div className="w-full max-w-[42rem] md:my-auto px-5 py-6 sm:px-8 md:py-[clamp(1rem,4svh,3.5rem)]">
         <h2
           id={titleId}
           tabIndex={-1}
@@ -44,12 +44,12 @@ export function RegisterPanel({
         >
           Create an identity
         </h2>
-        <p className="mt-3 max-w-measure font-body text-body text-ink-muted [text-wrap:pretty]">
+        <p className="mt-3 max-w-measure font-body text-body text-ink [text-wrap:pretty]">
           Your passphrase derives the key that encrypts your messages. Only a hash of it is stored.
         </p>
 
-        <form onSubmit={onRegister} noValidate className="mt-8 flex flex-col gap-5">
-          <div className="grid gap-5 sm:grid-cols-2">
+        <form onSubmit={onRegister} noValidate className="mt-6 md:mt-8 flex flex-col gap-5 [@media(max-height:760px)]:mt-6">
+          <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
             <VaultField
               label="Full name"
               name="name"
@@ -127,7 +127,15 @@ export function RegisterPanel({
 
           {error ? <VaultError id={errorId}>{error}</VaultError> : null}
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-4">
+          {/* Phones: the action row stays in view while the fields scroll under it (an opaque band on the sheet). */}
+          <div
+            className={
+              'mt-2 flex flex-wrap items-center gap-x-6 gap-y-4 [@media(max-height:760px)]:mt-0 ' +
+              'max-md:sticky max-md:bottom-0 max-md:z-[1] max-md:-mx-5 max-md:bg-surface max-md:px-5 max-md:pt-3 ' +
+              'max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:shadow-[0_-1px_0_var(--line)] ' +
+              'sm:max-md:-mx-8 sm:max-md:px-8'
+            }
+          >
             <Button type="submit" loading={loading} disabled={loading}>
               {loading ? 'Generating keys...' : 'Create identity'}
             </Button>

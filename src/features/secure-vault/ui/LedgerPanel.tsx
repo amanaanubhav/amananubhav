@@ -48,7 +48,7 @@ function BlockEntry({ block, isAdmin, onDelete }: { block: LedgerBlock; isAdmin:
       {/* Spine: connector from this node to the next one, 1 px line-strong, never a verification color. */}
       <span
         aria-hidden="true"
-        className="absolute -bottom-[7px] left-[11px] top-[13px] w-px bg-line-strong group-last:hidden"
+        className="absolute -bottom-[7px] left-[11px] top-[13px] w-px spine-steel group-last:hidden"
       />
       <span aria-hidden="true" className="absolute left-[8.5px] top-[7px] size-1.5 bg-ink forced-colors:bg-[CanvasText]" />
 
@@ -86,14 +86,14 @@ function BlockEntry({ block, isAdmin, onDelete }: { block: LedgerBlock; isAdmin:
 
         <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
           <div className="flex items-baseline gap-2">
-            <dt className="font-body text-caption italic text-ink-muted">hash</dt>
-            <dd className="font-data text-caption text-ink-muted" title={block.hash}>
+            <dt className="font-body text-caption italic text-accent-2">hash</dt>
+            <dd className="font-data text-caption text-aqua" title={block.hash}>
               {shortHash(block.hash)}
             </dd>
           </div>
           <div className="flex items-baseline gap-2">
-            <dt className="font-body text-caption italic text-ink-muted">prev</dt>
-            <dd className="font-data text-caption text-ink-muted" title={block.previousHash}>
+            <dt className="font-body text-caption italic text-accent-2">prev</dt>
+            <dd className="font-data text-caption text-aqua" title={block.previousHash}>
               {shortHash(block.previousHash)}
             </dd>
           </div>
@@ -141,7 +141,8 @@ export function LedgerPanel({
             onClick={onNukeChain}
             className={
               'inline-flex h-10 items-center gap-2 rounded-control border border-error px-3 font-display text-caption ' +
-              'font-semibold text-error transition-colors duration-hover hover:bg-surface-2 active:scale-[0.98] ' +
+              'font-semibold text-error transition-colors duration-hover hover:bg-error-soft focus-visible:bg-error-soft ' +
+              'active:scale-[0.98] ' +
               '[@media(pointer:coarse)]:h-11'
             }
           >
