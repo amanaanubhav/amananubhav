@@ -4,7 +4,7 @@
  * min-height and no empty bottom band. The seam above it is --space-seam (the page's last section has no bottom
  * padding), 24 px close it below, and only the bar keeps the chat bead's corner clear. One accent wash
  * (gradient-close) rises from the foot. Role tokens only. Hover is mirrored on :focus-visible, and nothing travels
- * under reduced motion (the OS setting or html[data-motion='off'], the bar's own switch).
+ * under reduced motion (the OS setting, html[data-motion='off']).
  */
 
 .root {
@@ -325,6 +325,8 @@
   gap: 4px 20px;
   min-height: 52px;
   margin-top: 4px;
+  /* Phones: the docked chat bead sits at the bar's right end (12 px in, 52 px wide); no row reaches under it. */
+  padding-right: 72px;
   font-family: var(--font-text), 'Literata Fallback', serif;
   font-size: 1rem;
   line-height: 1.4;
@@ -344,29 +346,15 @@
   gap: 10px;
   color: var(--ink);
 }
-.grow {
-  display: none;
-}
-/* Phones: the docked chat bead sits beside the switch's row (12 px in, 52 px wide). */
-.switch {
-  margin-right: 72px;
-}
 @media (min-width: 640px) {
   .bar {
     gap: 8px 28px;
     margin-top: 8px;
     padding-right: var(--chat-clearance);
   }
-  .grow {
-    display: block;
-    flex: 1 1 auto;
-  }
-  .switch {
-    margin-right: 0;
-  }
 }
 
-/* ─── Motion: only with motion allowed (the OS setting and the bar's switch) ─────────────────────── */
+/* ─── Motion: only with motion allowed (the OS setting) ──────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: no-preference) {
   :global(html:not([data-motion='off'])) .act {

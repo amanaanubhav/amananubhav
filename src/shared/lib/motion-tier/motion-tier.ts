@@ -4,9 +4,6 @@ import { useSyncExternalStore } from 'react';
 
 export type MotionTier = 0 | 1 | 2;
 
-/** localStorage value '1' = the visitor forced reduced motion with the footer switch. */
-export const MOTION_PREF_KEY = 'aa:reduce-motion';
-
 const REDUCE_QUERY = '(prefers-reduced-motion: reduce)';
 
 interface NavigatorHints {
@@ -17,7 +14,7 @@ interface NavigatorHints {
 
 /* ------------------------------------------------------------------------------------------------
  * Tier store. The tier is computed once on the client and can only go down at runtime
- * (degradeStage, the footer switch, the OS setting turning on).
+ * (degradeStage, the OS setting turning on).
  * ---------------------------------------------------------------------------------------------- */
 
 let cachedTier: MotionTier | null = null;
@@ -44,7 +41,6 @@ function probeWebGL2(): boolean {
 function computeTier(): MotionTier {
   const root = document.documentElement;
   if (root.dataset.motion === 'off' || root.dataset.lite === '1') return 0;
-  if (readPreference()) return 0;
   if (window.matchMedia(REDUCE_QUERY).matches) return 0;
 
   // Repeat the cheap gate checks in case the inline script did not run.
@@ -107,57 +103,4 @@ export function useMotionAllowed(): boolean {
 export function degradeStage(): void {
   if (typeof window === 'undefined') return;
   dropToZero();
-}
-
-/* ------------------------------------------------------------------------------------------------
- * The footer "Reduce motion" switch (§C.4). Turning it on drops the tier to 0 immediately;
- * turning it off is stored and takes effect on the next load (the tier only goes down at runtime).
- * ---------------------------------------------------------------------------------------------- */
-
-let cachedPreference: boolean | null = null;
-const preferenceListeners = new Set<() => void>();
-
-function readPreference(): boolean {
-  if (cachedPreference !== null) return cachedPreference;
-  let stored: string | null = null;
-  try {
-    stored = window.localStorage.getItem(MOTION_PREF_KEY);
-  } catch {
-    stored = null;
-  }
-  cachedPreference = stored === '1';
-  return cachedPreference;
-}
-
-function subscribePreference(callback: () => void): () => void {
-  preferenceListeners.add(callback);
-  return () => {
-    preferenceListeners.delete(callback);
-  };
-}
-
-const getPreferenceSnapshot = () => (typeof window === 'undefined' ? false : readPreference());
-const getPreferenceServerSnapshot = () => false;
-
-export function setReducedMotionPreference(on: boolean): void {
-  if (typeof window === 'undefined') return;
-  try {
-    if (on) window.localStorage.setItem(MOTION_PREF_KEY, '1');
-    else window.localStorage.removeItem(MOTION_PREF_KEY);
-  } catch {
-    // Storage blocked (private mode, policies): the choice still applies for this page view.
-  }
-  const changed = cachedPreference !== on;
-  cachedPreference = on;
-  if (on) {
-    document.documentElement.dataset.motion = 'off';
-    dropToZero();
-  }
-  if (changed) preferenceListeners.forEach((listener) => listener());
-}
-
-/** `[forced, set]` for the footer switch. Server snapshot `false`. */
-export function useReducedMotionPreference(): readonly [boolean, (on: boolean) => void] {
-  const forced = useSyncExternalStore(subscribePreference, getPreferenceSnapshot, getPreferenceServerSnapshot);
-  return [forced, setReducedMotionPreference] as const;
 }

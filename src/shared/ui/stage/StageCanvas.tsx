@@ -54,7 +54,7 @@ export interface StageCanvasProps {
  * and at least one scene registered, then an idle callback once boot is done, or the next frame when a
  * registered scene is `eager` (the home relief, which loads under the first-load curtain). Once armed it
  * stays mounted across routes; it unmounts only when the tier drops to 0 (context loss, degradeStage, the
- * footer switch), and the posters stay for the rest of the session.
+ * OS setting turning on), and the posters stay for the rest of the session.
  */
 export function StageCanvas({ paused, isDark }: StageCanvasProps) {
   const tier = useMotionTier();

@@ -15,7 +15,6 @@ import { StatusChip } from '@/shared/ui/status-chip';
 import { VisuallyHidden } from '@/shared/ui/visually-hidden';
 import { COMPACT_FOOTER_ROUTES, ELSEWHERE_LINKS, FOOTER_COPY, PAGE_LINKS } from '../config/footer';
 import { CopyEmail } from './CopyEmail';
-import { ReduceMotionSwitch } from './ReduceMotionSwitch';
 import styles from './Footer.module.css';
 
 const EMAIL = PROFILE.links.email;
@@ -196,10 +195,6 @@ export function Footer() {
               {FOOTER_COPY.status}
             </StatusChip>
           ) : null}
-          <span aria-hidden="true" className={styles.grow} />
-          <div className={styles.switch}>
-            <ReduceMotionSwitch />
-          </div>
         </div>
       </JournalGrid>
     </footer>

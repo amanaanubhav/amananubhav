@@ -26,7 +26,7 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-/** True when the stacked cards must render as a static list (reduced motion, footer switch, lite device). */
+/** True when the stacked cards must render as a static list (reduced motion, lite device). */
 export function useStaticStack(): boolean {
   return useSyncExternalStore(subscribe, isStaticStack, () => false);
 }

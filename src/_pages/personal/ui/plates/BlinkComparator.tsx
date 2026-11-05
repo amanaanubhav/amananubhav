@@ -48,7 +48,7 @@ function starField(): string {
 const FIELD = starField();
 const FRAME_PATHS = ASTEROID.map(([x, y]) => `${FIELD}M${x} ${y}h0`);
 
-/* Reduced motion: the OS setting or the footer switch (html[data-motion='off']). */
+/* Reduced motion: the OS setting (also html[data-motion='off']). */
 const REDUCE_QUERY = '(prefers-reduced-motion: reduce)';
 
 function subscribeReduced(onChange: () => void): () => void {

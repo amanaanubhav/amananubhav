@@ -90,7 +90,7 @@ export function RevealText({ as: Tag, children, className, id, style, wdthCompac
         split?.revert();
       };
     },
-    // revertOnUpdate: turning motion off (the footer switch) restores the text at once instead of at unmount.
+    // revertOnUpdate: turning motion off (the OS setting turning on) restores the text at once instead of at unmount.
     { scope: ref, dependencies: [motionAllowed], revertOnUpdate: true },
   );
 

@@ -111,7 +111,7 @@ export function ChatWindow({
   const isPresent = useIsPresent();
   const isModal = isCompact && isPresent;
   const hasVisitor = chat.visitor !== null;
-  // Tier 0 (OS setting, footer switch, lite devices): a 150 ms cross-fade instead of the reveal (§C.4).
+  // Tier 0 (OS setting, lite devices): a 150 ms cross-fade instead of the reveal (§C.4).
   const motionOk = useMotionAllowed();
   const fade = { duration: 0.15, ease: 'linear' } as const;
 

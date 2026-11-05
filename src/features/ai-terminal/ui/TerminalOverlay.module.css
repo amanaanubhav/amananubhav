@@ -1122,7 +1122,7 @@
   }
 }
 
-/* ── Reduced motion (the OS setting, or the footer switch via html[data-motion='off']) ──────
+/* ── Reduced motion (the OS setting, also via html[data-motion='off']) ──────
    A still mark: the light parks on the summit, the label is plain text, words appear without effects. */
 @media (prefers-reduced-motion: reduce) {
   .you[data-new],

@@ -46,7 +46,7 @@ export function ExperienceTrack({ children }: { children: ReactNode }) {
       });
       return () => mm.revert();
     },
-    // Revert on update: the footer's "Reduce motion" switch must kill the scrub, not leave it running.
+    // Revert on update: a drop to tier 0 at runtime (the OS setting turning on) kills the scrub instead of leaving it.
     { scope: rootRef, dependencies: [motionAllowed], revertOnUpdate: true },
   );
 

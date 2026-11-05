@@ -35,7 +35,7 @@ const SCROLL_PER_SECOND = 90;
  *   where that card is on top, so focus never lands on a covered or off-track card (WCAG 2.1.1, 2.4.11).
  *
  * Runs inside `useGSAP` so every tween, the pin length and the focus listener revert on unmount. Under reduced
- * motion, the footer switch or a lite device it does not run, and the page CSS lays the cards out as a list.
+ * motion or on a lite device it does not run, and the page CSS lays the cards out as a list.
  */
 export function useStackedCardsTimeline(
   scopeRef: RefObject<HTMLElement | null>,

@@ -251,7 +251,7 @@
   background: radial-gradient(closest-side, var(--glass-caustic), transparent);
 }
 
-/* Gentle press on the control itself, only when motion is allowed (OS setting and the footer switch). */
+/* Gentle press on the control itself, only when motion is allowed (the OS setting). */
 @media (prefers-reduced-motion: no-preference) {
   :global(html:not([data-motion='off'])) .ctl {
     transition-property: color, transform;

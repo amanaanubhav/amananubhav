@@ -17,7 +17,6 @@ import { closeStory, useSelectedStory } from '@/features/read-story';
 import { openVault } from '@/features/secure-vault';
 import { MOTION, ROUTES } from '@/shared/config';
 import { cn } from '@/shared/lib/cn';
-import { useReducedMotionPreference } from '@/shared/lib/motion-tier';
 import { useStageHold } from '@/shared/lib/stage-prefetch';
 import { scrollToTop } from '@/shared/lib/smooth-scroll';
 import { runThemeSweep, useTheme } from '@/shared/lib/theme';
@@ -48,7 +47,6 @@ const HIDE: Transition = {
 };
 /** The droplet glides between links (and the theme icon turns) with the same liquid give. */
 const GLIDE: Transition = { type: 'spring', visualDuration: 0.4, bounce: 0.2 };
-const INSTANT: Transition = { duration: 0 };
 
 /** Plain left clicks are taken over; modified clicks (new tab, new window) keep the browser's behavior. */
 function isPlainClick(event: MouseEvent<HTMLAnchorElement>): boolean {
@@ -115,10 +113,10 @@ export function Navbar() {
   // The navbar remounts after an overlay closes, possibly mid-page: start from the real scroll position.
   const [compact, setCompact] = useState(() => typeof window !== 'undefined' && isCompactScroll(window.scrollY));
   const [focusWithin, setFocusWithin] = useState(false);
-  // The OS setting is covered by <MotionConfig reducedMotion="user">; the footer switch is not (§C.4).
-  const [forcedReduce] = useReducedMotionPreference();
+  // <MotionConfig reducedMotion="user"> covers the transitions; the liquid hover drives motion values directly,
+  // so it reads the OS setting itself (§C.4).
   const osReduce = useReducedMotion() ?? false;
-  const liquid = useLiquidHover(forcedReduce || osReduce, pathname);
+  const liquid = useLiquidHover(osReduce, pathname);
   // A page that cannot scroll (e.g. /admin-chat) gives the hide-on-scroll hook nothing to read: always show there.
   const pageFits = usePageFitsViewport(pathname);
   // No link prefetch while the home stage holds the network for its 3D chunk (load-in-3d §10), and never for
@@ -187,7 +185,7 @@ export function Navbar() {
       <motion.div
         initial={{ y: '-150%', opacity: 0, scale: 0.94 }}
         animate={shown ? { y: '0%', opacity: 1, scale: 1 } : { y: '-150%', opacity: 0, scale: 0.94 }}
-        transition={forcedReduce ? INSTANT : shown ? SHOW : HIDE}
+        transition={shown ? SHOW : HIDE}
         style={{ transformOrigin: '50% 0%' }}
         data-liquid={liquid.active ? '' : undefined}
         data-compact={compact ? '' : undefined}
@@ -241,7 +239,7 @@ export function Navbar() {
                     {current !== undefined ? (
                       <motion.span
                         layoutId="nav-active"
-                        transition={forcedReduce ? INSTANT : GLIDE}
+                        transition={GLIDE}
                         aria-hidden="true"
                         className={styles.bead}
                       />
@@ -277,7 +275,7 @@ export function Navbar() {
                 initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
                 animate={{ opacity: 1, rotate: 0, scale: 1 }}
                 exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-                transition={forcedReduce ? INSTANT : GLIDE}
+                transition={GLIDE}
                 className="absolute inset-0 grid place-items-center"
               >
                 <ThemeIcon aria-hidden="true" focusable="false" className="size-5" strokeWidth={1.75} />

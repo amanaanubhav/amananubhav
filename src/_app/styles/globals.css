@@ -654,7 +654,7 @@ html[data-chrome-dim='on'] [data-chrome]:not(:hover):not(:focus-within):not([dat
   opacity: 0.4; transition: opacity 400ms var(--ease-settle);
 }
 
-/* Reduced motion: the OS setting or the footer switch (html[data-motion='off']) */
+/* Reduced motion: the OS setting (also html[data-motion='off']) */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important; scroll-behavior: auto !important; }

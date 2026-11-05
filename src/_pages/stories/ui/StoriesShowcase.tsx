@@ -20,7 +20,7 @@ const DRAWER_ID = 'field-notes-index';
 
 /*
  * Two layouts, chosen before paint by the same signals as the rest of the site (§C.4): the staged stack and a
- * static list (reduced motion, the footer switch, lite devices). The base rules are the static list; the staged
+ * static list (reduced motion, lite devices). The base rules are the static list; the staged
  * rules apply only when motion is on. Cards are never hidden by CSS: the first card rests in place and the
  * timeline's fromTo moves the others below the track on hydration (the section sits far below the fold), so
  * nothing waits for JavaScript to become readable.

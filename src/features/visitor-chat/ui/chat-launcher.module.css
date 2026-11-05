@@ -212,7 +212,7 @@
   display: none;
 }
 
-/* Reduced motion (the OS setting, or the footer switch): no lift, press or plane drift; the icons cross-fade. */
+/* Reduced motion (the OS setting): no lift, press or plane drift; the icons cross-fade. */
 @media (prefers-reduced-motion: reduce) {
   .bead,
   .bead:hover,

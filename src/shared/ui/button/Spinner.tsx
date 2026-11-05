@@ -1,6 +1,6 @@
 /**
  * 270° arc spinner (§D.3): action on outline and text buttons, on-action inside the primary fill.
- * Spins 1 s linear; static under reduced motion (OS setting or the footer switch).
+ * Spins 1 s linear; static under reduced motion (the OS setting).
  */
 export function Spinner() {
   return (

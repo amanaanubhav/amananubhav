@@ -2,7 +2,7 @@
 
 import { useId, useLayoutEffect, useMemo, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { motion, MotionConfig } from 'motion/react';
+import { motion } from 'motion/react';
 
 import { getExpedition } from '@/entities/expedition';
 import { storyLayoutIds, type Story } from '@/entities/story';
@@ -10,7 +10,7 @@ import { getMedia, MOTION, type MediaRatio, type MediaSlotId } from '@/shared/co
 import { cn } from '@/shared/lib/cn';
 import type { CSSVars } from '@/shared/lib/css';
 import { useBodyScrollLock, useEscapeKey } from '@/shared/lib/dom';
-import { useMotionAllowed, useReducedMotionPreference } from '@/shared/lib/motion-tier';
+import { useMotionAllowed } from '@/shared/lib/motion-tier';
 import { gsap, useGSAP } from '@/shared/lib/gsap';
 import { Button } from '@/shared/ui/button';
 import { thinAirWidth } from '@/shared/ui/chapter-header';
@@ -80,10 +80,9 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
   const html = useMemo(() => prepareStoryHtml(story.content), [story.content]);
   const plates = (story.slotIds ?? []).filter(rendersPlate);
   const layoutIds = storyLayoutIds(story.id);
-  // Tier 0 opens with a 150 ms fade (§C.4). `MotionConfig reducedMotion="user"` in Providers follows only the OS
-  // setting, so the footer "Reduce motion" switch turns the shared-element morph off here as well.
+  // Tier 0 opens with a 150 ms fade (§C.4); the OS setting turns the shared-element morph off through the
+  // `MotionConfig reducedMotion="user"` in Providers.
   const motionOk = useMotionAllowed();
-  const [motionForcedOff] = useReducedMotionPreference();
 
   // The page behind holds still (now also stops Lenis).
   useBodyScrollLock();
@@ -165,172 +164,170 @@ export function StoryReaderModal({ story, onClose }: StoryReaderModalProps) {
   const log = storyLog(story, expedition);
 
   return (
-    <MotionConfig reducedMotion={motionForcedOff ? 'always' : 'user'}>
-      <motion.div
-        ref={containerRef}
-        role="dialog"
-        aria-labelledby={titleId}
-        data-lenis-prevent
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={motionOk ? { duration: MOTION.dur.ui, ease: MOTION.bezier.settle } : { duration: 0.15 }}
-        className="scroll-pane fixed inset-0 z-reader overflow-y-auto overscroll-contain bg-ground text-ink"
-      >
-        {/* The site navbar (z-navbar) covers the first `--nav-h` (56 px); the reader's own bar sits directly under it. */}
-        <div className="sticky top-0 z-10 bg-ground pt-[var(--nav-h)]">
-          <div className="relative border-b border-line">
-            <div className="journal-grid h-14">
-              <div className={cn(FULL, 'flex min-w-0 items-center gap-4')}>
-                <Button variant="secondary" icon={ArrowLeft} onClick={onClose} className="shrink-0 px-4">
-                  Back to the journal
-                </Button>
-                {expedition && hasProfile ? (
-                  <div
-                    ref={profileRef}
-                    aria-hidden="true"
-                    className="h-7 min-w-0 flex-1 max-md:min-w-12"
-                    style={profileStyle}
-                  >
-                    <ElevationProfile
-                      variant="strip"
-                      points={profilePoints}
-                      title={`Reading progress along the ${expedition.shortName}`}
-                      desc={routeProfileDesc(expedition, profilePoints)}
-                      className="h-7 w-full"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex-1" />
-                )}
-                {/* Below 768 px the bar keeps the date only (the field log under the title repeats both facts). */}
-                <Log
-                  layout="strip"
-                  label="Story"
-                  items={[{ key: 'date', value: story.date }]}
-                  className="min-w-0 text-right md:hidden [&_dt]:sr-only"
-                />
-                <Log
-                  layout="strip"
-                  label="Story"
-                  items={[
-                    { key: 'date', value: story.date },
-                    { key: 'category', value: story.category, mono: false },
-                  ]}
-                  className="hidden shrink-0 md:flex"
-                />
-              </div>
+    <motion.div
+      ref={containerRef}
+      role="dialog"
+      aria-labelledby={titleId}
+      data-lenis-prevent
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={motionOk ? { duration: MOTION.dur.ui, ease: MOTION.bezier.settle } : { duration: 0.15 }}
+      className="scroll-pane fixed inset-0 z-reader overflow-y-auto overscroll-contain bg-ground text-ink"
+    >
+      {/* The site navbar (z-navbar) covers the first `--nav-h` (56 px); the reader's own bar sits directly under it. */}
+      <div className="sticky top-0 z-10 bg-ground pt-[var(--nav-h)]">
+        <div className="relative border-b border-line">
+          <div className="journal-grid h-14">
+            <div className={cn(FULL, 'flex min-w-0 items-center gap-4')}>
+              <Button variant="secondary" icon={ArrowLeft} onClick={onClose} className="shrink-0 px-4">
+                Back to the journal
+              </Button>
+              {expedition && hasProfile ? (
+                <div
+                  ref={profileRef}
+                  aria-hidden="true"
+                  className="h-7 min-w-0 flex-1 max-md:min-w-12"
+                  style={profileStyle}
+                >
+                  <ElevationProfile
+                    variant="strip"
+                    points={profilePoints}
+                    title={`Reading progress along the ${expedition.shortName}`}
+                    desc={routeProfileDesc(expedition, profilePoints)}
+                    className="h-7 w-full"
+                  />
+                </div>
+              ) : (
+                <div className="flex-1" />
+              )}
+              {/* Below 768 px the bar keeps the date only (the field log under the title repeats both facts). */}
+              <Log
+                layout="strip"
+                label="Story"
+                items={[{ key: 'date', value: story.date }]}
+                className="min-w-0 text-right md:hidden [&_dt]:sr-only"
+              />
+              <Log
+                layout="strip"
+                label="Story"
+                items={[
+                  { key: 'date', value: story.date },
+                  { key: 'category', value: story.category, mono: false },
+                ]}
+                className="hidden shrink-0 md:flex"
+              />
             </div>
-            {expedition && hasProfile ? null : (
-              <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -bottom-px h-0.5">
-                <div ref={lineRef} className="h-full origin-left scale-x-0 bg-action" />
-              </div>
-            )}
           </div>
+          {expedition && hasProfile ? null : (
+            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 -bottom-px h-0.5">
+              <div ref={lineRef} className="h-full origin-left scale-x-0 bg-action" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="journal-grid pb-24 pt-8 lg:pb-32 lg:pt-12">
+        {/* Cover: the exact shared-element structure of the story card (§G.4, §K.8). From 1024 px its width follows
+            the window height (3:2, never under 60% of the column), so the title's first line is on screen when
+            the story opens, also on short laptops. */}
+        <div className={cn(FULL, 'lg:col-[5/span_8] lg:row-start-1 lg:max-w-[max(60%,calc((100svh_-_30rem)*1.5))]')}>
+          <motion.div layoutId={layoutIds.container} className="relative w-full">
+            <motion.div layoutId={layoutIds.image} className="relative w-full">
+              {story.coverSlot ? (
+                <MediaSlot
+                  id={story.coverSlot}
+                  ratio="3:2"
+                  layout="cover"
+                  sizes={COVER_SIZES}
+                  caption="none"
+                  reveal="none"
+                  fill={coverFill}
+                />
+              ) : (
+                <PlateFrame as="div" ratio="3:2" tone="pending">
+                  {coverFill ?? <MediaFill kind="contour" seed={story.id} />}
+                </PlateFrame>
+              )}
+            </motion.div>
+          </motion.div>
         </div>
 
-        <div className="journal-grid pb-24 pt-8 lg:pb-32 lg:pt-12">
-          {/* Cover: the exact shared-element structure of the story card (§G.4, §K.8). From 1024 px its width follows
-              the window height (3:2, never under 60% of the column), so the title's first line is on screen when
-              the story opens, also on short laptops. */}
-          <div className={cn(FULL, 'lg:col-[5/span_8] lg:row-start-1 lg:max-w-[max(60%,calc((100svh_-_30rem)*1.5))]')}>
-            <motion.div layoutId={layoutIds.container} className="relative w-full">
-              <motion.div layoutId={layoutIds.image} className="relative w-full">
-                {story.coverSlot ? (
-                  <MediaSlot
-                    id={story.coverSlot}
-                    ratio="3:2"
-                    layout="cover"
-                    sizes={COVER_SIZES}
-                    caption="none"
-                    reveal="none"
-                    fill={coverFill}
-                  />
-                ) : (
-                  <PlateFrame as="div" ratio="3:2" tone="pending">
-                    {coverFill ?? <MediaFill kind="contour" seed={story.id} />}
-                  </PlateFrame>
-                )}
-              </motion.div>
-            </motion.div>
-          </div>
-
-          {/* A plain div, not <header>: inside the dialog it would read as a second banner landmark. */}
-          <div className={cn(FULL, 'mt-8 lg:col-[5/span_8] lg:row-start-2 lg:mt-12')}>
-            <motion.h1
-              ref={titleRef}
-              id={titleId}
-              tabIndex={-1}
-              layoutId={layoutIds.title}
-              style={titleStyle}
-              className={cn(
-                "m-0 font-display text-display font-[750] text-ink [font-variation-settings:'wdth'_var(--wdth,100)] [text-wrap:balance]",
-                '[--wdth:var(--wdth-wide)] max-md:[--wdth:var(--wdth-compact)] focus:outline-none',
-              )}
-            >
-              {story.title}
-            </motion.h1>
-            <p className="m-0 mt-4 max-w-measure font-body text-lead text-ink-muted [text-wrap:pretty]">
-              {story.subtitle}
-            </p>
-          </div>
-
-          <div
+        {/* A plain div, not <header>: inside the dialog it would read as a second banner landmark. */}
+        <div className={cn(FULL, 'mt-8 lg:col-[5/span_8] lg:row-start-2 lg:mt-12')}>
+          <motion.h1
+            ref={titleRef}
+            id={titleId}
+            tabIndex={-1}
+            layoutId={layoutIds.title}
+            style={titleStyle}
             className={cn(
-              FULL,
-              'mt-6 lg:col-[2/span_3] lg:row-[2/span_2] lg:mt-12 lg:self-start lg:pt-2 xl:sticky xl:top-[calc(var(--nav-h)+3.5rem+1.5rem)]',
+              "m-0 font-display text-display font-[750] text-ink [font-variation-settings:'wdth'_var(--wdth,100)] [text-wrap:balance]",
+              '[--wdth:var(--wdth-wide)] max-md:[--wdth:var(--wdth-compact)] focus:outline-none',
             )}
           >
-            <Log items={log} label="Field log" />
-          </div>
+            {story.title}
+          </motion.h1>
+          <p className="m-0 mt-4 max-w-measure font-body text-lead text-ink-muted [text-wrap:pretty]">
+            {story.subtitle}
+          </p>
+        </div>
 
-          <div className={cn(TEXT_COLUMN, 'mt-10 lg:row-start-3 lg:mt-12')}>
-            <article
-              ref={articleRef}
-              className={`prose-journal ${PROSE_HEADINGS}`}
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
+        <div
+          className={cn(
+            FULL,
+            'mt-6 lg:col-[2/span_3] lg:row-[2/span_2] lg:mt-12 lg:self-start lg:pt-2 xl:sticky xl:top-[calc(var(--nav-h)+3.5rem+1.5rem)]',
+          )}
+        >
+          <Log items={log} label="Field log" />
+        </div>
 
-            {story.links.length > 0 ? (
-              <nav aria-labelledby={`${titleId}-links`} className="mt-12 max-w-measure">
-                <h2 id={`${titleId}-links`} className="m-0 font-display text-title font-semibold text-ink">
-                  Further reading
-                </h2>
-                <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0 font-body text-body">
-                  {story.links.map((link) => (
-                    <li key={link.url}>
-                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="prose-link">
-                        {link.label}
-                        <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            ) : null}
+        <div className={cn(TEXT_COLUMN, 'mt-10 lg:row-start-3 lg:mt-12')}>
+          <article
+            ref={articleRef}
+            className={`prose-journal ${PROSE_HEADINGS}`}
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
 
-            {plates.length > 0 ? (
-              <ul
-                aria-label="Plates"
-                className="m-0 mt-16 hidden list-none items-start gap-x-6 gap-y-10 p-0 has-[li:not(:empty)]:grid sm:grid-cols-2"
-              >
-                {plates.map((id) => (
-                  <li key={id} className="min-w-0 empty:hidden">
-                    <MediaSlot id={id} layout="grid" ratio={plateRatio(id)} sizes={PLATE_SIZES} caption="short" />
+          {story.links.length > 0 ? (
+            <nav aria-labelledby={`${titleId}-links`} className="mt-12 max-w-measure">
+              <h2 id={`${titleId}-links`} className="m-0 font-display text-title font-semibold text-ink">
+                Further reading
+              </h2>
+              <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0 font-body text-body">
+                {story.links.map((link) => (
+                  <li key={link.url}>
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="prose-link">
+                      {link.label}
+                      <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+                    </a>
                   </li>
                 ))}
               </ul>
-            ) : null}
+            </nav>
+          ) : null}
 
-            <div className="mt-16 flex flex-col items-start gap-6 border-t border-line pt-6">
-              <Log layout="strip" items={[{ key: 'filed', value: story.date }]} />
-              <Button variant="secondary" icon={ArrowLeft} onClick={onClose}>
-                Back to the journal
-              </Button>
-            </div>
+          {plates.length > 0 ? (
+            <ul
+              aria-label="Plates"
+              className="m-0 mt-16 hidden list-none items-start gap-x-6 gap-y-10 p-0 has-[li:not(:empty)]:grid sm:grid-cols-2"
+            >
+              {plates.map((id) => (
+                <li key={id} className="min-w-0 empty:hidden">
+                  <MediaSlot id={id} layout="grid" ratio={plateRatio(id)} sizes={PLATE_SIZES} caption="short" />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          <div className="mt-16 flex flex-col items-start gap-6 border-t border-line pt-6">
+            <Log layout="strip" items={[{ key: 'filed', value: story.date }]} />
+            <Button variant="secondary" icon={ArrowLeft} onClick={onClose}>
+              Back to the journal
+            </Button>
           </div>
         </div>
-      </motion.div>
-    </MotionConfig>
+      </div>
+    </motion.div>
   );
 }
 
