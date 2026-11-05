@@ -496,8 +496,41 @@ export function renderTokensCss(palette) {
     ":root[data-theme='day'] {",
     block('day'),
     '}',
+    ...renderNightScope(block('night')),
     '',
   ].join('\n');
+}
+
+/**
+ * The Night colour scope (Life page FINAL-DESIGN §4.2.7, §8.2): `[data-palette-scope='night']` re-declares every Night
+ * token on a subtree, so the sky plate stays a night window when the page is in Day. Opt-in by attribute only: nothing
+ * carries it unless a component sets it, so no page changes. Custom properties resolve where they are declared, which
+ * is why the whole block is repeated (composites such as `--glass-fill` must re-resolve against the Night solids).
+ * Then the scope repeats, for its subtree, the three root rules of globals.css that sit on top of the theme blocks:
+ * R0 (the interface roles read the action tier), R1 (Night is steel off the home page; the scope is never used on /)
+ * and the `prefers-contrast: more` role override. Keep these in step with globals.css.
+ */
+function renderNightScope(nightBlock) {
+  const scope = "[data-palette-scope='night']";
+  return [
+    `${scope} {`,
+    nightBlock,
+    '  /* globals.css R0: the interface roles read the action tier. */',
+    '  --c-focus-ring: var(--c-focus-ring-action); --focus-ring: var(--focus-ring-action);',
+    '  --c-link-underline: var(--c-action-line);   --link-underline: var(--action-line);',
+    '  --c-caret: var(--c-action);                 --caret: var(--action);',
+    '  --tap-highlight: var(--action-wash);',
+    '  --glass-active-rim: var(--action-rim);',
+    '  /* globals.css R1: Night is steel off the home page. */',
+    '  --c-ground: var(--c-ground-steel);       --ground: var(--ground-steel);',
+    '  --c-surface: var(--c-surface-steel);     --surface: var(--surface-steel);',
+    '  --c-surface-2: var(--c-surface-2-steel); --surface-2: var(--surface-2-steel);',
+    '  --c-surface-3: var(--c-surface-3-steel); --surface-3: var(--surface-3-steel);',
+    '}',
+    '@media (prefers-contrast: more) {',
+    `  ${scope} { --c-ink-muted: var(--c-ink); --ink-muted: var(--ink); --c-line: var(--c-line-strong); --line: var(--line-strong); }`,
+    '}',
+  ];
 }
 
 /**
