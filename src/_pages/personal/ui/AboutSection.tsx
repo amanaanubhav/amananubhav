@@ -66,9 +66,9 @@ export function AboutSection() {
     <section
       id="about"
       aria-labelledby="about-h"
-      className="journal-grid scroll-mt-[calc(var(--nav-clear)+16px)] pt-[calc(var(--nav-clear)+clamp(16px,3vw,44px))]"
+      className="journal-grid scroll-mt-[calc(var(--nav-clear)+16px)] pt-[calc(var(--nav-clear)+clamp(12px,1.6vw,24px))]"
     >
-      <div className="col-[content] grid grid-cols-[minmax(0,1fr)_40%] items-start gap-x-4 gap-y-5 md:grid-cols-12 md:gap-x-[var(--gutter)] md:gap-y-6">
+      <div className="col-[content] grid grid-cols-[minmax(0,1fr)_40%] items-start gap-x-4 gap-y-5 md:grid-cols-12 md:gap-x-[var(--gutter)] md:gap-y-5">
         <h1
           id="about-h"
           tabIndex={-1}
@@ -159,7 +159,7 @@ export function AboutSection() {
         </LongVersion>
       </div>
 
-      <RouteMap className="col-[content] mt-7 md:mt-10" />
+      <RouteMap className="col-[content] mt-7 md:mt-8" />
     </section>
   );
 }
