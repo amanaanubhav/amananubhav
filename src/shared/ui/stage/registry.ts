@@ -5,7 +5,8 @@ import { lazy, useCallback, useEffect, useRef, useSyncExternalStore, type Compon
  * chunk with StageSlot and StageCanvas, and the renderer chunk reads it after it loads.
  */
 
-export type SceneId = 'relief-annapurna' | 'sky';
+/** The home relief is the only scene: the Life page's sky draws itself on a canvas (no stage slot on /personal). */
+export type SceneId = 'relief-annapurna';
 
 export interface SceneProps {
   id: SceneId;

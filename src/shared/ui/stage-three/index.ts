@@ -29,10 +29,5 @@ export type { StoryUniforms } from './story-uniforms';
 export { createStoryMarkers, createStoryRibbon, createStoryTerrain, setTerrainFocus } from './story-layers';
 export type { RibbonStrip, StoryMarkerKind, StoryMarkers, StoryTerrainOptions } from './story-layers';
 
-export { loadStarCatalogue, TIER1_STAR_LIMIT } from './sky-data';
-export type { StarCatalogue } from './sky-data';
-export { StarDome, createSkyUniforms } from './star-dome';
-export type { SkyUniforms, StarDomeProps } from './star-dome';
-
 /** Per-frame drivers of scenes run before primitives (0.8) and the slot render (1). */
 export const SCENE_DRIVER_PRIORITY = 0.6;
