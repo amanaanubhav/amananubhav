@@ -95,13 +95,16 @@
   }
 }
 
-/* The moat (a ground-colour stroke painted under the fill): contours, rings and the 3D map never touch a glyph. */
 .letter {
   position: relative;
   z-index: 1;
+  transition: color var(--dur-hover) ease;
+}
+/* The footer sheet's moat (a ground-colour stroke painted under the fill): its contours and rings never touch a
+   glyph. The home hero sets the name clean, with no outline. */
+.sheet .letter {
   -webkit-text-stroke: 0.045em var(--ground);
   paint-order: stroke fill;
-  transition: color var(--dur-hover) ease;
 }
 /* Summit letters take the action tier (PALETTE-SPEC §11): a solid colour, 54 px and up (aquamarine, >= 7:1 in
    Night and Day). */
@@ -239,6 +242,8 @@
   .letter[data-lit],
   .vis:not([data-engine]) .letter:hover {
     color: CanvasText;
+  }
+  .sheet .letter {
     -webkit-text-stroke: 0;
   }
   .base,
