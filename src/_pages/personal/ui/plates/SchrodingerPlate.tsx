@@ -1,6 +1,6 @@
 import { hashSeed, mulberry32 } from '@/shared/lib/random';
-import { DrawOnView } from '@/shared/ui/draw';
-import { DATA, INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, ROUTE, r1 } from './svg';
+import { PlateDraw, type PlateDrawOptions } from './PlateDraw';
+import { DATA, FLOW, INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, r1 } from './svg';
 
 const W = 360;
 const H = 240;
@@ -73,7 +73,7 @@ function dotsPath(points: ReadonlyArray<readonly [number, number]>): string {
 const CLOUD = dotsPath(orbitalSamples());
 const BOUND_R = BOUND_A0 * A0;
 
-export interface SchrodingerPlateProps {
+export interface SchrodingerPlateProps extends PlateDrawOptions {
   className?: string;
 }
 
@@ -82,11 +82,12 @@ export interface SchrodingerPlateProps {
  * seeded points in one path, with the dotted Bekenstein bound that the school paper used to pin the
  * electron's position down. A diagram, not data.
  */
-export function SchrodingerPlate({ className }: SchrodingerPlateProps) {
+export function SchrodingerPlate({ className, trigger, drawRef, drawKey }: SchrodingerPlateProps) {
   const scaleY = H - 22;
   return (
-    <DrawOnView className={className}>
+    <PlateDraw className={className} trigger={trigger} drawRef={drawRef} drawKey={drawKey}>
       <PlateSvg
+        tone="ink"
         width={W}
         height={H}
         title="Electron probability cloud with the Bekenstein bound"
@@ -100,13 +101,13 @@ export function SchrodingerPlate({ className }: SchrodingerPlateProps) {
           />
         </g>
         <path d={`M${CX - 6} ${CY}H${CX + 6}M${CX} ${CY - 6}V${CY + 6}`} style={{ ...INK, strokeWidth: 1 }} vectorEffect={NS} />
-        <circle cx={CX} cy={CY} r={2.6} className="fill-aqua" />
+        <circle cx={CX} cy={CY} r={2.6} className="fill-action" />
         <circle
           data-draw
           cx={CX}
           cy={CY}
           r={BOUND_R}
-          style={{ ...ROUTE, strokeDasharray: '0 5' }}
+          style={{ ...FLOW, strokeDasharray: '0 5' }}
           vectorEffect={NS}
         />
         <g data-draw-label>
@@ -141,6 +142,6 @@ export function SchrodingerPlate({ className }: SchrodingerPlateProps) {
           </text>
         </g>
       </PlateSvg>
-    </DrawOnView>
+    </PlateDraw>
   );
 }

@@ -1,5 +1,5 @@
-import { DrawOnView } from '@/shared/ui/draw';
-import { DATA, FAINT, INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, ROUTE, r1 } from './svg';
+import { PlateDraw, type PlateDrawOptions } from './PlateDraw';
+import { DATA, FAINT, FLOW, INK, LABEL, LABEL_MUTED, LIVE, MUTED, NS, PlateSvg, r1 } from './svg';
 
 const W = 360;
 const H = 240;
@@ -24,7 +24,7 @@ const AIR_TICKS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99]
 const BALLOON = `M${X0} ${Y0}L176 ${r1(CEILING + 9)}Q186 ${CEILING} 200 ${CEILING}H${IGNITION_X}`;
 const BURN = `M${IGNITION_X} ${CEILING}C248 ${CEILING} 268 52 280 22`;
 
-export interface VyomagamiPlateProps {
+export interface VyomagamiPlateProps extends PlateDrawOptions {
   className?: string;
 }
 
@@ -33,10 +33,11 @@ export interface VyomagamiPlateProps {
  * the rocket to about 30 km, above roughly 99% of the atmosphere's mass, and the rocket ignites there.
  * Deck figures only: the time axis carries no numbers.
  */
-export function VyomagamiPlate({ className }: VyomagamiPlateProps) {
+export function VyomagamiPlate({ className, trigger, drawRef, drawKey }: VyomagamiPlateProps) {
   return (
-    <DrawOnView className={className}>
+    <PlateDraw className={className} trigger={trigger} drawRef={drawRef} drawKey={drawKey}>
       <PlateSvg
+        tone="ink"
         width={W}
         height={H}
         title="VYOMAGAMI ascent: altitude against time"
@@ -56,14 +57,14 @@ export function VyomagamiPlate({ className }: VyomagamiPlateProps) {
         <path data-draw d={`M318 ${yAt(40)}V${Y0}h14V${yAt(40)}`} style={{ ...MUTED, strokeWidth: 1 }} vectorEffect={NS} />
         <path data-draw d={AIR_TICKS} style={{ ...MUTED, strokeWidth: 1 }} vectorEffect={NS} />
 
-        <path data-draw d={BALLOON} style={ROUTE} vectorEffect={NS} />
-        <path data-draw d={BURN} style={ROUTE} vectorEffect={NS} />
-        <path data-draw-label d="M274.5 25.5L280 22l.4 6.6" style={ROUTE} vectorEffect={NS} />
+        <path data-draw d={BALLOON} style={FLOW} vectorEffect={NS} />
+        <path data-draw d={BURN} style={FLOW} vectorEffect={NS} />
+        <path data-draw-label d="M274.5 25.5L280 22l.4 6.6" style={FLOW} vectorEffect={NS} />
 
         <g data-draw-label>
           <path d={`M${IGNITION_X} ${r1(CEILING - 4)}V${r1(CEILING - 14)}`} style={{ ...MUTED, strokeWidth: 1 }} vectorEffect={NS} />
           <circle cx={IGNITION_X} cy={r1(CEILING - 21)} r={7} style={{ ...INK, strokeWidth: 1.25 }} vectorEffect={NS} />
-          <circle cx={IGNITION_X} cy={CEILING} r={4} style={{ ...INK, strokeWidth: 1.25 }} vectorEffect={NS} />
+          <circle cx={IGNITION_X} cy={CEILING} r={4} style={{ ...LIVE, fill: 'var(--action)', strokeWidth: 1.25 }} vectorEffect={NS} />
           <text x={IGNITION_X + 8} y={r1(CEILING + 16)} className={LABEL}>
             ignition, ~30 km
           </text>
@@ -105,6 +106,6 @@ export function VyomagamiPlate({ className }: VyomagamiPlateProps) {
           </text>
         </g>
       </PlateSvg>
-    </DrawOnView>
+    </PlateDraw>
   );
 }

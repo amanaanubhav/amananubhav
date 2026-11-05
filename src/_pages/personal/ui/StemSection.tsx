@@ -1,81 +1,24 @@
-import type { ComponentType, ReactNode } from 'react';
-import { ChapterHeader } from '@/shared/ui/chapter-header';
-import { Log, PlateFrame, Spread } from '@/shared/ui/journal';
-import { MediaSlot } from '@/shared/ui/media-slot';
-import { EARLY_BUILDS, STEM_INTRO, type EarlyBuild, type EarlyBuildId } from '../config/content';
-import { BlinkComparator, PavanaPlate, RakshakPlate, SchrodingerPlate, VyomagamiPlate } from './plates';
-
-type PlateComponent = ComponentType<{ className?: string }>;
-
-/** G-06 diagrams by build (§F). The blink comparator is interactive and carries its own caption and buttons. */
-const DIAGRAMS: Record<Exclude<EarlyBuildId, 'asteroids'>, PlateComponent> = {
-  schrodinger: SchrodingerPlate,
-  pavana: PavanaPlate,
-  vyomagami: VyomagamiPlate,
-  rakshak: RakshakPlate,
-};
-
-function BuildPlate({ build }: { build: EarlyBuild }): ReactNode {
-  if (build.id === 'asteroids') {
-    // Press-to-play only (§G.2): never animates on its own.
-    return <BlinkComparator className="w-full max-w-[360px]" />;
-  }
-  const Diagram = DIAGRAMS[build.id];
-  return (
-    <div className="flex max-w-[360px] flex-col gap-8">
-      <PlateFrame ratio="3:2" ticks caption={build.plateCaption}>
-        {/* Each plate draws itself once at 30% in view (its own DrawOnView). */}
-        <Diagram className="absolute inset-0" />
-      </PlateFrame>
-      {build.photoSlot ? <MediaSlot id={build.photoSlot} ratio="3:2" /> : null}
-    </div>
-  );
-}
+import { SECTION_STATEMENTS } from '../config/content';
+import { sectionLabel } from '../config/sections';
+import { BuildsLightTable } from './builds/BuildsLightTable';
 
 /**
- * `#stem`: Early builds (§G.2, [S-LIFE-STEM]). Five rows in an ordered list, the plate always on the right:
- * log (year, tags), title, description, and a G-06 diagram that draws once at 30% in view.
+ * `#stem`: Early builds (FINAL §4.3), the light table. The h2 is the rail label; the statement sits under it; then the
+ * five plates the owner liked (Schrödinger cloud, PAVANA, VYOMAGAMI, the asteroid blink comparator, RAKSHAK), on a
+ * sticky viewer on desktop and stacked plate-first on phones.
  */
 export function StemSection() {
   return (
-    <section id="stem" aria-labelledby="stem-title">
-      <Spread
-        as="div"
-        plateSpan="none"
-        heading={
-          <ChapterHeader as="h2" id="stem-title">
-            {STEM_INTRO.title}
-          </ChapterHeader>
-        }
-      >
-        <p className="m-0 max-w-measure font-body text-lead text-ink [text-wrap:pretty]">{STEM_INTRO.lead}</p>
-      </Spread>
-
-      <ol className="m-0 mt-block flex list-none flex-col gap-block p-0">
-        {EARLY_BUILDS.map((build) => (
-          <Spread
-            key={build.id}
-            as="li"
-            heading={
-              <ChapterHeader as="h3" size="title">
-                {build.title}
-              </ChapterHeader>
-            }
-            log={
-              <Log
-                label={`${build.title} log`}
-                items={[
-                  { key: 'year', value: build.year },
-                  { key: 'tags', value: build.tags.join(', '), mono: false },
-                ]}
-              />
-            }
-            plate={<BuildPlate build={build} />}
-          >
-            <p className="m-0 max-w-measure font-body text-body text-ink [text-wrap:pretty]">{build.desc}</p>
-          </Spread>
-        ))}
-      </ol>
+    <section id="stem" aria-labelledby="stem-h" className="journal-grid scroll-mt-[calc(var(--nav-clear)+16px)]">
+      <div className="col-[content] min-w-0">
+        <h2 id="stem-h" tabIndex={-1} className="m-0 font-display text-h2 font-bold text-ink focus:outline-none">
+          {sectionLabel('stem')}
+        </h2>
+        <p className="m-0 mt-4 max-w-[30em] font-body text-lead text-ink [text-wrap:pretty]">{SECTION_STATEMENTS.stem}</p>
+        <div className="mt-8 lg:mt-12">
+          <BuildsLightTable />
+        </div>
+      </div>
     </section>
   );
 }

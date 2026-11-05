@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import { DrawOnView } from '@/shared/ui/draw';
-import { DATA, FAINT_INDEX, INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, ROUTE, polyline, r1 } from './svg';
+import { PlateDraw, type PlateDrawOptions } from './PlateDraw';
+import { DATA, FLOW, HATCH as HATCH_LINE, INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, polyline, r1 } from './svg';
 
 const W = 360;
 const H = 240;
@@ -77,7 +77,7 @@ const AIR = polyline([
 const HATCH = heatHatch();
 const LEGEND = legendHatch(IN.x0, IN.x1, 180);
 
-export interface PavanaPlateProps {
+export interface PavanaPlateProps extends PlateDrawOptions {
   className?: string;
 }
 
@@ -86,11 +86,12 @@ export interface PavanaPlateProps {
  * lining, a corrugated baffle maze, hatching that tightens toward the sunlit wall, and the air's path
  * through it. Every cost is marked "projected" (§G.2).
  */
-export function PavanaPlate({ className }: PavanaPlateProps) {
+export function PavanaPlate({ className, trigger, drawRef, drawKey }: PavanaPlateProps) {
   const clipId = `${useId()}-chamber`;
   return (
-    <DrawOnView className={className}>
+    <PlateDraw className={className} trigger={trigger} drawRef={drawRef} drawKey={drawKey}>
       <PlateSvg
+        tone="ink"
         width={W}
         height={H}
         title="PAVANA capture chamber, cutaway"
@@ -102,7 +103,7 @@ export function PavanaPlate({ className }: PavanaPlateProps) {
           </clipPath>
         </defs>
 
-        <path d={HATCH} clipPath={`url(#${clipId})`} style={{ ...FAINT_INDEX, strokeWidth: 1 }} vectorEffect={NS} />
+        <path d={HATCH} clipPath={`url(#${clipId})`} style={{ ...HATCH_LINE, strokeWidth: 1 }} vectorEffect={NS} />
         <path
           d={`M${OUT.x0} ${OUT.y0}H${OUT.x1}V${OUT.y1}H${OUT.x0}ZM${IN.x0} ${IN.y0}V${IN.y1}H${IN.x1}V${IN.y0}Z`}
           fillRule="evenodd"
@@ -118,8 +119,8 @@ export function PavanaPlate({ className }: PavanaPlateProps) {
           style={{ ...MUTED, strokeWidth: 1, strokeDasharray: '2 4' }}
           vectorEffect={NS}
         />
-        <path data-draw d={AIR} style={ROUTE} vectorEffect={NS} />
-        <path data-draw-label d="M330 76l8 5-8 5" style={ROUTE} vectorEffect={NS} />
+        <path data-draw d={AIR} style={FLOW} vectorEffect={NS} />
+        <path data-draw-label d="M330 76l8 5-8 5" style={FLOW} vectorEffect={NS} />
 
         <g data-draw-label>
           <text x={24} y={18} className={LABEL_MUTED}>
@@ -154,13 +155,13 @@ export function PavanaPlate({ className }: PavanaPlateProps) {
             design ΔT 250 to 400 °C
           </text>
           <text x={W / 2} y={228} textAnchor="middle" className={LABEL}>
-            Projected <tspan className="font-data tabular">$94 to $232</tspan> per tonne of CO₂
+            Projected <tspan className="fill-current font-data tabular">$94 to $232</tspan> per tonne of CO₂
           </text>
           <text x={W - 22} y={18} textAnchor="end" className={LABEL_MUTED}>
             Cutaway diagram
           </text>
         </g>
       </PlateSvg>
-    </DrawOnView>
+    </PlateDraw>
   );
 }

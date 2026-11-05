@@ -1,5 +1,5 @@
-import { DrawOnView } from '@/shared/ui/draw';
-import { INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, ROUTE, WATER, WATER_LABEL, polyline, r1 } from './svg';
+import { PlateDraw, type PlateDrawOptions } from './PlateDraw';
+import { FLOW as FLOW_LINE, INK, LABEL, LABEL_MUTED, MUTED, NS, PlateSvg, WATER, WATER_LABEL, polyline, r1 } from './svg';
 
 const W = 360;
 const H = 240;
@@ -64,7 +64,7 @@ function bank(y: number, side: 1 | -1): string {
   return d;
 }
 
-export interface RakshakPlateProps {
+export interface RakshakPlateProps extends PlateDrawOptions {
   className?: string;
 }
 
@@ -73,10 +73,11 @@ export interface RakshakPlateProps {
  * column swaying in its own wake of shed vortices, and the path a fish takes past it with no blades to
  * strike. A diagram of the idea; no efficiency figure is shown (Q-43).
  */
-export function RakshakPlate({ className }: RakshakPlateProps) {
+export function RakshakPlate({ className, trigger, drawRef, drawKey }: RakshakPlateProps) {
   return (
-    <DrawOnView className={className}>
+    <PlateDraw className={className} trigger={trigger} drawRef={drawRef} drawKey={drawKey}>
       <PlateSvg
+        tone="ink"
         width={W}
         height={H}
         title="RAKSHAK: river flow around a bladeless harvester"
@@ -96,7 +97,7 @@ export function RakshakPlate({ className }: RakshakPlateProps) {
           vectorEffect={NS}
         />
 
-        <path data-draw d={FISH} style={ROUTE} vectorEffect={NS} />
+        <path data-draw d={FISH} style={FLOW_LINE} vectorEffect={NS} />
         <path
           data-draw-label
           d={`M${FISH_X + 4} ${FISH_Y}c4-4.5 10-4.5 14 0c-4 4.5-10 4.5-14 0Zm14 0 5-4v8Z`}
@@ -125,6 +126,6 @@ export function RakshakPlate({ className }: RakshakPlateProps) {
           </text>
         </g>
       </PlateSvg>
-    </DrawOnView>
+    </PlateDraw>
   );
 }

@@ -43,6 +43,25 @@ export const ROUTE: CSSProperties = {
 };
 
 /**
+ * Light-table roles (FINAL §4.3.5, Palette 1.1): flows (an air path, a trajectory, a fish's line) in `accent-2`, the
+ * live step (the ignition point, the nucleus, the found asteroid) in `action`, hatching in ink at `alpha-edge`. No
+ * oxblood or red inside the Early builds plates; `ROUTE` stays for the road sheet.
+ */
+export const FLOW: CSSProperties = {
+  stroke: 'var(--accent-2)',
+  fill: 'none',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+};
+
+/** The live step: aquamarine `action`, 2 px. */
+export const LIVE: CSSProperties = { ...FLOW, stroke: 'var(--action)' };
+
+/** Heat hatching: ink at `alpha-edge`. */
+export const HATCH: CSSProperties = { ...INK, stroke: 'rgb(var(--c-ink) / var(--alpha-edge))' };
+
+/**
  * Water: rivers, the sea and their italic labels (a map convention, not an accent). Strokes take the map's
  * shoreline token (`map-lake-edge`: aqua, >= 3:1 on every ground in both themes; the lake fill `map-lake` is too
  * light for a 1 px line on Day paper); labels take `map-lake-text` (`WATER_LABEL`).
@@ -64,6 +83,11 @@ export interface PlateSvgProps {
   title: string;
   desc: string;
   className?: string;
+  /**
+   * What `currentColor` (the INK line) is: `'accent'` (default, the road sheet) or `'ink'` (the Early builds plates,
+   * where structure is ink and only the flows are violet).
+   */
+  tone?: 'accent' | 'ink';
   children: ReactNode;
 }
 
@@ -71,7 +95,7 @@ export interface PlateSvgProps {
  * The root of every plate: `<svg role="img">` labelled by its own `<title>` and `<desc>`, ink as
  * `currentColor`, 13-unit type that reads at 13 px when the plate renders near its viewBox width.
  */
-export function PlateSvg({ width, height, title, desc, className, children }: PlateSvgProps) {
+export function PlateSvg({ width, height, title, desc, className, tone = 'accent', children }: PlateSvgProps) {
   const id = useId();
   const titleId = `${id}-t`;
   const descId = `${id}-d`;
@@ -81,8 +105,9 @@ export function PlateSvg({ width, height, title, desc, className, children }: Pl
       role="img"
       aria-labelledby={titleId}
       aria-describedby={descId}
-      className={cn('block h-auto w-full text-accent-2', className)}
-      fontSize={13}
+      className={cn('block h-auto w-full', tone === 'ink' ? 'text-ink' : 'text-accent-2', className)}
+      // 13 units by default; the light table sets --plate-fs per plate so labels read near 14 px at any width.
+      style={{ fontSize: 'var(--plate-fs, 13px)' }}
     >
       <title id={titleId}>{title}</title>
       <desc id={descId}>{desc}</desc>

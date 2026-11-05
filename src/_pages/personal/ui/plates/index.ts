@@ -10,5 +10,3 @@ export { RakshakPlate } from './RakshakPlate';
 export type { RakshakPlateProps } from './RakshakPlate';
 export { RoadSheet } from './RoadSheet';
 export type { RoadSheetProps } from './RoadSheet';
-export { DisciplineGlyph } from './glyphs';
-export type { DisciplineGlyphProps } from './glyphs';
