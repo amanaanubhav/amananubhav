@@ -57,6 +57,13 @@
   translate: 0 calc(var(--dock-h) + 16px);
   transition-duration: var(--dur-hover);
 }
+/* Route pages (the Life page's sky plate and route map): the bead steps aside with the bar while a region asks the
+   dock to (html[data-dock-aside], SectionDotNav). An open chat, or a bead with focus, never moves. */
+:global(html[data-dock][data-dock-aside]) .dock:not([data-open]):not(:focus-within) {
+  translate: 0 calc(var(--dock-h) + 16px);
+  transition-duration: var(--dur-hover);
+  pointer-events: none;
+}
 /* Docked, the name pill opens above the bead (the bar sits to its left). */
 :global(html[data-dock]) .dock .tip {
   top: auto;
@@ -228,6 +235,12 @@
   }
   .dot {
     transition: none;
+  }
+  /* Stepping aside fades instead of travelling. */
+  :global(html[data-dock][data-dock-aside]) .dock:not([data-open]):not(:focus-within) {
+    translate: none;
+    opacity: 0;
+    transition: opacity 150ms linear;
   }
 }
 :global(html[data-motion='off']) .bead,
