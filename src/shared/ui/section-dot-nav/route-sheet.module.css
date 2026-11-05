@@ -1,0 +1,117 @@
+/*
+ * The contents sheet of the route rail (SectionDotNav variant="route", Life page FINAL-DESIGN §2.2): a modal bottom
+ * sheet. It rises on the drawer curve in 240 ms and leaves faster (180 ms, ease-depart); under reduced motion it
+ * cross-fades in 150 ms. Swipe-to-dismiss drives `transform` inline while a finger is on the grab bar.
+ */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: 35rem;
+  max-height: 85dvh;
+  margin: 0 auto;
+  padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  border-bottom-width: 0;
+  border-radius: 1.375rem 1.375rem 0 0;
+  color: var(--ink);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.sheet::backdrop {
+  background: var(--glass-scrim);
+}
+
+.sheet[open] {
+  animation: sheet-in 240ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.sheet[open]::backdrop {
+  animation: fade-in 240ms var(--ease-settle) both;
+}
+
+.sheet[data-closing] {
+  animation: sheet-out 180ms var(--ease-depart) both;
+}
+
+.sheet[data-closing]::backdrop {
+  animation: fade-out 180ms var(--ease-depart) both;
+}
+
+/* The grab bar and the header take the swipe; the list keeps its own vertical scroll. */
+.grab {
+  display: grid;
+  place-items: center;
+  height: 1.75rem;
+  touch-action: none;
+  cursor: grab;
+}
+
+.grabBar {
+  width: 2.5rem;
+  height: 0.25rem;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+
+.head {
+  touch-action: none;
+}
+
+/* The current row: action-soft with a 2 px action bar at its left edge. */
+.current {
+  position: relative;
+}
+
+.current::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--action);
+}
+
+@media (forced-colors: active) {
+  .current::before {
+    background: Highlight;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open],
+  .sheet[open]::backdrop {
+    animation: fade-in 150ms linear both;
+  }
+
+  .sheet[data-closing],
+  .sheet[data-closing]::backdrop {
+    animation: fade-out 150ms linear both;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}

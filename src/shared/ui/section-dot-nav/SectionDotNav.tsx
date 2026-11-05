@@ -1,11 +1,14 @@
 'use client';
 
 import {
+  lazy,
+  Suspense,
   useEffect,
   useId,
   useLayoutEffect,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactElement,
 } from 'react';
@@ -20,6 +23,11 @@ import { useMotionAllowed } from '@/shared/lib/motion-tier';
 import { scrollToTarget } from '@/shared/lib/smooth-scroll';
 
 import { dockSlotInUse, registerDockSlot } from './dock-slot';
+import { routeSheetExitMs } from './route-sheet-timing';
+
+// The contents sheet only the route variant uses (the Life page): its own chunk, so pages on the waypoint rail do not
+// carry it (review P3-4).
+const RouteSheet = lazy(() => import('./RouteSheet').then((m) => ({ default: m.RouteSheet })));
 
 export type SectionNavItem = {
   readonly id: string;
@@ -28,6 +36,10 @@ export type SectionNavItem = {
   readonly waypoint?: string;
   readonly approx?: boolean;
   readonly kind?: 'waypoint' | 'interpolated' | 'planned';
+  /** Route variant only: a six-word line under the label in the contents sheet. */
+  readonly teaser?: string;
+  /** Route variant only: a tag beside the label ("Live" with the live dot, "Try it"). */
+  readonly tag?: { readonly label: string; readonly live?: boolean };
 };
 
 export interface SectionDotNavProps {
@@ -36,6 +48,14 @@ export interface SectionDotNavProps {
   track?: { caption: string };
   /** Default 'Sections on this page'. */
   label?: string;
+  /**
+   * `'waypoint'` (default): the rail every page has today, unchanged. `'route'` (opt-in, the Life page): trig marks
+   * with the current one filled, a travelled track (action-line above the current mark, steel below), every label on
+   * hover or focus of the rail, arrow keys between marks, a live dot on a `tag.live` stop; below 1024 px the dock
+   * reads "label n of N" and opens a modal contents sheet with teasers and tags, and steps aside while an element
+   * marked `data-dock-avoid` asks it to (see contracts in docs/redesign/life/BUILD-PLAN.md).
+   */
+  variant?: 'waypoint' | 'route';
 }
 
 const nf = new Intl.NumberFormat('en');
@@ -136,6 +156,30 @@ function showDock(dock: HTMLElement | null): void {
   dock?.removeAttribute('data-away');
 }
 
+/**
+ * Route variant: whether a page element asks the dock to step aside right now (Life page P0-2). Contract:
+ * `data-dock-avoid="shown"` while any part of it is on screen (the route map repeats the contents);
+ * `data-dock-avoid="cover"` while it covers 40 % of the viewport's height and the reader is not scrolling up (the sky
+ * plate); `data-dock-avoid-held` (any value) while it is present (a finger on the sky).
+ */
+function dockAvoided(scrollingUp: boolean): boolean {
+  if (document.querySelector('[data-dock-avoid-held]')) return true;
+  const viewport = window.innerHeight;
+  for (const el of document.querySelectorAll<HTMLElement>('[data-dock-avoid]')) {
+    const r = el.getBoundingClientRect();
+    const mode = el.dataset.dockAvoid;
+    if (mode === 'shown' && r.bottom > 0 && r.top < viewport) return true;
+    if (mode === 'cover' && !scrollingUp) {
+      const covered = Math.max(0, Math.min(r.bottom, viewport) - Math.max(r.top, 0));
+      if (viewport > 0 && covered / viewport >= 0.4) return true;
+    }
+  }
+  return false;
+}
+
+/** The route variant's trig mark (a level-survey triangle), current one filled. */
+const TRIG_PATH = 'M10.5 2 19 16H2Z';
+
 /** Keyboard focus (`:focus-visible`), not a press: a tapped chip must not pin the dock in place. */
 function isKeyboardFocus(target: EventTarget | null): target is Element {
   if (!(target instanceof Element)) return false;
@@ -204,7 +248,9 @@ export const SectionDotNav = ({
   sections,
   track,
   label = 'Sections on this page',
+  variant = 'waypoint',
 }: SectionDotNavProps): ReactElement | null => {
+  const route = variant === 'route';
   /** Index of the section you are in; -1 above the first section (an id-less hero). */
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
@@ -347,8 +393,9 @@ export const SectionDotNav = ({
   }, [active, allowed, idsKey, host]);
 
   // Sheet: Escape and outside press close it; focus returns to the chip when it was inside.
+  // (The route variant's modal sheet handles Esc, outside presses and focus itself.)
   useEffect(() => {
-    if (!open) return;
+    if (!open || route) return;
     const wrap = mobileRef.current;
     const close = (returnFocus: boolean) => {
       setOpen(false);
@@ -369,7 +416,7 @@ export const SectionDotNav = ({
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onPointer);
     };
-  }, [open]);
+  }, [open, route]);
 
   // A sheet hanging from the dock keeps it shown.
   useEffect(() => {
@@ -426,15 +473,32 @@ export const SectionDotNav = ({
     /** The page has its own controls in the slot (sticky: the home legend's Key leaves the slot in some acts). */
     let slotted = false;
     const usesSlot = () => (slotted ||= dockSlotInUse());
+    /** Route variant: a page element asks the bar to step aside (`dockAvoided`); last direction of travel. */
+    let avoiding = false;
+    let scrollingUp = false;
+    let lastShown = !dock.hasAttribute('data-away');
 
     // With controls in the slot the whole dock moves as one piece (`html[data-dock]`: the bar, the bead, the legend's
     // slot). With an empty slot only the bar goes away (`data-away` on the band) and the bead keeps its place, so chat
     // is never off screen at rest.
     const write = (shown: boolean) => {
+      lastShown = shown;
       const slot = usesSlot();
       const next = shown || !slot ? 'shown' : 'hidden';
       if (html.dataset.dock !== next) html.dataset.dock = next;
-      dock.toggleAttribute('data-away', !shown && !slot);
+      dock.toggleAttribute('data-away', (!shown && !slot) || avoiding);
+      // The docked chat bead steps aside with the bar (chat-launcher.module.css), only while a region asks for it.
+      html.toggleAttribute('data-dock-aside', avoiding);
+    };
+    // Route variant: never while the dock is in use (an open sheet, keyboard focus in it).
+    const updateAvoid = () => {
+      if (!route) return;
+      const inUse = openRef.current || (keyboard && dock.contains(document.activeElement));
+      const next = !inUse && dockAvoided(scrollingUp);
+      if (next !== avoiding) {
+        avoiding = next;
+        write(lastShown);
+      }
     };
     // With an empty slot the dock does not come back on its own mid-page: at rest it would sit over the text.
     const settle = () => {
@@ -470,6 +534,8 @@ export const SectionDotNav = ({
       }
       const dy = y - lastY;
       lastY = y;
+      if (dy !== 0) scrollingUp = dy < 0;
+      updateAvoid();
       if (Math.abs(y - idleFrom) >= 4) {
         idleFrom = y;
         window.clearTimeout(idle);
@@ -506,6 +572,12 @@ export const SectionDotNav = ({
     window.addEventListener('resize', schedule);
     document.addEventListener('focusin', onFocusIn);
     document.addEventListener('focusout', onFocusOut);
+    // Route variant: a finger landing on (or leaving) the sky toggles `data-dock-avoid-held` without any scroll.
+    let held: MutationObserver | null = null;
+    if (route) {
+      held = new MutationObserver(schedule);
+      held.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-dock-avoid-held'] });
+    }
     return () => {
       if (raf) cancelAnimationFrame(raf);
       window.clearTimeout(idle);
@@ -513,9 +585,11 @@ export const SectionDotNav = ({
       window.removeEventListener('resize', schedule);
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
+      held?.disconnect();
       dock.removeAttribute('data-yield');
+      html.removeAttribute('data-dock-aside');
     };
-  }, [isDock, host]);
+  }, [isDock, host, route]);
 
   if (sections.length === 0) return null;
 
@@ -545,12 +619,32 @@ export const SectionDotNav = ({
     showDock(dockRef.current);
     // scrollToTarget subtracts the section's scroll-margin-top and the root's scroll-padding-top on both paths
     // (Lenis and the native fallback), so the heading lands under the navbar band, never beneath it.
-    scrollToTarget(el);
-    if (keyboard) focusSection(el);
+    const go = () => {
+      scrollToTarget(el);
+      if (route) {
+        // Route variant (the Life page's landing rule): every jump, pointer or keyboard, moves focus to the
+        // section's heading, so the next Tab continues from the chosen section.
+        const headingId = el.getAttribute('aria-labelledby');
+        focusSection((headingId ? document.getElementById(headingId) : null) ?? el);
+      } else if (keyboard) focusSection(el);
+    };
+    // The route variant's modal sheet first leaves (its exit), then the page moves and focus lands on the section.
+    if (route && fromSheet) window.setTimeout(go, routeSheetExitMs() + 10);
+    else go();
   };
 
   // The visible chip text is its name ("How I work"); the position, the waypoint and its altitude are its description.
   const chipDescription = [current ? `${at + 1} of ${n}` : '', reading?.spoken ?? '', label].filter(Boolean).join('. ');
+
+  // Route variant, rail: arrow keys move between the marks with no animation (a keyboard repeat).
+  const onRailKey = (e: ReactKeyboardEvent<HTMLOListElement>) => {
+    if (!route || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
+    const links = Array.from(e.currentTarget.querySelectorAll<HTMLAnchorElement>('a'));
+    const i = links.indexOf(document.activeElement as HTMLAnchorElement);
+    if (i < 0) return;
+    e.preventDefault();
+    links[Math.min(links.length - 1, Math.max(0, i + (e.key === 'ArrowDown' ? 1 : -1)))]?.focus();
+  };
 
   const ui = (
     <>
@@ -616,27 +710,40 @@ export const SectionDotNav = ({
 
         <div className="relative min-h-0 w-8 flex-1">
           <div aria-hidden="true" className="pointer-events-none absolute inset-y-4 right-0 w-8">
-            <span className="absolute inset-y-0 right-[15.5px] w-px bg-line-strong track-steel forced-colors:bg-[CanvasText]" />
-            {/* Compositor only (no layout per frame while the story scrolls): the fill spans the track and scales from
-                its top; the head rides a track-sized wrapper whose `y` percentage is a fraction of the track. */}
             <span
-              className="absolute inset-y-0 right-[15px] w-0.5 origin-top bg-action transition-transform duration-ui ease-settle forced-colors:bg-[Highlight]"
+              className={clsx(
+                'absolute inset-y-0 right-[15.5px] w-px track-steel forced-colors:bg-[CanvasText]',
+                route ? 'bg-steel' : 'bg-line-strong',
+              )}
+            />
+            {/* Compositor only (no layout per frame while the story scrolls): the fill spans the track and scales from
+                its top; the head rides a track-sized wrapper whose `y` percentage is a fraction of the track. The
+                route variant draws the travelled stretch as a 1 px action-line and marks the current stop itself. */}
+            <span
+              className={clsx(
+                'absolute inset-y-0 origin-top transition-transform ease-settle forced-colors:bg-[Highlight]',
+                route
+                  ? 'right-[15.5px] w-px bg-action-line duration-hover motion-reduce:transition-none'
+                  : 'right-[15px] w-0.5 bg-action duration-ui',
+              )}
               style={{ transform: `scaleY(${frac})` }}
             />
-            <motion.span className="absolute inset-0 block" initial={false} animate={{ y: `${frac * 100}%` }} transition={spring}>
-              <span
-                className={clsx(
-                  'absolute right-[22px] top-0 block size-2 -translate-y-1/2 transition-opacity duration-hover',
-                  current ? 'opacity-100' : 'opacity-0',
-                )}
-              >
-                <HereMark />
-              </span>
-            </motion.span>
+            {!route && (
+              <motion.span className="absolute inset-0 block" initial={false} animate={{ y: `${frac * 100}%` }} transition={spring}>
+                <span
+                  className={clsx(
+                    'absolute right-[22px] top-0 block size-2 -translate-y-1/2 transition-opacity duration-hover',
+                    current ? 'opacity-100' : 'opacity-0',
+                  )}
+                >
+                  <HereMark />
+                </span>
+              </motion.span>
+            )}
           </div>
           {/* Each tick sits at its fraction of the track's own box, so ticks and marker always agree and a short
               rail packs them closer instead of running past its foot. */}
-          <ol className="absolute inset-y-4 right-0 w-8">
+          <ol className="absolute inset-y-4 right-0 w-8" onKeyDown={route ? onRailKey : undefined}>
             {sections.map((s, i) => {
               const isActive = i === at;
               const small = s.kind === 'interpolated';
@@ -655,29 +762,66 @@ export const SectionDotNav = ({
                     onClick={(e) => jump(e, s.id, false)}
                     className="group pointer-events-auto relative block size-8 rounded-control focus-visible:bg-ground focus-visible:[outline-offset:0px]"
                   >
-                    <span
-                      aria-hidden="true"
-                      className={clsx(
-                        'absolute top-1/2 h-px -translate-y-1/2 transition-colors duration-hover',
-                        small ? 'right-3.5 w-1' : 'right-3 w-2',
-                        isActive
-                          ? 'h-0.5 bg-ink forced-colors:bg-[Highlight]'
-                          : clsx(
-                              'forced-colors:bg-[CanvasText]',
-                              s.kind === 'planned' ? 'bg-line-strong' : 'bg-ink-muted group-hover:bg-ink',
-                            ),
-                      )}
-                    />
+                    {route ? (
+                      // A trig mark on the track: open (ground fill, ink-muted rim), the current one filled action.
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 21 18"
+                        className="absolute right-[5.5px] top-1/2 h-[18px] w-[21px] -translate-y-1/2 overflow-visible"
+                      >
+                        <path
+                          d={TRIG_PATH}
+                          strokeWidth={1.5}
+                          strokeLinejoin="round"
+                          className={clsx(
+                            'transition-colors duration-hover',
+                            isActive
+                              ? 'fill-action stroke-action forced-colors:fill-[Highlight] forced-colors:stroke-[Highlight]'
+                              : 'fill-ground stroke-ink-muted group-hover:stroke-ink forced-colors:fill-[Canvas] forced-colors:stroke-[CanvasText]',
+                          )}
+                        />
+                      </svg>
+                    ) : (
+                      <span
+                        aria-hidden="true"
+                        className={clsx(
+                          'absolute top-1/2 h-px -translate-y-1/2 transition-colors duration-hover',
+                          small ? 'right-3.5 w-1' : 'right-3 w-2',
+                          isActive
+                            ? 'h-0.5 bg-ink forced-colors:bg-[Highlight]'
+                            : clsx(
+                                'forced-colors:bg-[CanvasText]',
+                                s.kind === 'planned' ? 'bg-line-strong' : 'bg-ink-muted group-hover:bg-ink',
+                              ),
+                        )}
+                      />
+                    )}
+                    {route && s.tag?.live && (
+                      <span
+                        aria-hidden="true"
+                        className="live-halo absolute right-[3px] top-[5px] size-1.5 rounded-full bg-live forced-colors:bg-[Highlight]"
+                      />
+                    )}
                     {/* The label never leaves the rail: 160 px less the 32 px tick and its 4 px gap; a longer one
-                        wraps (balanced) rather than reaching into the text column. The current one shows at rest. */}
+                        wraps (balanced) rather than reaching into the text column. The current one shows at rest; the
+                        route variant shows every label while the rail is hovered or holds focus. */}
                     <span
                       className={clsx(
                         'pointer-events-none absolute right-full top-1/2 mr-1 w-max max-w-[7.75rem] -translate-y-1/2 px-2 py-0.5 text-right',
                         KNOCKOUT,
-                        'font-body text-caption font-medium [text-wrap:balance]',
-                        isActive
-                          ? 'text-ink'
-                          : 'text-ink-muted opacity-0 transition-opacity duration-hover group-hover:text-ink group-hover:opacity-100 group-focus-visible:text-ink group-focus-visible:opacity-100',
+                        route
+                          ? 'font-display text-caption font-semibold [text-wrap:balance]'
+                          : 'font-body text-caption font-medium [text-wrap:balance]',
+                        route
+                          ? isActive
+                            ? 'text-ink transition-[opacity,transform] duration-hover ease-settle'
+                            : clsx(
+                                'translate-x-1 text-ink opacity-0 transition-[opacity,transform] duration-hover ease-settle motion-reduce:translate-x-0',
+                                'group-hover/rail:translate-x-0 group-hover/rail:opacity-100 group-focus-within/rail:translate-x-0 group-focus-within/rail:opacity-100',
+                              )
+                          : isActive
+                            ? 'text-ink'
+                            : 'text-ink-muted opacity-0 transition-opacity duration-hover group-hover:text-ink group-hover:opacity-100 group-focus-visible:text-ink group-focus-visible:opacity-100',
                       )}
                     >
                       {s.label}
@@ -735,6 +879,9 @@ export const SectionDotNav = ({
             '[html[data-dock=hidden]_&]:[transition-duration:var(--dur-hover)] [html[data-dock=hidden]_&]:[translate:0_calc(var(--dock-h)+16px)]',
             'group-data-[away]/dock:[transition-duration:var(--dur-hover)] group-data-[away]/dock:[translate:0_calc(var(--dock-h)+16px)]',
             'group-data-[yield]/dock:[transition-duration:var(--dur-hover)] group-data-[yield]/dock:[translate:0_calc(var(--dock-h)+16px)]',
+            // Route variant: under reduced motion the bar steps aside by fading out in place (opacity only), never travelling.
+            route &&
+              'motion-reduce:[transition:opacity_var(--dur-hover)_var(--ease-settle),visibility_var(--dur-hover)] motion-reduce:group-data-[away]/dock:invisible motion-reduce:group-data-[away]/dock:opacity-0 motion-reduce:group-data-[away]/dock:[translate:none]',
           )}
         >
           {/* The glass is a layer under the controls, not their parent: inside a backdrop-filter, a sheet rising from
@@ -750,7 +897,8 @@ export const SectionDotNav = ({
               ref={chipRef}
               type="button"
               aria-expanded={open}
-              aria-controls={open ? sheetId : undefined}
+              aria-haspopup={route ? 'dialog' : undefined}
+              aria-controls={open || route ? sheetId : undefined}
               aria-describedby={chipDescId}
               onClick={() => setOpen((o) => !o)}
               className={clsx(
@@ -762,10 +910,19 @@ export const SectionDotNav = ({
               {current ? (
                 <>
                   <HereMark />
-                  <span className="min-w-0 truncate font-medium">{current.label}</span>
-                  <span aria-hidden="true" className="-ml-2 hidden shrink-0 min-[480px]:inline">
-                    , {at + 1} of {n}
+                  <span className={clsx('min-w-0 truncate', route ? 'font-display font-semibold' : 'font-medium')}>
+                    {current.label}
                   </span>
+                  {route ? (
+                    // "Night sky 2 of 6": a real position in a real sequence, on every phone width.
+                    <span aria-hidden="true" className="tabular shrink-0 font-data text-caption text-ink-muted">
+                      {at + 1} of {n}
+                    </span>
+                  ) : (
+                    <span aria-hidden="true" className="-ml-2 hidden shrink-0 min-[480px]:inline">
+                      , {at + 1} of {n}
+                    </span>
+                  )}
                   {reading && (
                     <>
                       <span aria-hidden="true" className="h-4 w-px shrink-0 bg-ink/rim forced-colors:bg-[CanvasText]" />
@@ -793,9 +950,23 @@ export const SectionDotNav = ({
               {chipDescription}
             </span>
 
+            {route && (
+              <Suspense fallback={null}>
+                <RouteSheet
+                  id={sheetId}
+                  sections={sections}
+                  at={at}
+                  open={open}
+                  label={label}
+                  chipRef={chipRef}
+                  onRequestClose={() => setOpen(false)}
+                  onJump={(e, id) => jump(e, id, true)}
+                />
+              </Suspense>
+            )}
             {/* The sheet rises out of the bar (origin at its foot), as wide as the bar; laid out against the bar row. */}
             <AnimatePresence>
-              {open && (
+              {open && !route && (
                 <motion.div
                   id={sheetId}
                   key="sheet"
