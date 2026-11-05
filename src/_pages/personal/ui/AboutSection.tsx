@@ -1,132 +1,165 @@
 import { PROFILE } from '@/entities/profile';
-import { ChapterHeader } from '@/shared/ui/chapter-header';
-import { Log, Spread } from '@/shared/ui/journal';
-import type { LogEntry } from '@/shared/ui/journal';
+import { SKY_OBSERVER } from '@/shared/lib/astro';
 import { StarChart } from '@/shared/ui/map';
 import { MediaSlot } from '@/shared/ui/media-slot';
-import { VisuallyHidden } from '@/shared/ui/visually-hidden';
-import { ORIGIN, ORIGIN_OPTIONAL_SLOTS } from '../config/content';
+import {
+  LONG_VERSION,
+  ORIGIN,
+  ORIGIN_FACTS,
+  ORIGIN_OPTIONAL_SLOTS,
+  SIKAHAR_READOUT,
+} from '../config/content';
 import { WINTER_SKY } from '../config/sky-charts.generated';
+import { LongVersion } from './origin/LongVersion';
+import { OpenThisSky } from './origin/OpenThisSky';
+import { RouteMap } from './origin/RouteMap';
+import { SikaharReadout } from './origin/SikaharReadout';
 
-/** Component links: `link-ink` on a 1 px `link-underline`, 2 px on hover and focus (globals `.prose-link`). */
-const LINK = 'prose-link inline-flex min-h-6 items-center rounded-control';
+/** Reading time of the long version: words at about 200 a minute, at least one minute. */
+const LONG_MINUTES = Math.max(1, Math.round(ORIGIN.paragraphs.join(' ').split(/\s+/).length / 200));
 
 /**
- * The h1 as its two sentences, one per line block (P-05): the break falls between the sentences, never inside
- * one ("I didn't inherit talent. / I built it."). Balanced wrapping still works inside each sentence.
+ * The thesis as its two sentences. From 1200 px each sentence is its own line (P1-4), so the break falls between them,
+ * never inside one; below that the words wrap freely (three lines on phones is the documented exception).
  */
 function TitleSentences({ text }: { text: string }) {
   const sentences = text.split(/(?<=[.!?])\s+/);
+  return sentences.map((sentence, i) => (
+    <span key={sentence}>
+      <span className="min-[1200px]:block">{sentence}</span>
+      {i < sentences.length - 1 ? ' ' : null}
+    </span>
+  ));
+}
+
+/** North-east arrow after an external link (drawn, not a glyph). */
+function ExternalArrow() {
   return (
-    <>
-      {sentences.map((sentence) => (
-        <span key={sentence} className="block">
-          {sentence}
-        </span>
-      ))}
-    </>
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="size-3.5 flex-none fill-none stroke-current"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M7 17 17 7M8 7h9v9" />
+    </svg>
   );
 }
 
-/** The `elsewhere` log value: text links from `PROFILE.links` (no phone, ever). */
-function Elsewhere() {
-  const { linkedin, github, kaggle, instagram, email } = PROFILE.links;
-  const links = [
-    { label: 'LinkedIn', href: linkedin, external: true },
-    { label: 'GitHub', href: github, external: true },
-    { label: 'Kaggle', href: kaggle, external: true },
-    { label: 'Instagram', href: instagram, external: true },
-    { label: 'Email', href: `mailto:${email}`, external: false },
-  ];
-  return (
-    <span className="inline-flex flex-wrap gap-x-3 gap-y-1">
-      {links.map((link) => (
-        <a
-          key={link.label}
-          href={link.href}
-          className={LINK}
-          {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-        >
-          {link.label}
-          {link.external ? <VisuallyHidden> (opens in a new tab)</VisuallyHidden> : null}
-        </a>
-      ))}
-    </span>
-  );
-}
+const FACT_KEY = 'font-body text-caption italic leading-[1.4] text-accent-2';
+const FACT_VALUE = 'm-0 font-display text-ui font-semibold leading-[1.35] text-ink';
 
 /**
- * `#about`: Origin (§G.2). The page's h1 is this spread's heading. Log column of measured facts, three
- * [S-CH1-ORIGIN] paragraphs, the portrait plate with the winter-sky inset over its lower-left corner.
+ * `#about`: Origin, the title block (FINAL-DESIGN §4.1). The page's one h1, the portrait (first phone screen), three
+ * facts, the one-sentence statement, the live Sikahar readout, "Read the long version" (the three original paragraphs
+ * and the winter chart, find-in-page reachable) and the route map as the page's contents.
+ *
+ * Grid: the section is a journal grid; the block spans its content tracks and lays out its own 12 columns with the
+ * same gutter (so it aligns with every section below). Phones: facts (left) beside the portrait (40 %), then the
+ * statement, the button and the readout. Markup order puts the facts before the statement (P1-8): the tab order then
+ * follows the phone layout.
  */
 export function AboutSection() {
-  const log: LogEntry[] = [
-    { key: 'born in', value: ORIGIN.bornIn, mono: false },
-    { key: 'latitude', value: ORIGIN.latitude },
-    { key: 'now', value: ORIGIN.now, mono: false },
-    { key: 'daily stack', value: PROFILE.dailyStack?.join(', ') },
-    { key: 'focus', value: PROFILE.focus?.join(', '), mono: false },
-    { key: 'elsewhere', value: <Elsewhere />, mono: false },
-    { key: 'featured in', value: ORIGIN.featuredIn, href: PROFILE.links.news, external: true, mono: false },
-  ];
-
   return (
-    <Spread
+    <section
       id="about"
-      labelledBy="about-title"
-      // The first section keeps its own top: the navbar band plus 40 px (phone) / 88 px (desktop), as before.
-      className="pt-[calc(var(--nav-clear)+2.5rem)] lg:pt-[calc(var(--nav-clear)+5.5rem)]"
-      // The display h1 takes cols 1-8 (it stops one gutter short of the portrait at track 10); the log moves to
-      // row 2 beside the body (P-05).
-      headingCols="lg:col-[2/span_8]"
-      heading={
-        <ChapterHeader as="h1" id="about-title">
-          <TitleSentences text={ORIGIN.title} />
-        </ChapterHeader>
-      }
-      log={<Log items={log} label="Origin log" />}
-      plate={
-        <div className="flex flex-col gap-16">
-          {/*
-            The inset straddles the portrait's lower-left corner (P-12): it sits in flow and is pulled up over the
-            portrait by 176 px, so its real height (chart plus caption) sets the space below; nothing is reserved.
-          */}
-          <div className="mx-auto flex w-full max-w-[420px] flex-col lg:mx-0">
-            <MediaSlot id="M-ORIGIN-01" ratio="4:5" caption="none" sizes="(min-width: 1024px) 420px, 100vw" priority />
-            <div className="relative -mt-44 ml-3 w-[200px] md:-ml-6 [html:not([data-theme=day])_&_.plate]:shadow-[0_24px_56px_-24px_rgb(var(--c-aqua)/var(--alpha-glint))]">
-              <MediaSlot
-                id="M-ORIGIN-03"
-                layout="inset"
-                captionText={ORIGIN.insetCaption}
-                fill={
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,var(--sky-zenith)_0%_45%,var(--sky-horizon)_100%)] [html:not([data-theme=day])_&]:bg-aqua-soft [html:not([data-theme=day])_&]:bg-[linear-gradient(180deg,transparent_0%_45%,rgb(var(--c-aqua)/var(--alpha-spec))_100%)] [html:not([data-theme=day])_&]:outline [html:not([data-theme=day])_&]:outline-1 [html:not([data-theme=day])_&]:-outline-offset-1 [html:not([data-theme=day])_&]:outline-[rgb(var(--c-titanium-aqua)/var(--alpha-line))] [html:not([data-theme=day])_&]:[--ink-contour:rgb(var(--c-aqua)/var(--alpha-edge))]">
-                    <StarChart
-                      data={WINTER_SKY}
-                      reveal="magnitude"
-                      title={ORIGIN.insetTitle}
-                      desc={ORIGIN.insetDesc}
-                      className="h-full w-full [html:not([data-theme=day])_&]:[--c-ink:var(--c-accent-2)]"
-                    />
-                  </div>
-                }
-              />
-            </div>
-          </div>
-          <div className="grid gap-8 empty:hidden sm:grid-cols-2">
-            {ORIGIN_OPTIONAL_SLOTS.map((id) => (
-              <MediaSlot key={id} id={id} />
-            ))}
-          </div>
-        </div>
-      }
+      aria-labelledby="about-h"
+      className="journal-grid scroll-mt-[calc(var(--nav-clear)+16px)] pt-[calc(var(--nav-clear)+clamp(16px,3vw,44px))]"
     >
-      <div className="flex max-w-measure flex-col gap-4 font-body text-body text-ink [&>p]:[text-wrap:pretty]">
-        {ORIGIN.paragraphs.map((paragraph) => (
-          <p key={paragraph.slice(0, 24)} className="m-0">
-            {paragraph}
-          </p>
-        ))}
+      <div className="col-[content] grid grid-cols-[minmax(0,1fr)_40%] items-start gap-x-4 gap-y-5 md:grid-cols-12 md:gap-x-[var(--gutter)] md:gap-y-6">
+        <h1
+          id="about-h"
+          tabIndex={-1}
+          className="col-span-full m-0 font-display text-display font-bold leading-[1.04] tracking-[-0.02em] text-ink outline-none [--step-6:clamp(2.75rem,1.6rem+3.9vw,4.5rem)] [text-wrap:balance] md:col-[1/10] md:row-start-1 lg:tracking-[-0.03em]"
+        >
+          <TitleSentences text={ORIGIN.title} />
+        </h1>
+
+        <div className="col-start-2 row-start-2 min-w-0 md:col-[10/13] md:row-[1/6] [&_.plate]:rounded-panel">
+          <MediaSlot
+            id="M-ORIGIN-01"
+            ratio="4:5"
+            caption="none"
+            sizes="(min-width: 1280px) 300px, (min-width: 768px) 25vw, 40vw"
+            priority
+          />
+        </div>
+
+        <dl className="col-start-1 row-start-2 m-0 grid content-start gap-3.5 md:col-[1/10] md:row-start-4 md:flex md:flex-wrap md:gap-x-10 md:gap-y-3">
+          <div className="grid gap-px">
+            <dt className={FACT_KEY}>{ORIGIN_FACTS.bornInKey}</dt>
+            <dd className={FACT_VALUE}>{ORIGIN.bornIn}</dd>
+          </div>
+          <div className="grid gap-px">
+            <dt className={FACT_KEY}>{ORIGIN_FACTS.nowKey}</dt>
+            <dd className={FACT_VALUE}>{ORIGIN.now}</dd>
+          </div>
+          <div className="grid gap-px">
+            <dt className={FACT_KEY}>{ORIGIN_FACTS.featuredInKey}</dt>
+            <dd className={FACT_VALUE}>
+              <a
+                href={PROFILE.links.news}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={ORIGIN_FACTS.featuredInLinkName}
+                className="prose-link -my-3 inline-flex min-h-11 items-center gap-1"
+              >
+                {ORIGIN.featuredIn}
+                <ExternalArrow />
+              </a>
+            </dd>
+          </div>
+        </dl>
+
+        <p className="col-span-full m-0 max-w-[30em] font-body text-lead text-ink [text-wrap:pretty] md:col-[1/8] md:row-start-2 lg:col-[1/7]">
+          {ORIGIN.statement}
+        </p>
+
+        <LongVersion
+          id="about-long"
+          label={LONG_VERSION.button}
+          minutes={LONG_VERSION.minutes(LONG_MINUTES)}
+          buttonClassName="col-span-full md:col-[1/8] md:row-start-3 md:justify-self-start"
+          regionClassName="col-span-full md:row-start-6"
+          afterButton={
+            <div className="col-span-full min-w-0 justify-self-start md:col-[1/10] md:row-start-5">
+              <SikaharReadout copy={SIKAHAR_READOUT} observer={SKY_OBSERVER} />
+            </div>
+          }
+        >
+          <div className="grid gap-8 pb-1 pt-2 md:grid-cols-[minmax(0,64ch)_280px] md:items-start md:justify-between md:gap-6">
+            <div className="grid max-w-[64ch] gap-4 font-body text-body text-ink">
+              {ORIGIN.paragraphs.map((paragraph) => (
+                <p key={paragraph.slice(0, 24)} className="m-0 [text-wrap:pretty]">
+                  {paragraph}
+                </p>
+              ))}
+              <div className="grid gap-6 empty:hidden sm:grid-cols-2">
+                {ORIGIN_OPTIONAL_SLOTS.map((id) => (
+                  <MediaSlot key={id} id={id} />
+                ))}
+              </div>
+            </div>
+            <figure className="m-0 grid w-full max-w-[280px] gap-3">
+              {/* A night window in both themes: the chart is the sky at night, so it keeps the Night palette. */}
+              <div
+                data-palette-scope="night"
+                className="overflow-hidden rounded-full bg-ground-sky outline outline-1 -outline-offset-1 outline-line-strong forced-colors:outline-[CanvasText]"
+              >
+                <StarChart data={WINTER_SKY} title={ORIGIN.insetTitle} desc={ORIGIN.insetDesc} />
+              </div>
+              <figcaption className="max-w-[36em] font-body text-caption italic text-ink-muted">
+                {ORIGIN.insetCaption}
+              </figcaption>
+              <OpenThisSky label={LONG_VERSION.openThisSky} href={SIKAHAR_READOUT.href} />
+            </figure>
+          </div>
+        </LongVersion>
       </div>
-    </Spread>
+
+      <RouteMap className="col-[content] mt-7 md:mt-10" />
+    </section>
   );
 }
