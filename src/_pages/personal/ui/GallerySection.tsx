@@ -1,38 +1,41 @@
-import { ChapterHeader } from '@/shared/ui/chapter-header';
-import { JournalGrid, Spread } from '@/shared/ui/journal';
-import { ALBUM_COPY, ALBUM_FRAMES } from '../config/content';
+import { JournalGrid } from '@/shared/ui/journal';
+import { ALBUM_COPY, ALBUM_FRAMES, SECTION_STATEMENTS } from '../config/content';
+import { sectionLabel } from '../config/sections';
 import { CircleSpread } from './sections/CircleSpread';
 import { ContactSheet } from './sections/ContactSheet';
 import { RoadSpread } from './sections/RoadSpread';
 
 /**
- * `#gallery`: Field album (§G.2, [S-LIFE-GALLERY]): the contact sheet of existing frames, then two
- * sub-spreads (road, circle) under the same id. The page's last section: no padding at either end (the stack's
- * `gap-section` above, the footer's seam below; P-02, P-07).
+ * `#gallery`: Field album (FINAL-DESIGN §4.6). h2 (the rail label) and the statement, the contact sheet of the twelve
+ * existing frames (visually hidden h3), then the band: the road (with the road sheet) and the people, two columns
+ * from 1024 px (7 / 5), stacked below. Motion: frames develop once and the road sheet draws once; both static under
+ * reduced motion.
  */
 export function GallerySection() {
   return (
-    <section id="gallery" aria-labelledby="gallery-title">
-      <Spread
-        as="div"
-        plateSpan="none"
-        heading={
-          <ChapterHeader as="h2" id="gallery-title">
-            {ALBUM_COPY.title}
-          </ChapterHeader>
-        }
-      >
-        <p className="m-0 max-w-measure font-body text-lead text-ink [text-wrap:pretty]">{ALBUM_COPY.lead}</p>
-      </Spread>
+    <section id="gallery" aria-labelledby="gallery-h" className="scroll-mt-[calc(var(--nav-clear)+16px)]">
+      <JournalGrid>
+        <div className="col-[content-start/content-end] min-w-0">
+          <h2 id="gallery-h" tabIndex={-1} className="m-0 font-display text-h2 font-bold text-ink [text-wrap:balance] focus:outline-none">
+            {sectionLabel('gallery')}
+          </h2>
+          <p className="m-0 mt-4 max-w-[30em] font-body text-lead text-ink [text-wrap:pretty]">
+            {SECTION_STATEMENTS.gallery}
+          </p>
 
-      <JournalGrid className="mt-block">
-        <div className="col-[content-start/content-end] lg:col-[2/span_11]">
-          <ContactSheet frames={ALBUM_FRAMES} label={ALBUM_COPY.sheetLabel} />
+          <h3 id="gallery-sheet-h" className="sr-only">
+            {ALBUM_COPY.sheetLabel}
+          </h3>
+          <div className="mt-8 lg:mt-12">
+            <ContactSheet frames={ALBUM_FRAMES} labelledBy="gallery-sheet-h" />
+          </div>
+
+          <div className="mt-16 grid gap-12 lg:mt-[72px] lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-x-12">
+            <RoadSpread />
+            <CircleSpread />
+          </div>
         </div>
       </JournalGrid>
-
-      <RoadSpread />
-      <CircleSpread />
     </section>
   );
 }

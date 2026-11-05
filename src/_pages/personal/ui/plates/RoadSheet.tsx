@@ -1,9 +1,11 @@
-import { useId } from 'react';
+import { useId, type CSSProperties } from 'react';
 import type { RoadPlace, Ride } from '../../config/content';
 import { DrawOnView } from '@/shared/ui/draw';
 import { INK, LABEL, LABEL_MUTED, MUTED, NS, ROUTE, WATER, WATER_LABEL, polyline } from './svg';
 
 const W = 640;
+/** The ride lines draw once on view (§3.4: 900 ms, pen); static under reduced motion (DrawOnView's own rule). */
+const DRAW_MS = 900;
 const H = 360;
 
 /**
@@ -43,6 +45,12 @@ const LINING = [8, 16, 25, 35].map((k, i) => ({
   opacity: [0.55, 0.43, 0.31, 0.19][i],
 }));
 
+/**
+ * A ride line: the route pact's 2 px round-capped stroke in `accent-2` (FINAL-DESIGN §3.2, §4.6): rides are not trek
+ * routes, so never oxblood.
+ */
+const RIDE: CSSProperties = { ...ROUTE, stroke: 'var(--accent-2)' };
+
 /** Opacity builds with frequency: 3 = the ride repeated most, drawn most opaque. */
 const FREQ_OPACITY: Record<Ride['frequency'], number> = { 1: 0.4, 2: 0.7, 3: 1 };
 const FREQ_WORD: Record<Ride['frequency'], string> = { 1: 'now and then', 2: 'often', 3: 'most often' };
@@ -53,9 +61,9 @@ export interface RoadSheetProps {
 }
 
 /**
- * G-10 road sheet (16:9): a taillight map of the rides on a schematic Odisha coast. Each ride is a
- * straight `signal-line` trail between two schematic nodes; the more often it is ridden, the more
- * opaque it is. Labelled "schematic": the coast is hand-simplified and nothing is to scale.
+ * G-10 road sheet (16:9): the rides on a schematic Odisha coast. Each ride is a straight `accent-2` line
+ * between two schematic nodes; the more often it is ridden, the more opaque it is. Labelled "schematic":
+ * the coast is hand-simplified and nothing is to scale. Ink is `currentColor` (`text-ink` on the svg).
  */
 export function RoadSheet({ rides, className }: RoadSheetProps) {
   // Type is set in viewBox units, so it shrinks with the sheet; the breakpoint steps keep the labels
@@ -75,13 +83,16 @@ export function RoadSheet({ rides, className }: RoadSheetProps) {
   const legend = ([3, 2, 1] as const).filter((f) => rides.some((ride) => ride.frequency === f));
 
   return (
-    <DrawOnView className={className}>
+    <DrawOnView className={className} durationMs={DRAW_MS}>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
         aria-labelledby={`${id}-t`}
         aria-describedby={`${id}-d`}
-        className="block h-auto w-full text-accent-2 [font-size:24px] sm:[font-size:15px] md:[font-size:12px]"
+        className={
+          'block h-auto w-full text-ink [font-size:24px] sm:[font-size:16px] md:[font-size:14px] ' +
+          'forced-colors:[&_circle]:![fill:CanvasText] forced-colors:[&_path]:![stroke:CanvasText]'
+        }
       >
         <title id={`${id}-t`}>Road sheet: my rides around Bhubaneswar</title>
         <desc id={`${id}-d`}>{desc}</desc>
@@ -98,7 +109,7 @@ export function RoadSheet({ rides, className }: RoadSheetProps) {
               key={ride.id}
               data-draw
               d={`M${a.x} ${a.y}L${b.x} ${b.y}`}
-              style={{ ...ROUTE, opacity: FREQ_OPACITY[ride.frequency] }}
+              style={{ ...RIDE, opacity: FREQ_OPACITY[ride.frequency] }}
               vectorEffect={NS}
             >
               <title>{`${ride.label}, ${FREQ_WORD[ride.frequency]}`}</title>
@@ -146,7 +157,7 @@ export function RoadSheet({ rides, className }: RoadSheetProps) {
 
           {legend.map((f, i) => (
             <g key={f} transform={`translate(24 ${276 + i * 34})`}>
-              <path d="M0 0H32" style={{ ...ROUTE, opacity: FREQ_OPACITY[f] }} vectorEffect={NS} />
+              <path d="M0 0H32" style={{ ...RIDE, opacity: FREQ_OPACITY[f] }} vectorEffect={NS} />
               <text x={42} y={0} dominantBaseline="central" className={LABEL_MUTED}>
                 {FREQ_WORD[f]}
               </text>

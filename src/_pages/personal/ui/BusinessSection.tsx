@@ -1,124 +1,209 @@
-import { ChapterHeader } from '@/shared/ui/chapter-header';
-import { Log, Spread } from '@/shared/ui/journal';
+import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 import { getMedia } from '@/shared/config';
-import { MediaFill, MediaSlot } from '@/shared/ui/media-slot';
+import { cn } from '@/shared/lib/cn';
+import { JournalGrid, Stamp } from '@/shared/ui/journal';
+import { MediaSlot } from '@/shared/ui/media-slot';
 import { VisuallyHidden } from '@/shared/ui/visually-hidden';
-import { VENTURES, VENTURES_CAPTION, VENTURES_TITLE, type Venture } from '../config/content';
-
-/** Component links: `link-ink` on a 1 px `link-underline`, 2 px on hover and focus (globals `.prose-link`). */
-const LINK = 'prose-link rounded-control';
-
-function VentureLinks({ venture }: { venture: Venture }) {
-  if (venture.links.length === 0) return null;
-  return (
-    <ul aria-label={`${venture.title} links`} className="m-0 mt-4 flex list-none flex-wrap gap-x-5 gap-y-2 p-0 font-body text-ui">
-      {venture.links.map((link) => (
-        <li key={link.url}>
-          <a href={link.url} target="_blank" rel="noopener noreferrer" className={LINK}>
-            {link.name}
-            <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-}
+import {
+  SECTION_STATEMENTS,
+  VENTURE_LEDGER,
+  VENTURE_LEDGER_COPY,
+  VENTURES,
+  VENTURES_CAPTION,
+  type Venture,
+} from '../config/content';
+import { sectionLabel } from '../config/sections';
+import { JumpLink } from './sections/JumpLink';
 
 /*
- * The ledger is a real `<table>` with a caption (§J.1: ledgers are tables), laid out as journal spreads. Each
- * row is a journal grid with the same placements as `Spread` (§B.5): name (the row header, an h3) in cols 4-8,
- * log (role, years) in cols 1-3, story (subtitle, description, links) under the name, plate in cols 9-12; below
- * 1024 px every cell stacks in DOM order. The table parts carry their ARIA roles explicitly because some engines
- * drop table semantics once `display` is changed by CSS.
+ * `#business`: Ventures (FINAL-DESIGN §4.4): one row per venture in a real `<table>`. From 900 px it is a steel panel
+ * with steel rules between rows (a table, so the rules are honest); below 900 px each row is its own card. The table
+ * parts keep explicit ARIA roles on purpose: the card layout sets `display: block`, which drops native table
+ * semantics in Safari (REVIEW-UX P1-3, kept). No motion beyond press feedback on the links.
+ *
+ * `.panel-steel` (steel rim + glass top light) is written out per breakpoint below: the material class has no
+ * responsive variant, and it belongs on the table from 900 px but on each card under it.
  */
-const FULL_CONTENT = 'col-[content-start/content-end] p-0 text-left align-top font-normal';
-const NAME_CELL = `${FULL_CONTENT} lg:col-[5/span_5] lg:row-start-1`;
-const LOG_CELL = `${FULL_CONTENT} mt-3 lg:col-[2/span_3] lg:row-[1/span_2] lg:mt-0 lg:self-start lg:pt-2 xl:sticky xl:top-[calc(var(--nav-clear)+1.5rem)]`;
-const STORY_CELL = `${FULL_CONTENT} mt-4 lg:col-[5/span_5] lg:row-start-2 lg:self-start`;
-const PLATE_CELL = `${FULL_CONTENT} mt-8 empty:hidden lg:col-[10/span_4] lg:row-[1/span_2] lg:mt-0 lg:self-start`;
 
 /**
- * A venture's plate until its screen is supplied: the registry's glyph on a quiet 16:10 plate. Passed as `fill`,
- * so production shows a finished glyph plate in the plate column (C-05) instead of a "Screens to come" line;
- * the dev server and `?media=spec` keep the full pending plate.
+ * Row cells: stacked in the card below 900 px; from 900 px padded table cells with a steel rule above every row but
+ * the first (`.rule-steel` is a border-image, so it draws only where the cell has a top border).
  */
-function VenturePlate({ venture }: { venture: Venture }) {
-  const entry = getMedia(venture.slotId);
+const CELL =
+  'rule-steel block p-0 text-left align-top font-normal ' +
+  'min-[900px]:table-cell min-[900px]:px-5 min-[900px]:py-5 min-[900px]:[tr:not(:first-child)>&]:border-t';
+
+/** Component link (`.prose-link`: action-line underline, action on hover and focus), a 44 px target, pressable. */
+const LINK =
+  'prose-link inline-flex min-h-11 items-center gap-1 rounded-control font-body text-caption ' +
+  'transition-transform duration-micro active:scale-[0.97]';
+
+function subtitleOf(venture: Venture): string | null {
+  const row = VENTURE_LEDGER[venture.id];
+  if (row && row.subtitle !== undefined) return row.subtitle;
+  return venture.subtitle;
+}
+
+/** A screen thumbnail at the row's left edge, only once the venture's screen exists (§3.5: nothing until then). */
+function VentureThumb({ venture }: { venture: Venture }) {
+  if (getMedia(venture.slotId).status !== 'existing') return null;
   return (
     <MediaSlot
       id={venture.slotId}
-      ratio="16:10"
-      className="max-w-[280px]"
-      sizes="280px"
-      fill={<MediaFill kind={entry.fill} seed={entry.id} glyph={entry.glyph} />}
+      layout="thumb"
+      caption="none"
+      ratio="1:1"
+      sizes="72px"
+      className="w-[72px] shrink-0 overflow-hidden rounded-control"
     />
   );
 }
 
+function VentureRow({ venture }: { venture: Venture }) {
+  const row = VENTURE_LEDGER[venture.id];
+  const subtitle = subtitleOf(venture);
+  const recognition = row?.stamp ?? row?.qualifier;
+  return (
+    <tr
+      role="row"
+      className={
+        'block rounded-panel border border-[var(--steel-rim)] bg-surface px-4 pb-2 pt-4 ' +
+        'shadow-[inset_0_1px_0_var(--glass-highlight)] ' +
+        'min-[900px]:table-row min-[900px]:rounded-none min-[900px]:border-0 min-[900px]:bg-transparent ' +
+        'min-[900px]:p-0 min-[900px]:shadow-none'
+      }
+    >
+      <th role="rowheader" scope="row" className={cn(CELL, 'mb-1.5 min-[900px]:mb-0 min-[900px]:w-[31%]')}>
+        <div className="flex items-start gap-4">
+          <VentureThumb venture={venture} />
+          <div className="min-w-0">
+            <span className="block font-display text-title font-semibold text-ink [text-wrap:balance]">
+              {venture.title}
+            </span>
+            {subtitle || row?.crossLink ? (
+              <span className="mt-1 block font-body text-caption text-ink-muted [text-wrap:pretty]">
+                {subtitle}
+                {row?.crossLink ? (
+                  <>
+                    {subtitle ? ' ' : null}
+                    <JumpLink
+                      targetId={row.crossLink.href.slice(1)}
+                      // Inline in the sentence for a mouse (a 24 px box, WCAG 2.5.8); its own 44 px line on touch screens.
+                      className={cn(
+                        LINK,
+                        'inline-block min-h-6 align-baseline [@media(pointer:coarse)]:flex [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:w-fit',
+                      )}
+                    >
+                      {row.crossLink.label}
+                    </JumpLink>
+                  </>
+                ) : null}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </th>
+      <td
+        role="cell"
+        className={cn(
+          CELL,
+          'inline font-display text-ui font-semibold text-ink',
+          "after:font-body after:font-normal after:text-ink-muted after:content-['_·_']",
+          'min-[900px]:w-[13%] min-[900px]:after:content-none',
+        )}
+      >
+        {venture.role}
+      </td>
+      <td
+        role="cell"
+        className={cn(
+          CELL,
+          'inline font-data text-caption text-ink [font-variant-numeric:tabular-nums]',
+          'min-[900px]:w-[17%] min-[900px]:whitespace-nowrap',
+        )}
+      >
+        {venture.years}
+      </td>
+      <td role="cell" className={cn(CELL, 'mt-3 empty:hidden min-[900px]:mt-0 min-[900px]:w-[21%] min-[900px]:empty:table-cell')}>
+        {recognition ? (
+          <Stamp tone={row?.stamp ? 'signal' : 'placed'} className="whitespace-normal text-left">
+            {recognition}
+          </Stamp>
+        ) : null}
+      </td>
+      <td role="cell" className={cn(CELL, 'mt-1 empty:hidden min-[900px]:mt-0 min-[900px]:py-2 min-[900px]:empty:table-cell')}>
+        {venture.links.length > 0 ? (
+          <ul aria-label={`${venture.title} links`} className="m-0 flex list-none flex-wrap gap-x-4 p-0">
+            {venture.links.map((link) => (
+              <li key={link.url}>
+                <a href={link.url} target="_blank" rel="noopener noreferrer" className={LINK}>
+                  {link.name}
+                  <ArrowUpRight aria-hidden="true" className="size-3.5 shrink-0 text-ink-muted" strokeWidth={2} />
+                  <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </td>
+    </tr>
+  );
+}
+
 /**
- * `#business`: Ventures (§G.2, [S-VENTURES]). A ledger of four rows: log (role, years), name, subtitle,
- * description and text links, with a 16:10 plate whose pending fill is the venture's glyph.
+ * `#business`: Ventures. h2 (the rail label), the statement, the four-row ledger from `VENTURES` + `VENTURE_LEDGER`
+ * (name, subtitle, cross link, role, years, stamp or qualifier, links), then the line to the Work page (same tab).
  */
 export function BusinessSection() {
   return (
-    <section id="business" aria-labelledby="business-title">
-      <Spread
-        as="div"
-        plateSpan="none"
-        heading={
-          <ChapterHeader as="h2" id="business-title">
-            {VENTURES_TITLE}
-          </ChapterHeader>
-        }
-      />
+    <section id="business" aria-labelledby="business-h" className="scroll-mt-[calc(var(--nav-clear)+16px)]">
+      <JournalGrid>
+        <div className="col-[content-start/content-end] min-w-0">
+          <h2 id="business-h" tabIndex={-1} className="m-0 font-display text-h2 font-bold text-ink [text-wrap:balance] focus:outline-none">
+            {sectionLabel('business')}
+          </h2>
+          <p className="m-0 mt-4 max-w-[30em] font-body text-lead text-ink [text-wrap:pretty]">
+            {SECTION_STATEMENTS.business}
+          </p>
 
-      <table role="table" className="mt-block block w-full border-collapse">
-        <caption className="sr-only">{VENTURES_CAPTION}</caption>
-        <thead role="rowgroup" className="sr-only">
-          <tr role="row">
-            <th role="columnheader" scope="col">
-              Venture
-            </th>
-            <th role="columnheader" scope="col">
-              Role and years
-            </th>
-            <th role="columnheader" scope="col">
-              What it is
-            </th>
-            <th role="columnheader" scope="col">
-              Plate
-            </th>
-          </tr>
-        </thead>
-        <tbody role="rowgroup" className="flex flex-col gap-block">
-          {VENTURES.map((venture) => (
-            <tr key={venture.id} role="row" className="journal-grid lg:grid-rows-[auto_1fr]">
-              <th role="rowheader" scope="row" className={NAME_CELL}>
-                <ChapterHeader as="h3" size="h3">
-                  {venture.title}
-                </ChapterHeader>
-              </th>
-              <td role="cell" className={LOG_CELL}>
-                <Log
-                  label={`${venture.title} log`}
-                  items={[
-                    { key: 'role', value: venture.role, mono: false },
-                    { key: 'years', value: venture.years },
-                  ]}
-                />
-              </td>
-              <td role="cell" className={STORY_CELL}>
-                <p className="m-0 font-body text-lead italic text-ink-muted [text-wrap:pretty]">{venture.subtitle}</p>
-                <p className="m-0 mt-3 max-w-measure font-body text-body text-ink [text-wrap:pretty]">{venture.desc}</p>
-                <VentureLinks venture={venture} />
-              </td>
-              <td role="cell" className={PLATE_CELL}>
-                <VenturePlate venture={venture} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <table
+            role="table"
+            className={
+              'mt-8 block w-full lg:mt-12 ' +
+              'min-[900px]:table min-[900px]:border-separate min-[900px]:border-spacing-0 min-[900px]:overflow-hidden ' +
+              'min-[900px]:rounded-panel min-[900px]:border min-[900px]:border-[var(--steel-rim)] min-[900px]:bg-surface ' +
+              'min-[900px]:shadow-[inset_0_1px_0_var(--glass-highlight)]'
+            }
+          >
+            <caption className="sr-only">{VENTURES_CAPTION}</caption>
+            <thead role="rowgroup" className="sr-only">
+              <tr role="row">
+                {VENTURE_LEDGER_COPY.headers.map((label) => (
+                  <th key={label} role="columnheader" scope="col">
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody role="rowgroup" className="grid gap-4 min-[900px]:table-row-group">
+              {VENTURES.map((venture) => (
+                <VentureRow key={venture.id} venture={venture} />
+              ))}
+            </tbody>
+          </table>
+
+          <p className="m-0 mt-4 font-body text-caption text-ink-muted">
+            {VENTURE_LEDGER_COPY.after}
+            <Link
+              href={VENTURE_LEDGER_COPY.afterLink.href}
+              className="prose-link inline-flex min-h-11 items-center rounded-control transition-transform duration-micro active:scale-[0.97]"
+            >
+              {VENTURE_LEDGER_COPY.afterLink.label}
+            </Link>
+          </p>
+        </div>
+      </JournalGrid>
     </section>
   );
 }
