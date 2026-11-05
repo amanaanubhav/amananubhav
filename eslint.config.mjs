@@ -24,5 +24,9 @@ export default defineConfig([
     '.playwright-cli/**',
     '.vercel/**',
     'public/boot/**', // generated, minified (npm run gen:preloader)
+    // The Life page's reviewed design prototype and its sky engine: plain browser JS kept as the design reference
+    // (its `useFont` helper is not a React hook). The shipped port lives in src/_pages/personal/lib/sky-engine.ts.
+    'docs/redesign/life/prototype/**',
+    'docs/redesign/life/sky/**',
   ]),
 ]);
