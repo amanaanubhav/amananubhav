@@ -837,8 +837,8 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
   },
   'M-SKY-01': {
     chapter: 'sky', kind: 'scene', status: 'generated', ratio: '16:10',
-    path: 'src/_pages/personal/ui/scenes/SkyScene.tsx', generator: 'scene sky + G-04b',
-    subject: 'Star dome scene and its sky poster, built from the star catalogue.',
+    path: 'src/_pages/personal/ui/sky/SkyLive.tsx', generator: 'npm run sky:data + G-04b',
+    subject: 'The live 2D sky plate and its SSR poster, built from the star catalogue.',
     short: "tonight's sky over Bihar", alt: "Tonight's sky over Bihar, 25° N, from dusk to dawn",
     usedIn: ['/personal#sky'],
   },
@@ -868,7 +868,7 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
     path: 'src/_pages/personal/ui/plates/RoadSheet.tsx', generator: 'G-10',
     subject: 'Schematic road sheet, drawn from the rides list.',
     short: 'a map of my rides', alt: 'Map of my rides: Bhubaneswar to Puri and Chandaka',
-    usedIn: ['/personal#gallery (road spread)'], confirm: ['Q-59'],
+    usedIn: ['/personal#gallery (road sheet, drawn inline, not through MediaSlot)'], confirm: ['Q-59'],
   },
 
   // ── Circle ──────────────────────────────────────────────────────────────────────────────────────
@@ -886,7 +886,8 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
     src: G5_AMAN_ONLY, width: 1852, height: 2315,
     subject: 'An Aman-only 4:5 crop of G5 (bridge over a gorge in Sikkim), made from the original so no friend is in frame; the full frame shows only with their consent.',
     short: 'me at a bridge over a gorge in Sikkim', alt: 'Aman at a bridge over a gorge in Sikkim', place: 'Sikkim',
-    usedIn: ['/personal#gallery (circle spread)'], confirm: ['Q-60'],
+    // Not rendered on /personal since the Life redesign: the circle band dropped it (it duplicated album frame 04).
+    usedIn: [], confirm: ['Q-60'],
   },
 
   // ── Album ───────────────────────────────────────────────────────────────────────────────────────
