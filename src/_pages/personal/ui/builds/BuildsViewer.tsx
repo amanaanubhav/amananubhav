@@ -150,6 +150,57 @@ export function BuildsViewer({ children, className }: BuildsViewerProps) {
         : null;
     articles.forEach((a) => io?.observe(a));
 
+    // Phones and tablets: the strip (one article at a time), its counter and steps, and the chip index's current mark.
+    const strip = root.querySelector<HTMLElement>('[data-build-strip]');
+    const cards = strip ? Array.from(strip.querySelectorAll<HTMLElement>('[data-build-card]')) : [];
+    const count = root.querySelector<HTMLElement>('[data-strip-count]');
+    const steps = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-strip-step]'));
+    const chips = Array.from(root.querySelectorAll<HTMLAnchorElement>('a[data-build-chip]'));
+    let index = -1;
+    let stripFrame = 0;
+    const snapLine = (): number =>
+      strip ? strip.getBoundingClientRect().left + (parseFloat(getComputedStyle(strip).scrollPaddingLeft) || 0) : 0;
+    /** The card whose left edge sits nearest the strip's snap line. */
+    const nearest = (): number => {
+      const line = snapLine();
+      let best = 0;
+      cards.forEach((card, i) => {
+        if (Math.abs(card.getBoundingClientRect().left - line) < Math.abs(cards[best].getBoundingClientRect().left - line)) best = i;
+      });
+      return best;
+    };
+    const syncStrip = () => {
+      stripFrame = 0;
+      if (!strip || wide.matches || cards.length === 0) return;
+      const i = nearest();
+      if (i === index) return;
+      index = i;
+      const template = count?.dataset.template;
+      if (count && template) count.textContent = template.replace('{n}', String(i + 1)).replace('{total}', String(cards.length));
+      steps.forEach((step) => {
+        step.disabled = Number(step.dataset.stripStep) < 0 ? i === 0 : i === cards.length - 1;
+      });
+      chips.forEach((chip) => {
+        if (chip.dataset.buildChip === order[i]) chip.setAttribute('aria-current', 'true');
+        else chip.removeAttribute('aria-current');
+      });
+    };
+    const onStripScroll = () => {
+      if (!stripFrame) stripFrame = requestAnimationFrame(syncStrip);
+    };
+    const goTo = (i: number) => {
+      const card = cards[Math.max(0, Math.min(cards.length - 1, i))];
+      if (!strip || !card) return;
+      strip.scrollTo({
+        left: strip.scrollLeft + card.getBoundingClientRect().left - snapLine(),
+        behavior: reduce.matches || !motionRef.current ? 'auto' : 'smooth',
+      });
+    };
+    const onStep = (event: Event) => goTo(nearest() + Number((event.currentTarget as HTMLElement).dataset.stripStep));
+    strip?.addEventListener('scroll', onStripScroll, { passive: true });
+    steps.forEach((step) => step.addEventListener('click', onStep));
+    syncStrip();
+
     const onClick = (event: MouseEvent) => {
       const target = event.target as Element | null;
       const button = target?.closest<HTMLElement>('[data-build-show]');
@@ -163,6 +214,13 @@ export function BuildsViewer({ children, className }: BuildsViewerProps) {
       if (!article) return;
       event.preventDefault();
       article.querySelector<HTMLElement>('h3')?.focus({ preventScroll: true });
+      if (strip && !wide.matches) {
+        // The strip slides to the card; the page only moves if the strip is off screen.
+        goTo(order.indexOf(chip.dataset.buildChip ?? ''));
+        const top = strip.getBoundingClientRect().top;
+        if (top < 0 || top > window.innerHeight * 0.6) scrollToTarget(strip);
+        return;
+      }
       scrollToTarget(article);
     };
     root.addEventListener('click', onClick);
@@ -183,6 +241,9 @@ export function BuildsViewer({ children, className }: BuildsViewerProps) {
       io?.disconnect();
       ro?.disconnect();
       root.removeEventListener('click', onClick);
+      strip?.removeEventListener('scroll', onStripScroll);
+      steps.forEach((step) => step.removeEventListener('click', onStep));
+      if (stripFrame) cancelAnimationFrame(stripFrame);
       fadeIn?.cancel();
       fadeOut?.cancel();
     };

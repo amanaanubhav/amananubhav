@@ -549,11 +549,20 @@ export const BUILD_NAV = {
     rakshak: 'Show the RAKSHAK diagram',
   },
   drawAgain: 'Draw again',
+  /** Phones and tablets: the builds as a swipeable strip, one card at a time. */
+  strip: {
+    label: 'Early builds, one at a time',
+    prev: 'Previous build',
+    next: 'Next build',
+    /** `{n}` and `{total}` are filled on the server and again by the client as the strip moves. */
+    count: '{n} of {total}',
+  },
 } as const satisfies {
   label: string;
   chips: Record<EarlyBuildId, string>;
   show: Record<EarlyBuildId, string>;
   drawAgain: string;
+  strip: { label: string; prev: string; next: string; count: string };
 };
 
 /** Award stamps (`bg-oxblood-deep text-on-oxblood glint-metal`): in the index row and in the plate's corner. */

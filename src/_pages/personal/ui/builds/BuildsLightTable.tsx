@@ -1,3 +1,7 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+import { IconButton } from '@/shared/ui/button';
+
 import { BUILD_NAV, BUILD_STAMPS, EARLY_BUILDS } from '../../config/content';
 import { BuildFigure, STAMP_CLASS } from './BuildFigure';
 import { BuildsViewer } from './BuildsViewer';
@@ -7,8 +11,9 @@ const headingId = (id: string): string => `build-${id}-h`;
 /**
  * Early builds as a light table (FINAL §4.3). Desktop (≥ 1024 px): the index of five articles in columns 1-5 and a
  * sticky viewer in columns 6-12 that shows the active build's plate (scroll or press drives it). Phones and tablets:
- * a chip index, then each article stacked plate first. The plates are rendered twice (article and viewer) and CSS
- * shows one set, so the server sends finished drawings and the client only switches and draws.
+ * the chip index over a swipeable strip, one article at a time, plate first, with the next one peeking in and a
+ * "n of 5" counter with previous and next below. The plates are rendered twice (article and viewer) and CSS shows one
+ * set, so the server sends finished drawings and the client only switches and draws.
  */
 export function BuildsLightTable() {
   const [first] = EARLY_BUILDS;
@@ -24,7 +29,7 @@ export function BuildsLightTable() {
               <a
                 href={`#build-${build.id}`}
                 data-build-chip={build.id}
-                className="inline-flex min-h-11 items-center rounded-full border border-line-strong bg-surface px-4 font-display text-[0.9375rem] font-semibold leading-none text-ink no-underline transition-transform duration-micro ease-settle active:scale-[0.97]"
+                className="inline-flex min-h-11 items-center rounded-full border border-line-strong bg-surface px-4 font-display text-[0.9375rem] font-semibold leading-none text-ink no-underline transition-transform duration-micro ease-settle active:scale-[0.97] aria-[current=true]:border-action aria-[current=true]:bg-action-soft"
               >
                 {BUILD_NAV.chips[build.id]}
               </a>
@@ -33,13 +38,18 @@ export function BuildsLightTable() {
         </ul>
       </nav>
 
-      <div className="mt-6 grid gap-12 lg:mt-0 lg:grid-cols-12 lg:items-start lg:gap-x-[var(--gutter)]">
-        <ol className="m-0 grid list-none gap-10 p-0 lg:col-span-5 lg:gap-1">
+      <div className="mt-6 grid gap-12 max-lg:gap-0 lg:mt-0 lg:grid-cols-12 lg:items-start lg:gap-x-[var(--gutter)]">
+        <ol
+          data-build-strip=""
+          data-lenis-prevent=""
+          aria-label={BUILD_NAV.strip.label}
+          className="m-0 list-none p-0 max-lg:-mx-[var(--margin)] max-lg:flex max-lg:snap-x max-lg:snap-mandatory max-lg:scroll-px-[var(--margin)] max-lg:gap-4 max-lg:overflow-x-auto max-lg:overscroll-x-contain max-lg:px-[var(--margin)] max-lg:pb-1 max-lg:[scrollbar-width:none] max-lg:[&::-webkit-scrollbar]:hidden lg:col-span-5 lg:grid lg:gap-1"
+        >
           {EARLY_BUILDS.map((build) => {
             const stamp = BUILD_STAMPS[build.id];
             const hId = headingId(build.id);
             return (
-              <li key={build.id}>
+              <li key={build.id} data-build-card="" className="max-lg:w-[min(86%,26rem)] max-lg:shrink-0 max-lg:snap-start">
                 <article
                   id={`build-${build.id}`}
                   data-build={build.id}
@@ -83,6 +93,22 @@ export function BuildsLightTable() {
             );
           })}
         </ol>
+
+        {/* Phones and tablets: where the strip is, and a step either way (44 px targets). */}
+        <div className="mt-4 flex items-center justify-between gap-4 lg:hidden">
+          <p
+            data-strip-count=""
+            data-template={BUILD_NAV.strip.count}
+            aria-live="polite"
+            className="m-0 font-data text-caption tabular text-ink-muted"
+          >
+            {BUILD_NAV.strip.count.replace('{n}', '1').replace('{total}', String(EARLY_BUILDS.length))}
+          </p>
+          <div className="flex gap-2">
+            <IconButton icon={ChevronLeft} label={BUILD_NAV.strip.prev} variant="outline" data-strip-step="-1" disabled />
+            <IconButton icon={ChevronRight} label={BUILD_NAV.strip.next} variant="outline" data-strip-step="1" />
+          </div>
+        </div>
 
         <div
           id="builds-viewer"
