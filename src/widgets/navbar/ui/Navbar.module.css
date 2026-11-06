@@ -118,6 +118,16 @@
     border-color var(--dur-hover) var(--ease-settle);
 }
 
+/* Touch: the hit area reaches 44 px tall (the 48 px pill has room for it) and 1 px into the gap either side;
+   nothing drawn changes. ::before is the wash, so the hit area is ::after. */
+@media (pointer: coarse) {
+  .ctl::after {
+    content: '';
+    position: absolute;
+    inset: -2px -1px;
+  }
+}
+
 /* Vault keeps its outlined pill, inset like the bead. */
 .pill::before {
   border: 1px solid var(--line-strong);

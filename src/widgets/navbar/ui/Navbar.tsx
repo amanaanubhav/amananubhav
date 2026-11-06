@@ -267,20 +267,23 @@ export function Navbar() {
             aria-label={themeLabel}
             title={themeLabel}
             onClick={() => runThemeSweep(toggleTheme, { toDay: isDark })}
-            className={action('w-10 overflow-hidden')}
+            className={action('w-10')}
           >
-            <AnimatePresence initial={false}>
-              <motion.span
-                key={isDark ? 'sun' : 'moon'}
-                initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-                animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-                transition={GLIDE}
-                className="absolute inset-0 grid place-items-center"
-              >
-                <ThemeIcon aria-hidden="true" focusable="false" className="size-5" strokeWidth={1.75} />
-              </motion.span>
-            </AnimatePresence>
+            {/* The turning icon is clipped by its own box, not the button's, so the touch hit area (::after) is not. */}
+            <span aria-hidden="true" className="absolute inset-0 overflow-hidden rounded-full">
+              <AnimatePresence initial={false}>
+                <motion.span
+                  key={isDark ? 'sun' : 'moon'}
+                  initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                  exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                  transition={GLIDE}
+                  className="absolute inset-0 grid place-items-center"
+                >
+                  <ThemeIcon aria-hidden="true" focusable="false" className="size-5" strokeWidth={1.75} />
+                </motion.span>
+              </AnimatePresence>
+            </span>
           </button>
 
           <button
