@@ -50,7 +50,7 @@ export const STORY_POINTS: readonly StoryPoint[] = [
     title: 'Altitude',
     subtitle: 'Everything on my back',
     description:
-      'I trek solo and self-supported: my own tent, my own food, my own call on when to turn back. Annapurna Circuit in 14 days with 18 kg. Kun Tso at 5,000 m in deep winter snow. Chandrashila alone via Deoriatal and Rohini Bugyal.',
+      'I trek solo and self-supported: my own tent, my own food, my own call on when to turn back. Annapurna Circuit in 14 days with 18 kg. Kun Tso near 5,000 m in deep winter snow. Chandrashila alone via Deoriatal and Rohini Bugyal.',
   },
   {
     id: 'ask',
@@ -256,12 +256,12 @@ export const LEDGER_GLYPH = {
 
 /* ------------------------------------------------------------------ #next */
 
-/** [S-EPILOGUE] and [S-REMOTE-SHORT]. Q-46 interim place names; no dates before the trip (Q-48). */
+/** [S-EPILOGUE] and [S-REMOTE-SHORT]. The next trek is planned, so it is never dated before the trip (Q-48). */
 export const NEXT_COPY = {
-  headline: 'Next: Dodital and Darwa Top. Then, ideally, your team.',
-  /** After the trip (§G.1): "Last seen: Darwa Top, [altitude] m." */
-  headlineAfter: (place: string, altitude?: string) => `Last seen: ${place}${altitude ? `, ${altitude}` : ''}.`,
-  body: "Next on the map: Dodital and Darwa Top in Uttarkashi. After that, I'd like my next climb to be a remote role on a team that ships AI people actually use. If that sounds like your team, write to me.",
+  headline: 'Next: Annapurna North Base Camp. Then, ideally, your team.',
+  /** The trek after the last one (Aman, 2026-11-06): planned, so no dates. */
+  nextTrek: { name: 'Annapurna North Base Camp', region: 'Nepal' },
+  body: "Last seen on Darwa Top in Uttarkashi, in October. Next on the map: Annapurna North Base Camp in Nepal. After that, I'd like my next climb to be a remote role on a team that ships AI people actually use. If that sounds like your team, write to me.",
   remote:
     "I'm looking for a remote AI engineering role: give me a clear problem and a quiet room, and I'll give you focused, well-documented work.",
   then: 'a remote AI engineering role',

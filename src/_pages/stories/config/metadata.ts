@@ -4,7 +4,7 @@ import { ROUTES, SITE } from '@/shared/config';
 
 const title = 'Journal: Solo Treks and Build Logs | Aman Anubhav';
 const description =
-  '250 km solo on the Annapurna Circuit, Kun Tso at 5,000 m in winter, Chandrashila alone, and the GitHub Action that archives my LeetCode work.';
+  '250 km solo on the Annapurna Circuit, Kun Tso near 5,000 m in winter, Chandrashila alone, and the GitHub Action that archives my LeetCode work.';
 
 /**
  * [S-SEO] for this route. openGraph and twitter repeat the root card and image because a page-level

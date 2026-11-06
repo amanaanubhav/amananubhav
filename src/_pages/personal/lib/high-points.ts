@@ -18,7 +18,7 @@ export interface HighPoint {
   readonly route: string;
   readonly when?: string;
   readonly region?: string;
-  /** `mode === 'solo'` only. Kun Tso's mode stays hidden until Q-51, so it is never marked solo. */
+  /** `mode === 'solo'` only. Kun Tso is solo (Q-51, confirmed 2026-11-06). */
   readonly solo: boolean;
   /** The trek's journal on /stories, only when the expedition has a published story. */
   readonly storyHref?: string;

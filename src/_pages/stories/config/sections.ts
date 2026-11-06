@@ -29,7 +29,7 @@ export const STORIES_SECTIONS: readonly SectionNavItem[] = [
   trekItem('kun-tso', 'Kun Tso', 'kun-tso'),
   trekItem('chandrashila', 'Chandrashila', 'chandrashila'),
   trekItem('himachal', 'Himachal trails', 'yulla-kanda'),
-  trekItem('dodital', 'Next: Dodital', 'dodital', 'planned'),
+  trekItem('dodital', 'Dodital', 'dodital'),
   { id: 'pack', label: 'The pack' },
   { id: 'adventures', label: 'Journal' },
 ];

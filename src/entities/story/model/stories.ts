@@ -32,8 +32,8 @@ export const STORIES: readonly Story[] = [
   },
   {
     id: 'kun-tso-winter-climb',
-    title: 'Duct Tape at 5,000 m: Kun Tso in Winter',
-    subtitle: 'From Zero Point at 4,600 m through waist-deep snow in North Sikkim.',
+    title: 'Duct Tape near 5,000 m: Kun Tso in Winter',
+    subtitle: 'Solo from Zero Point at about 4,400 m, through waist-deep snow in North Sikkim.',
     // Q-51 interim
     date: 'Nov 2025',
     category: 'Expedition & Mountaineering',
@@ -43,7 +43,7 @@ export const STORIES: readonly Story[] = [
     expeditionId: 'kun-tso',
     place: 'North Sikkim, India',
     content: `
-<p>Kun Tso starts where the road gives up: Zero Point at <em>Yumesamdong</em>, 4,600 m, in the North Sikkim Himalayas. On paper, 400 m of gain to 5,000 m is a short day. In winter it isn't. Fresh snow came up to my waist, the wind was well below zero, and my boots started letting the cold in, so I wrapped them in duct tape and kept going.</p>
+<p>Kun Tso starts where the road gives up: Zero Point at <em>Yumesamdong</em>, about 4,400 m, in the North Sikkim Himalayas. On paper, 400 to 600 m of gain to a lake at about 4,800 to 5,000 m is a short day. In winter it isn't. Fresh snow came up to my waist, the wind was well below zero, and my boots started letting the cold in, so I wrapped them in duct tape and kept going.</p>
 <p>Every step was slow and the margin for error was small. At the top there was nothing but frozen water, silent peaks and the sound of my own breathing. It was punishing and it was one of the most fun days I've had.</p>
 `,
     media: [],
@@ -215,7 +215,7 @@ export const DRAFT_STORIES: readonly Story[] = [
   {
     id: 'chandrashila-solo',
     title: 'Lake, Meadow, Summit: Chandrashila Solo',
-    subtitle: 'Deoriatal to Rohini Bugyal to Chandrashila, alone.',
+    subtitle: 'Through the forest to Deoriatal, over Jhandi Top and Rohini Bugyal to Chandrashila, alone.',
     date: '2026',
     category: 'Expedition & Mountaineering',
     coverImage: '',
@@ -224,7 +224,7 @@ export const DRAFT_STORIES: readonly Story[] = [
     expeditionId: 'chandrashila',
     place: 'Rudraprayag, Uttarakhand',
     content: `
-<p>My most recent trek, done alone. I started at <em>Deoriatal</em>, crossed the high meadows of <em>Rohini Bugyal</em>, came down to Chopta and climbed to the summit of Chandrashila.</p>
+<p>Done alone, in record time. Up through the forest to <em>Deoriatal</em>, over <em>Jhandi Top</em> and the high meadows of <em>Rohini Bugyal</em>, down to Chopta, then up to the summit of Chandrashila.</p>
 `,
     media: [],
     links: [],

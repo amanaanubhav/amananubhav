@@ -45,10 +45,13 @@ export interface StoryMarkDef {
 /** Every Annapurna place by name, main line and side trips. */
 const PLACES = new Map([...ANNAPURNA_ROUTE, ...ANNAPURNA_SIDE_TRIPS.flat()].map((wp) => [wp.name, wp]));
 
+/** Labels the map keeps as drawn although their figure was confirmed later (Ice Lake's ~4,600 m, 2026-11-06). */
+const LABEL_WITHOUT_ALTITUDE = new Set(['Ice Lake']);
+
 /** The entity's altitude for a place: none while it has no figure or withholds one (`showAltitude: false`). */
 function altOf(place: string): Pick<StoryMarkDef, 'altM' | 'approxAlt'> {
   const wp = PLACES.get(place);
-  const altM = wp && wp.showAltitude !== false ? (wp.altitudeM ?? null) : null;
+  const altM = wp && wp.showAltitude !== false && !LABEL_WITHOUT_ALTITUDE.has(place) ? (wp.altitudeM ?? null) : null;
   return { altM, approxAlt: altM !== null && wp?.approx === true };
 }
 

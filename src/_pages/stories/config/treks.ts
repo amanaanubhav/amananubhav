@@ -11,7 +11,7 @@ export const ATLAS_COPY = {
   copyId: 'S-CH4-ALTITUDE',
   headline: 'Everything on my back.',
   paragraphs: [
-    'I trek solo and self-supported. My own tent, my own stove, my own food, and my own decision about when the weather says no. That has meant trails across Himachal and Uttarakhand, a winter climb to 5,000 m in Sikkim, and the Annapurna Circuit: 250 km in 14 days with an 18 kg pack, over Thorong La at 5,416 m.',
+    'I trek solo and self-supported. My own tent, my own stove, my own food, and my own decision about when the weather says no. That has meant trails across Himachal and Uttarakhand, a winter climb to about 5,000 m in Sikkim, and the Annapurna Circuit: 250 km in 14 days with an 18 kg pack, over Thorong La at 5,416 m.',
     "Going alone isn't about proving anything. It's the quietest place I know. Every decision is mine and so is every mistake, which is an honest way to learn how I think under pressure.",
   ],
 } as const;
@@ -54,8 +54,8 @@ export const TREKS: readonly TrekCopy[] = [
     id: 'kun-tso',
     expeditionId: 'kun-tso',
     copyId: 'S-EXP-KUNTSO',
-    headline: 'Duct tape at 5,000 m.',
-    lead: "Kun Tso starts where the road gives up: Zero Point at Yumesamdong, 4,600 m, in the North Sikkim Himalayas. On paper, 400 m of gain to 5,000 m is a short day. In winter it isn't. Fresh snow came up to my waist, the wind was well below zero, and my boots started letting the cold in, so I wrapped them in duct tape and kept going.",
+    headline: 'Duct tape near 5,000 m.',
+    lead: "Kun Tso starts where the road gives up: Zero Point at Yumesamdong, about 4,400 m, in the North Sikkim Himalayas. On paper, 400 to 600 m of gain to a lake at about 4,800 to 5,000 m is a short day. In winter it isn't. Fresh snow came up to my waist, the wind was well below zero, and my boots started letting the cold in, so I wrapped them in duct tape and kept going.",
     leadSlots: ['M-EXP-KUN-05', 'M-EXP-KUN-06'],
     rowSlots: ['M-EXP-KUN-01', 'M-EXP-KUN-02', 'M-EXP-KUN-03'],
     calloutSlots: ['M-EXP-KUN-02'],
@@ -65,7 +65,7 @@ export const TREKS: readonly TrekCopy[] = [
     expeditionId: 'chandrashila',
     copyId: 'S-EXP-CHANDRASHILA',
     headline: 'Lake, meadow, summit.',
-    lead: 'My most recent trek, done alone. I started at Deoriatal, crossed the high meadows of Rohini Bugyal, came down to Chopta and climbed to the summit of Chandrashila.',
+    lead: 'Done alone, in record time: up through the forest to Deoriatal, over Jhandi Top and the high meadows of Rohini Bugyal, down to Chopta, then up to the summit of Chandrashila.',
     leadSlots: ['M-EXP-CHA-01'],
     rowSlots: ['M-EXP-CHA-02', 'M-EXP-CHA-03'],
     noteComing: 'Entry coming.',
@@ -74,9 +74,10 @@ export const TREKS: readonly TrekCopy[] = [
     id: 'dodital',
     expeditionId: 'dodital',
     copyId: 'S-EXP-DODITAL',
-    headline: 'Next on the map.',
-    // The "before the trip" line; no dates and no departure copy while the trip is upcoming (Q-48).
-    lead: "Next I'm heading to Dodital, a lake in the forests above Uttarkashi, and on to Darwa Top. Journal entries when I'm back.",
+    headline: 'Forest, lake, top.',
+    // 18 to 20 October 2026 (Aman, 2026-11-06); month and year only (Q-48).
+    lead: 'Three days in October 2026: Dodital, a lake in the forests above Uttarkashi, and on to Darwa Top.',
+    noteComing: 'Entry coming.',
     leadSlots: ['M-EXP-DOD-01'],
     rowSlots: ['M-EXP-DOD-02', 'M-EXP-DOD-03'],
   },

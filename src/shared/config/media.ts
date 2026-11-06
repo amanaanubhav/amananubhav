@@ -649,7 +649,7 @@ const SLOTS: Readonly<Record<MediaSlotId, SlotInput>> = {
   'M-EXP-KUN-01': {
     chapter: 'expeditions', kind: 'photo', status: 'placeholder', ratio: '3:2', minPx: PHOTO_L_32,
     subject: 'The frozen lake at Kun Tso.',
-    short: 'the frozen lake at Kun Tso', alt: 'Kun Tso, frozen, 5,000 m', place: 'Kun Tso',
+    short: 'the frozen lake at Kun Tso', alt: 'Kun Tso, frozen, near 5,000 m', place: 'Kun Tso',
     usedIn: ['/stories#kun-tso'], priority: 1, confirm: ['Q-51'],
   },
   'M-EXP-KUN-02': {

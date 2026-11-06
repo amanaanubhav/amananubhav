@@ -32,7 +32,7 @@ export function routeProfileDesc(expedition: Expedition, points: readonly Profil
 
 const ALTITUDE = new Intl.NumberFormat('en');
 
-/** One "high point" value, as on the trek spreads: "5,000 m Kun Tso" (the name alone when the altitude is unknown). */
+/** One "high point" value, as on the trek spreads: "~5,000 m Kun Tso" (the name alone when the altitude is unknown). */
 function highPointValue(high: Expedition['highPoint'] | undefined): ReactNode {
   if (!high) return undefined;
   if (high.altitudeM === undefined) return high.name ? <span className="font-body">{high.name}</span> : undefined;

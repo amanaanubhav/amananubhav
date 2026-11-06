@@ -55,10 +55,10 @@ const GREEN_LAKE: Waypoint = {
   name: 'Green Lake', kind: 'lake', stop: 'landmark', day: 6, lat: 28.6641, lon: 84.0184, positionApprox: true,
   sideTrip: true, source: 'estimate', confirm: 'Q-52',
 };
-/** The terrain agrees with the commonly cited ~4,600 m; not printed until Aman confirms it. */
+/** The commonly cited ~4,600 m, which the terrain agrees with; Aman confirmed it on 2026-11-06 (Q-52). */
 const ICE_LAKE: Waypoint = {
   name: 'Ice Lake', altName: 'Kicho Tal', kind: 'lake', stop: 'landmark', day: 7, altitudeM: 4600, approx: true,
-  showAltitude: false, lat: 28.6799, lon: 84.0613, sideTrip: true, source: 'commonly-cited', confirm: 'Q-52',
+  lat: 28.6799, lon: 84.0613, sideTrip: true, source: 'commonly-cited',
 };
 const TILICHO_BASE_CAMP: Waypoint = {
   name: 'Tilicho Base Camp', kind: 'village', stop: 'pass-through', day: 10, altitudeM: 4150, approx: true,
@@ -152,22 +152,25 @@ export const EXPEDITIONS: readonly Expedition[] = [
     shortName: 'Kun Tso',
     region: 'North Sikkim',
     country: 'India',
-    // Q-51 interim; mode stays hidden until Q-51
+    // Solo (Aman, 2026-11-06, Q-51); the month stays the Q-51 interim.
     when: 'Nov 2025',
     year: 2025,
-    highPoint: { name: 'Kun Tso', altitudeM: 5000 },
+    mode: 'solo',
+    // Aman: the lake is around 4,800 to 5,000 m, so the figure is approximate.
+    highPoint: { name: 'Kun Tso', altitudeM: 5000, approx: true },
     status: 'done',
     storyId: 'kun-tso-winter-climb',
     trailhead: { lat: 27.92, lon: 88.74 },
     waypoints: [
-      { name: 'Zero Point, Yumesamdong', kind: 'trailhead', altitudeM: 4600, lat: 27.92, lon: 88.74, source: 'bio' },
+      // Aman: about 4,400 m where he started (2026-11-06).
+      { name: 'Zero Point, Yumesamdong', kind: 'trailhead', altitudeM: 4400, approx: true, lat: 27.92, lon: 88.74, source: 'bio' },
       // No coordinates until a GPX arrives (Q-100): drawn only in the profile.
-      { name: 'Kun Tso', kind: 'lake', altitudeM: 5000, source: 'bio', confirm: 'Q-100' },
+      { name: 'Kun Tso', kind: 'lake', altitudeM: 5000, approx: true, source: 'bio', confirm: 'Q-100' },
     ],
   },
   {
     id: 'chandrashila',
-    name: 'Deoriatal, Rohini Bugyal, Chopta, Chandrashila',
+    name: 'Deoriatal, Jhandi Top, Rohini Bugyal, Chopta, Chandrashila',
     shortName: 'Chandrashila',
     region: 'Rudraprayag, Uttarakhand',
     country: 'India',
@@ -181,6 +184,9 @@ export const EXPEDITIONS: readonly Expedition[] = [
     trailhead: { lat: 30.52, lon: 79.13 },
     waypoints: [
       { name: 'Deoriatal', kind: 'lake', altitudeM: 2438, approx: true, lat: 30.52, lon: 79.13, source: 'commonly-cited' },
+      // Aman (2026-11-06): up through the forest to Deoriatal, then over Jhandi Top. No figure or position until a GPX
+      // arrives, so it is drawn only in the profile.
+      { name: 'Jhandi Top', kind: 'summit', source: 'bio' },
       { name: 'Rohini Bugyal', kind: 'camp', lat: 30.5, lon: 79.17, source: 'estimate' },
       { name: 'Chopta', kind: 'village', altitudeM: 2680, approx: true, lat: 30.49, lon: 79.21, source: 'commonly-cited' },
       { name: 'Tungnath', kind: 'village', altitudeM: 3680, approx: true, lat: 30.49, lon: 79.22, source: 'commonly-cited', confirm: 'Q-54' },
@@ -233,9 +239,12 @@ export const EXPEDITIONS: readonly Expedition[] = [
     shortName: 'Dodital',
     region: 'Uttarkashi, Uttarakhand',
     country: 'India',
-    // No dates before the trip (Q-48).
+    // 18 to 20 October 2026 (Aman, 2026-11-06), shown as month and year only (Q-48).
+    when: 'October 2026',
+    year: 2026,
+    days: 3,
     highPoint: { name: 'Darwa Top', altitudeM: 4100, approx: true, confirm: 'Q-46' },
-    status: 'upcoming',
+    status: 'done',
     trailhead: { lat: 30.8, lon: 78.48 },
     // All coordinates are estimates, for drawing only.
     waypoints: [

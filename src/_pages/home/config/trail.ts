@@ -1,7 +1,7 @@
 import { formatAltitude, getExpedition } from '@/entities/expedition';
 import type { TrailItem } from '@/shared/ui/journal';
 
-import type { HomeEntryId } from './copy';
+import { NEXT_COPY, type HomeEntryId } from './copy';
 
 /*
  * Two-lane trail marks per home entry (§G.1, D1 graft): squares are systems, triangles are summits,
@@ -60,7 +60,13 @@ export const ENTRY_TRAILS: Readonly<Partial<Record<HomeEntryId, readonly TrailIt
   ],
 };
 
-/** `#next`: the planned trek, never dated before the trip (Q-48). */
+/** `#next`: the last trek, then the planned one (never dated before the trip, Q-48). */
 export const NEXT_TRAIL: readonly TrailItem[] = [
-  { lane: DODITAL.status === 'done' ? 'summit' : 'planned', label: 'Dodital and Darwa Top' },
+  {
+    lane: DODITAL.status === 'done' ? 'summit' : 'planned',
+    label: 'Dodital and Darwa Top',
+    date: DODITAL.when,
+    datetime: DODITAL.year ? String(DODITAL.year) : undefined,
+  },
+  { lane: 'planned', label: NEXT_COPY.nextTrek.name },
 ];

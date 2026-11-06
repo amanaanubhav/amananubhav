@@ -9,9 +9,9 @@ const STROKE = 'fill-none stroke-steel [stroke-width:1.5] forced-colors:![stroke
  * of `NEXT_ENTRY.rows` on a steel panel, beside a small survey drawing (a solid steel line from a filled trig mark into
  * a dashed one ending in an open mark; `aria-hidden`, no numbers). Not a rail stop. No motion.
  *
- * OPEN QUESTION (owner, 2026-11-04): Dodital and Darwa Top is done but he gave no details, so there is no "next climb"
- * row until he names the next climb. The "as of" row stays hidden until he gives a date (Q-F8). Both live in
- * `NEXT_ENTRY` (config/content.ts); this component renders whatever rows it holds.
+ * The rows live in `NEXT_ENTRY` (config/content.ts): the next climb (Annapurna North Base Camp, never dated, Q-48), the
+ * next skill and the base. The "as of" row stays hidden until he gives a date (Q-F8). This component renders whatever
+ * rows it holds.
  */
 export function NextSection() {
   return (

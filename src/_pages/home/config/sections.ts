@@ -39,7 +39,7 @@ export const HOME_WAYPOINTS: Readonly<Record<HomeSectionId, HomeWaypoint>> = {
   pass: waypoint(ANNAPURNA, 'Thorong La'),
   ask: waypoint(ANNAPURNA, 'Muktinath'),
   write: waypoint(ANNAPURNA, 'Muktinath'),
-  next: waypoint(DODITAL, 'Darwa Top', true),
+  next: waypoint(DODITAL, 'Darwa Top', DODITAL.status !== 'done'),
 };
 
 function item(id: HomeSectionId, label: string): SectionNavItem {

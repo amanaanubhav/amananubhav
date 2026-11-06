@@ -150,13 +150,13 @@ export const MOUNTAIN_PLATES: readonly MountainPlate[] = [
     id: 'kun-tso',
     category: 'Winter climb',
     title: 'Kun Tso',
-    line: '5,000 m in North Sikkim, in waist-deep snow.',
+    line: 'Near 5,000 m in North Sikkim, in waist-deep snow.',
     slotId: 'M-EXP-KUN-05',
     spot: { expedition: 'kun-tso', waypoint: 'Kun Tso' },
     href: '/stories#kun-tso',
   },
   {
-    // Altitude hidden until Q-52 (the waypoint carries showAltitude: false).
+    // Ice Lake's ~4,600 m was confirmed on 2026-11-06 (Q-52).
     id: 'ice-lake',
     category: 'Solo trekking',
     title: 'Ice Lake',
@@ -169,7 +169,7 @@ export const MOUNTAIN_PLATES: readonly MountainPlate[] = [
     id: 'chandrashila',
     category: 'Solo trekking',
     title: 'Chandrashila',
-    line: 'Alone via Deoriatal and Rohini Bugyal.',
+    line: 'Alone via Deoriatal, Jhandi Top and Rohini Bugyal.',
     slotId: 'M-EXP-CHA-01',
     spot: { expedition: 'chandrashila', waypoint: 'Chandrashila' },
     href: '/stories#chandrashila',
@@ -687,14 +687,14 @@ export const ALBUM_UI = {
 // ── #next: Next on the route (§4.7) ─────────────────────────────────────────────────────────────────────────────────
 
 /**
- * The closing field entry. OPEN QUESTION (owner, 2026-11-04): Dodital and Darwa Top is now done, but he gave no details,
- * so nothing may present it as the next climb: the "next climb" row is omitted until he names the next one (and the
- * expedition entity's status is updated). The "as of" row stays hidden until he gives a date (Q-F8).
+ * The closing field entry. The next climb is Annapurna North Base Camp (Aman, 2026-11-06), planned and so never
+ * dated (Q-48). The "as of" row stays hidden until he gives a date (Q-F8).
  */
 export const NEXT_ENTRY = {
   id: 'next',
   title: 'Next on the route',
   rows: [
+    { key: 'next climb', value: 'Annapurna North Base Camp, Nepal' },
     { key: 'next skill', value: 'Surfing' },
     // Q-03 interim.
     { key: 'based in', value: ORIGIN.now },
