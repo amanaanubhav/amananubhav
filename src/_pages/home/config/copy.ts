@@ -220,19 +220,23 @@ export const LEGEND_COPY = {
   key: 'Key',
   altitudeScale: 'Altitude scale, metres',
   temperatureScale: 'Temperature scale, degrees Celsius',
+  /** The isotherm marks on the ramp (the map's +10, 0 and −10 °C lines), named for screen readers. */
+  isoScale: 'Temperature lines on the scale',
   isoWarm: '+10',
   isoZero: '0 °C',
   isoCold: '−10',
-  frost: 'below 0',
-  noteAltitude: 'Colour: altitude, 500 m bands. Lines: temperature, modelled from altitude, not measured.',
-  noteTemperature:
-    'Colour: temperature on an April–May day, modelled from altitude (−6.5 °C per 1,000 m from about +22 °C at Besisahar). Not measured.',
+  /** The honesty line under the ramp; Key adds how the colour is made (no repeat of it). */
+  shortAltitude: 'Lines: temperature, modelled, not measured.',
+  shortTemperature: 'An April–May day, modelled, not measured.',
+  noteAltitude: 'Colour: altitude, in 500 m bands.',
+  noteTemperature: 'Colour: temperature from altitude, −6.5 °C per 1,000 m from about +22 °C at Besisahar.',
   keys: [
     { id: 'walked', style: 'kRoute', text: 'Walked' },
     { id: 'ahead', style: 'kGhost', text: 'To walk' },
     { id: 'side', style: 'kSide', text: 'Side trip' },
     { id: 'lake', style: 'kLake', text: 'Lake' },
     { id: 'peak', style: 'kPeak', text: 'Peak' },
+    { id: 'frost', style: 'kFrost', text: 'Below 0 °C' },
   ],
   honesty:
     'April–May 2026. Altitudes are commonly cited and approximate (~). Blue Lake and Green Lake are at approximate positions.',

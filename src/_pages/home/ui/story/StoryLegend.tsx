@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, type Transition } from 'motion/react';
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 
-import { CHROME, MOTION } from '@/shared/config';
+import { CHROME, MOTION, STORY_LAPSE } from '@/shared/config';
 import { cn } from '@/shared/lib/cn';
 import { useMediaQuery } from '@/shared/lib/dom';
 import { useMotionAllowed, useMotionTier } from '@/shared/lib/motion-tier';
@@ -32,6 +32,7 @@ function ramp(layer: Layer): string {
 
 const RAMP: Record<Layer, string> = { alt: ramp('alt'), temp: ramp('temp') };
 
+/* Under the ramp: altitudes, or the temperature ramp's own ends (its isotherms are named above it). */
 const TICKS: Record<Layer, { at: number; text: string }[]> = {
   alt: [
     { at: 1000, text: '1,000' },
@@ -40,27 +41,39 @@ const TICKS: Record<Layer, { at: number; text: string }[]> = {
     { at: 7000, text: '7,000 m' },
   ],
   temp: [
-    { at: -20, text: '−20' },
-    { at: -10, text: '−10' },
-    { at: 0, text: '0 °C' },
-    { at: 10, text: '+10' },
-    { at: 20, text: '+20' },
+    { at: -25, text: '−25' },
+    { at: 22, text: '+22 °C' },
   ],
 };
 
-function tickLeft(layer: Layer, at: number): CSSProperties {
+/** The map's isotherms (story-layers: 0 °C bold teal, −10 °C fine teal, +10 °C a neutral hairline). */
+const ISOTHERMS = [
+  { c: 10, text: LEGEND_COPY.isoWarm, tone: 'warm' },
+  { c: 0, text: LEGEND_COPY.isoZero, tone: 'zero' },
+  { c: -10, text: LEGEND_COPY.isoCold, tone: 'cold' },
+] as const;
+
+/** Where `value` sits along a layer's ramp, 0 to 100 (the ramp runs from its first stop to its last). */
+function along(layer: Layer, value: number): number {
   const range: readonly number[] = layer === 'alt' ? STORY_HYPSO_STOPS_M : STORY_TEMP_STOPS_C;
   const lo = range[0];
   const hi = range[range.length - 1];
-  return { left: `${(((at - lo) / (hi - lo)) * 100).toFixed(1)}%` };
+  return Math.min(100, Math.max(0, ((value - lo) / (hi - lo)) * 100));
 }
+
+/** An isotherm on the ramp: on the altitude ramp at the altitude the model gives it (0 °C near 4,150 m). */
+function isothermAlong(layer: Layer, c: number): number {
+  return along(layer, layer === 'alt' ? STORY_LAPSE.baseM + ((c - STORY_LAPSE.baseC) / STORY_LAPSE.perKm) * 1000 : c);
+}
+
+const left = (x: number): CSSProperties => ({ left: `${x.toFixed(1)}%` });
 
 interface LayerProps {
   layer: Layer;
   onLayer: (layer: Layer) => void;
 }
 
-/** Day and place, the Altitude | Temperature switch (aria-pressed), the ramp, its ticks, the isotherm key, the note. */
+/** The day, led by the route's tick, and the day's places. */
 function Where({ day, place }: { day: string; place: string }) {
   return (
     <p className={styles.where}>
@@ -70,6 +83,7 @@ function Where({ day, place }: { day: string; place: string }) {
   );
 }
 
+/** Altitude | Temperature as type (aria-pressed): the pressed one carries the signal underline. */
 function LayerSwitch({ layer, onLayer }: LayerProps) {
   return (
     <div className={styles.switch} role="group" aria-label={LEGEND_COPY.emphasis}>
@@ -83,41 +97,43 @@ function LayerSwitch({ layer, onLayer }: LayerProps) {
   );
 }
 
+/**
+ * One scale for the whole map: the ramp in the scene's colours, the isotherms marked on it where the map draws them
+ * (named above it), the frost dots over its side below 0 °C, the ticks under it and one honesty line.
+ */
 function Scale({ layer }: { layer: Layer }) {
+  const zero = isothermAlong(layer, 0);
+  const frost: CSSProperties =
+    layer === 'alt' ? { left: `${zero.toFixed(1)}%`, right: 0 } : { left: 0, right: `${(100 - zero).toFixed(1)}%` };
   return (
-    <>
-      <div className={styles.bar} style={{ backgroundImage: RAMP[layer] }} aria-hidden="true" />
-      <ol className={styles.ticks} aria-label={layer === 'alt' ? LEGEND_COPY.altitudeScale : LEGEND_COPY.temperatureScale}>
-        {TICKS[layer].map((t) => (
-          <li key={t.text} style={tickLeft(layer, t.at)}>
+    <div className={styles.scale}>
+      <ol className={styles.isoAt} aria-label={LEGEND_COPY.isoScale}>
+        {ISOTHERMS.map((t) => (
+          <li key={t.c} style={left(isothermAlong(layer, t.c))}>
             {t.text}
           </li>
         ))}
       </ol>
-      <ul className={styles.iso}>
-        <li>
-          <span className={`${styles.line} ${styles.lineWarm}`} aria-hidden="true" />
-          {LEGEND_COPY.isoWarm}
-        </li>
-        <li>
-          <span className={styles.line} aria-hidden="true" />
-          {LEGEND_COPY.isoZero}
-        </li>
-        <li>
-          <span className={`${styles.line} ${styles.lineCold}`} aria-hidden="true" />
-          {LEGEND_COPY.isoCold}
-        </li>
-        <li>
-          <span className={styles.frost} aria-hidden="true" />
-          {LEGEND_COPY.frost}
-        </li>
-      </ul>
-      <p className={styles.note}>{layer === 'alt' ? LEGEND_COPY.noteAltitude : LEGEND_COPY.noteTemperature}</p>
-    </>
+      <div className={styles.bar} style={{ backgroundImage: RAMP[layer] }} aria-hidden="true">
+        <span className={styles.frostBand} style={frost} />
+        {ISOTHERMS.map((t) => (
+          <span key={t.c} className={styles.notch} data-tone={t.tone} style={left(isothermAlong(layer, t.c))} />
+        ))}
+      </div>
+      <ol className={styles.ticks} aria-label={layer === 'alt' ? LEGEND_COPY.altitudeScale : LEGEND_COPY.temperatureScale}>
+        {TICKS[layer].map((t) => (
+          <li key={t.text} style={left(along(layer, t.at))}>
+            {t.text}
+          </li>
+        ))}
+      </ol>
+      <p className={styles.note}>{layer === 'alt' ? LEGEND_COPY.shortAltitude : LEGEND_COPY.shortTemperature}</p>
+    </div>
   );
 }
 
-function LineKey() {
+/** Behind Key: the line and symbol key, the colour note in full (staged) and the honesty note. */
+function LineKey({ layer }: { layer?: Layer }) {
   return (
     <>
       <ul className={styles.keys}>
@@ -128,27 +144,80 @@ function LineKey() {
           </li>
         ))}
       </ul>
+      {layer ? (
+        <p className={styles.honesty}>{layer === 'alt' ? LEGEND_COPY.noteAltitude : LEGEND_COPY.noteTemperature}</p>
+      ) : null}
       <p className={styles.honesty}>{LEGEND_COPY.honesty}</p>
     </>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true" className={styles.chevron}>
+      <path d="M2 6.5 5 3.5 8 6.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
 /**
  * The map legend (§13): the live day and place, the Altitude | Temperature emphasis (aria-pressed buttons; the
  * scene swaps its fill, the story never changes), the ramp drawn from the same stops as the shader, the isotherm
- * key and the honesty note ("modelled from altitude, not measured"). "Key" discloses the line styles. At tier 0
- * (the static plan sheet) it shows the trek line and the line key only. It fades out as the map dissolves.
+ * key and the honesty note ("modelled from altitude, not measured"). "Key" discloses the line styles. In the static
+ * layout (tier 0, or a stage that turned static: the plan sheet) it shows the trek line and the line key only. It
+ * fades out with the story's end (staged) and stays away while #next is in view, in both layouts (#next has its own
+ * map key there); it comes back once the visitor scrolls up into the story.
  *
- * From 1024 px: fixed glass chrome above the chat bead (its own frosted card, story.module.css), server-rendered
- * with its default text (no layout shift when the scene arrives). A recede pool sits under it
- * (`data-recede-chrome`), and it publishes its height as `--legend-h` so the waypoint rail ends above it (C-02).
+ * From 1024 px: fixed above the chat bead, server-rendered with its default text (no layout shift when the scene
+ * arrives). Over the 3D map it is type on the map, no card (Aman, 2026-11-07: the card was big and bulky): the
+ * terrain recedes under it (`data-recede-chrome`, a pool like the story text's) and labels stay clear of it. Key
+ * opens above it, so the switch and the Key never move under the pointer. The static layout (no live map, the page
+ * scrolls under it) keeps the glass card. It publishes its height as `--legend-h` so the waypoint rail ends above it
+ * (C-02).
  *
  * Below 1024 px: no bar of its own (C-01). A compact "Key" control sits in the dock bar (`<DockSlot>`), sharing its
  * glass, scrim and show / hide; it opens the whole legend as a sheet laid out against the bar.
  */
+/**
+ * True while the story stage is static (`[data-story-stage][data-static]`: a failed 3D load, or the tier dropped). The
+ * tier alone misses a failed load, where the story driver never runs and the phase stays at its first act.
+ */
+function useStageStatic(tier: number): boolean {
+  const [isStatic, setStatic] = useState(false);
+  useEffect(() => {
+    const stage = document.querySelector<HTMLElement>('[data-story-stage]');
+    if (!stage) return;
+    const read = () => setStatic(stage.hasAttribute('data-static'));
+    read();
+    const observer = new MutationObserver(read);
+    observer.observe(stage, { attributes: true, attributeFilter: ['data-static'] });
+    return () => observer.disconnect();
+  }, [tier]); // looked up again when the tier changes (the stage may be a new node)
+  return isStatic;
+}
+
+/** #next's top above 60 % of the viewport, or the section scrolled past: the rest view and below. */
+function useAtNext(): boolean {
+  const [atNext, setAtNext] = useState(false);
+  useEffect(() => {
+    const next = document.getElementById('next');
+    if (!next || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e) setAtNext(e.isIntersecting || e.boundingClientRect.top < 0);
+      },
+      { rootMargin: '0px 0px -40% 0px' },
+    );
+    io.observe(next);
+    return () => io.disconnect();
+  }, []);
+  return atNext;
+}
+
 export function StoryLegend() {
   const tier = useMotionTier();
-  const staged = tier > 0;
+  const stageStatic = useStageStatic(tier);
+  const staged = tier > 0 && !stageStatic;
   const phase = useSyncExternalStore(subscribePhase, getPhase, getServerPhase);
   const [layer, setLayer] = useState<Layer>('alt');
   const [keyOpen, setKeyOpen] = useState(false);
@@ -169,7 +238,12 @@ export function StoryLegend() {
   const whole = !staged || phase.overview || !act.place;
   const day = whole ? LEGEND_COPY.wholeDays(TREK_DAYS) : LEGEND_COPY.day(act.day, TREK_DAYS);
   const place = whole ? LEGEND_COPY.wholePlace : act.place;
-  const hidden = staged && phase.legendHidden;
+  // The legend leaves once #next (with its own map key) is reached: read by an observer on the section's top at
+  // 60 % of the viewport, in both layouts. The static layout has no story driver, so this is its only signal; in the
+  // staged one the phase has already faded it at the story's end (the observer only keeps it away at the rest view
+  // and below, never earlier).
+  const atNext = useAtNext();
+  const hidden = atNext || (staged && phase.legendHidden);
 
   // --legend-h (CORE-CONTRACT §3a): the legend's height from 1024 px, else 0, so the waypoint rail ends above it. It
   // never changes while scrolling (7a5ed17's rail never moved): a write on :root restyles the whole page and moves
@@ -247,8 +321,12 @@ export function StoryLegend() {
         data-recede-chrome=""
         data-hidden={hidden ? '' : undefined}
         data-open={keyOpen ? '' : undefined}
-        className={`glass-chrome glass-legend ${styles.legend}`}
+        data-card={staged ? undefined : ''}
+        className={cn(styles.legend, !staged && 'glass-chrome glass-legend')}
       >
+        <div id={keyId} hidden={!keyOpen} className={styles.keyPanel}>
+          <LineKey layer={staged ? layer : undefined} />
+        </div>
         <Where day={day} place={place} />
         <div className={styles.row}>
           {staged ? <LayerSwitch layer={layer} onLayer={setLayer} /> : <span />}
@@ -260,12 +338,10 @@ export function StoryLegend() {
             onClick={() => setKeyOpen((v) => !v)}
           >
             {LEGEND_COPY.key}
+            <Chevron />
           </button>
         </div>
         {staged ? <Scale layer={layer} /> : null}
-        <div id={keyId} hidden={!keyOpen}>
-          <LineKey />
-        </div>
       </aside>
 
       {hidden ? null : (
@@ -312,7 +388,7 @@ export function StoryLegend() {
                         <Scale layer={layer} />
                       </>
                     ) : null}
-                    <LineKey />
+                    <LineKey layer={staged ? layer : undefined} />
                   </div>
                 </motion.div>
               )}
