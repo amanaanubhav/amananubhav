@@ -10,7 +10,7 @@ import {
 } from 'motion/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, type FocusEvent, type MouseEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FocusEvent, type MouseEvent } from 'react';
 import { Lock, Moon, Sun, Terminal } from 'lucide-react';
 import { openTerminal } from '@/features/ai-terminal';
 import { closeStory, useSelectedStory } from '@/features/read-story';
@@ -110,8 +110,14 @@ export function Navbar() {
   const pathname = usePathname();
   const { isDark, toggleTheme } = useTheme();
   const { scrollY } = useScroll();
-  // The navbar remounts after an overlay closes, possibly mid-page: start from the real scroll position.
-  const [compact, setCompact] = useState(() => typeof window !== 'undefined' && isCompactScroll(window.scrollY));
+  // The server renders the full bar; the real scroll position is read after hydration (a first render that read
+  // it would not match the server's markup on a deep link such as /#next). A layout effect, so a navbar that
+  // remounts mid-page (after an overlay closes) is compact before its first paint.
+  const [compact, setCompact] = useState(false);
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the scroll position only exists on the client
+    setCompact(isCompactScroll(window.scrollY));
+  }, []);
   const [focusWithin, setFocusWithin] = useState(false);
   // <MotionConfig reducedMotion="user"> covers the transitions; the liquid hover drives motion values directly,
   // so it reads the OS setting itself (§C.4).
