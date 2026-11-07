@@ -36,6 +36,13 @@ export type SectionNavItem = {
   readonly waypoint?: string;
   readonly approx?: boolean;
   readonly kind?: 'waypoint' | 'interpolated' | 'planned';
+  /**
+   * Opt-in: a short italic word after an altitude reading ("expected"), shown on the rail, the dock chip and its
+   * sheet, and said after the altitude. Readings without it are unchanged.
+   */
+  readonly note?: string;
+  /** Opt-in: the place in full for screen readers ("Annapurna North Base Camp") when `waypoint` is shortened. */
+  readonly spokenPlace?: string;
   /** Route variant only: a six-word line under the label in the contents sheet. */
   readonly teaser?: string;
   /** Route variant only: a tag beside the label ("Live" with the live dot, "Try it"). */
@@ -68,8 +75,10 @@ const hasAltitude = (s: SectionNavItem | undefined): s is SectionNavItem & { alt
  * leads, so the name contains what is shown (WCAG 2.5.3 label in name).
  */
 function accessibleName(s: SectionNavItem): string {
-  const place = `${s.waypoint ?? s.label}${s.kind === 'planned' ? ' (planned)' : ''}`;
-  if (hasAltitude(s)) return `${s.label}, ${place}, ${s.approx ? 'about ' : ''}${fmt(s.altitudeM)} metres`;
+  const place = `${s.spokenPlace ?? s.waypoint ?? s.label}${s.kind === 'planned' ? ' (planned)' : ''}`;
+  if (hasAltitude(s)) {
+    return `${s.label}, ${place}, ${s.approx ? 'about ' : ''}${fmt(s.altitudeM)} metres${s.note ? `, ${s.note}` : ''}`;
+  }
   if (s.kind === 'planned' && s.waypoint) return `${s.label}, ${place}`;
   return s.label;
 }
@@ -80,9 +89,11 @@ interface Reading {
   /** The datum, "~2,670 m" or "planned": never truncated. */
   readonly value: string;
   readonly planned: boolean;
-  /** One line, "Chame ~2,670 m" or "Darwa Top, planned". */
+  /** The item's opt-in note ("expected"), shown italic after the datum; never truncated. */
+  readonly note?: string;
+  /** One line, "Chame ~2,670 m", "Darwa Top, planned" or "Annapurna North BC ~4,190 m, expected". */
   readonly text: string;
-  /** "Chame, about 2,670 metres". */
+  /** "Chame, about 2,670 metres"; with a note, "Annapurna North Base Camp, about 4,190 metres, expected". */
   readonly spoken: string;
 }
 
@@ -95,13 +106,11 @@ function readout(s: SectionNavItem | undefined): Reading | null {
   }
   if (!hasAltitude(s)) return null;
   const value = `${s.approx ? '~' : ''}${fmt(s.altitudeM)} m`;
-  return {
-    place,
-    value,
-    planned: false,
-    text: `${place} ${value}`,
-    spoken: `${place}, ${s.approx ? 'about ' : ''}${fmt(s.altitudeM)} metres`,
-  };
+  const spoken = `${s.spokenPlace ?? place}, ${s.approx ? 'about ' : ''}${fmt(s.altitudeM)} metres`;
+  if (s.note) {
+    return { place, value, planned: false, note: s.note, text: `${place} ${value}, ${s.note}`, spoken: `${spoken}, ${s.note}` };
+  }
+  return { place, value, planned: false, text: `${place} ${value}`, spoken };
 }
 
 /** Moves keyboard focus to a section after a jump (non-interactive target: no focus ring). */
@@ -685,6 +694,9 @@ export const SectionDotNav = ({
                         {initialValue}
                       </span>
                       {hasAltitude(current) && <span className="font-data text-ui text-ink-muted">m</span>}
+                      {hasAltitude(current) && current.note && (
+                        <span className="ml-0.5 font-body text-ui italic text-ink-muted">{current.note}</span>
+                      )}
                     </>
                   )}
                 </p>
@@ -697,7 +709,14 @@ export const SectionDotNav = ({
             )}
             {track && (
               // Full text at w-40, never clamped; each line carries its own ground knockout, like a map label.
-              <p className="sr-only [@container(min-height:22.5rem)]:not-sr-only">
+              // A reading with a note (the next base camp, "expected") is not on the track the caption names:
+              // the caption is hidden then, keeping its height so the ticks below do not move.
+              <p
+                className={clsx(
+                  'sr-only [@container(min-height:22.5rem)]:not-sr-only',
+                  hasAltitude(current) && current.note && 'invisible',
+                )}
+              >
                 <span className="block w-40 font-body text-caption text-ink-muted">
                   <span className={clsx('px-1 py-0.5 [-webkit-box-decoration-break:clone] [box-decoration-break:clone]', KNOCKOUT)}>
                     {track.caption}
@@ -935,6 +954,11 @@ export const SectionDotNav = ({
                       >
                         {reading.value}
                       </span>
+                      {reading.note && (
+                        <span aria-hidden="true" className="-ml-1 shrink-0 italic text-ink-muted">
+                          {reading.note}
+                        </span>
+                      )}
                     </>
                   )}
                 </>
@@ -1022,7 +1046,14 @@ export const SectionDotNav = ({
                                     aria-hidden="true"
                                     className={clsx('text-caption', r.planned ? 'italic' : 'tabular font-data')}
                                   >
-                                    {r.text}
+                                    {r.note ? (
+                                      <>
+                                        {r.place} {r.value}
+                                        <span className="font-body italic">, {r.note}</span>
+                                      </>
+                                    ) : (
+                                      r.text
+                                    )}
                                   </span>
                                 </>
                               )}
