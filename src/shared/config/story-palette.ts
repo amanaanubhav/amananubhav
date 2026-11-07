@@ -18,6 +18,11 @@ import { STORY_THEME, type StoryThemeTokens, type ThemeName } from './palette';
 export const STORY_HYPSO_STOPS_M = [800, 2000, 3500, 4500, 5500, 7000] as const;
 /** Temperatures (°C) of the temperature-emphasis ramp stops. */
 export const STORY_TEMP_STOPS_C = [-25, -10, 0, 5, 12, 22] as const;
+/**
+ * The modelled temperature (never measured): about +22 °C at Besisahar (760 m), -6.5 °C per 1,000 m. The scene's
+ * `uLapse` and the legend's isotherm marks (the altitude of each isotherm on the altitude ramp) read the same model.
+ */
+export const STORY_LAPSE = { baseM: 760, baseC: 22, perKm: -6.5 } as const;
 
 /** The map's colours for one theme (the generated `map` group of the palette). */
 export type StoryThemeColors = StoryThemeTokens;

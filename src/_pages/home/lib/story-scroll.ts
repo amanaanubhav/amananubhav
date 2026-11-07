@@ -1,3 +1,4 @@
+import { NEXT_MOBILE_MAX_WIDTH, NEXT_REST_TOP, NEXT_TEXT_AT, S_NEXT_REST } from '../ui/scenes/story/next-timeline';
 import {
   S_DISSOLVE,
   S_END,
@@ -40,7 +41,7 @@ function smoothstep(a: number, b: number, x: number): number {
   return t * t * (3 - 2 * t);
 }
 
-/** 0 before the dissolve, 1 at S_END: the map melts into the ground in place (§10). */
+/** 0 before the story's last 60 vh, 1 at S_END: the story's legend and labels fade (the map itself stays). */
 export function dissolveAt(s: number): number {
   return smoothstep(S_DISSOLVE, S_END, s);
 }
@@ -55,7 +56,12 @@ export function dissolveAt(s: number): number {
  *   [data-story-span="a,b"]    a sticky block: its wrapper starts sticking -> s a, stops sticking -> s b
  *                              (the sticky child carries data-story-stick, its top offset is read from CSS)
  *   [data-story-end]           its top reaches the viewport bottom        -> s S_END
- * plus (scroll 0, s 0): the first scroll pixel already walks the line (R8).
+ * plus (scroll 0, s 0): the first scroll pixel already walks the line (R8). Then the #next transition
+ * (docs/redesign/next-trek/build/CONTRACT.md):
+ *   [data-next-anchor="marpha"]  caption C1's centre at the viewport centre  -> s NEXT_TEXT_AT.caption
+ *   [data-next-anchor="rest"]    the #next header's top at the rest line     -> s S_NEXT_REST
+ *                                (`--rest-line` % on #next; else [data-next-end], the transition slot's end)
+ * Past the rest anchor s holds at S_NEXT_REST: the camera is fixed and the copy scrolls over the still map.
  */
 
 export interface ScrollMap {
@@ -99,6 +105,26 @@ export function buildScrollMap(root: ParentNode): ScrollMap {
   const end = root.querySelector<HTMLElement>('[data-story-end]');
   if (end && end.getClientRects().length > 0) pts.push([docTop(end, scrollY) - vh, S_END]);
 
+  // #next: only while the transition slot is laid out (the staged layout; `display: none` when static).
+  const slot = root.querySelector<HTMLElement>('[data-next-transition]');
+  if (slot && slot.getClientRects().length > 0) {
+    const caption = root.querySelector<HTMLElement>('[data-next-anchor="marpha"]');
+    const box = caption?.getBoundingClientRect();
+    if (caption && box && box.height > 0) {
+      pts.push([box.top + scrollY + box.height / 2 - vh / 2, NEXT_TEXT_AT.caption]);
+    }
+    const restEl =
+      root.querySelector<HTMLElement>('[data-next-anchor="rest"]') ?? root.querySelector<HTMLElement>('[data-next-end]');
+    if (restEl && restEl.getClientRects().length > 0) {
+      const section = document.getElementById('next');
+      const line = section ? Number.parseFloat(getComputedStyle(section).getPropertyValue('--rest-line')) : NaN;
+      const mobile = window.innerWidth <= NEXT_MOBILE_MAX_WIDTH;
+      const top = Number.isFinite(line) ? line / 100 : mobile ? NEXT_REST_TOP.mobile : NEXT_REST_TOP.desktop;
+      const at = Number(restEl.dataset.nextAt);
+      pts.push([docTop(restEl, scrollY) - top * vh, Number.isFinite(at) && at > S_END ? at : S_NEXT_REST]);
+    }
+  }
+
   // Keep the anchors that move forward in both scroll and story (a block taller than its slot can push a
   // later anchor behind an earlier one; dropping it keeps the map monotonic).
   pts.sort((p, q) => p[0] - q[0]);
@@ -113,7 +139,7 @@ export function buildScrollMap(root: ParentNode): ScrollMap {
   return { y: Float64Array.from(y), s: Float64Array.from(s) };
 }
 
-/** s at scroll position `scrollY` (clamped to 0..S_END). */
+/** s at scroll position `scrollY` (clamped to 0..S_NEXT_REST; S_END when the page has no #next anchors). */
 export function storyAtScroll(map: ScrollMap, scrollY: number): number {
   const { y, s } = map;
   const n = y.length;
@@ -127,7 +153,14 @@ export function storyAtScroll(map: ScrollMap, scrollY: number): number {
     else hi = mid;
   }
   const t = (scrollY - y[lo]) / (y[hi] - y[lo]);
-  return Math.min(S_END, s[lo] + (s[hi] - s[lo]) * t);
+  return Math.min(S_NEXT_REST, s[lo] + (s[hi] - s[lo]) * t);
+}
+
+/** The scroll position (px) of the rest anchor (s = S_NEXT_REST), or NaN when the page has none (static layouts). */
+export function scrollAtRest(map: ScrollMap): number {
+  const { y, s } = map;
+  for (let i = 0; i < y.length; i++) if (s[i] >= S_NEXT_REST - 1e-6) return y[i];
+  return Number.NaN;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -143,7 +176,7 @@ export interface StoryPhase {
   readonly summit: boolean;
   /** The legend fades from dissolve 0.4; the labels from 0.5. */
   readonly legendHidden: boolean;
-  /** The map has melted into the ground (the stage is hidden and the renderer idles). */
+  /** The map plate has scrolled away with #next (the stage is hidden and the renderer idles). */
   readonly gone: boolean;
 }
 
@@ -151,7 +184,8 @@ const INITIAL: StoryPhase = { act: 0, overview: false, summit: false, legendHidd
 let phase: StoryPhase = INITIAL;
 const phaseListeners = new Set<() => void>();
 
-export function phaseAt(s: number): StoryPhase {
+/** The phase at `s`; `gone` is the plate's exit, measured by the driver (the map no longer dissolves). */
+export function phaseAt(s: number, gone = false): StoryPhase {
   const act: StoryAct = actAt(s);
   const d = dissolveAt(s);
   return {
@@ -159,7 +193,7 @@ export function phaseAt(s: number): StoryPhase {
     overview: s >= S_OVERVIEW,
     summit: s >= SUMMIT_ACT.s0 && s < SUMMIT_ACT.s1,
     legendHidden: d > 0.4,
-    gone: d >= 0.999,
+    gone,
   };
 }
 

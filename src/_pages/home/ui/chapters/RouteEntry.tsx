@@ -77,7 +77,7 @@ export function RouteEntry({ id, extras, slot }: RouteEntryProps) {
   const trail = ENTRY_TRAILS[id];
 
   return (
-    <li className={`${styles.slot} py-16 md:py-24`} style={{ '--slot-h': `${slot.vh}vh` } as CSSVars}>
+    <li className={`${styles.slot} py-16 md:py-24`} data-static-collapse="" style={{ '--slot-h': `${slot.vh}vh` } as CSSVars}>
       <article id={id} aria-labelledby={titleId} data-story-at={slot.at} className={ARTICLE_GRID}>
         <div data-recede="" className="lg:col-[1/span_5] lg:row-start-1">
           <ChapterHeader as="h2" id={titleId} altitudeM={wp.altitudeM}>

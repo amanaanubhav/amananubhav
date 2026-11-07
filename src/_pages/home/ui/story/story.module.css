@@ -287,6 +287,78 @@
   color: var(--map-head);
 }
 
+/*
+ * The #next map's labels (NEXT-DESIGN §3.4): names in ink, the jeep's villages in steel (map-jeep, the planned
+ * road's colour), the "planned" / "expected" notes in muted italic. No halo: the casing-free type sits on the
+ * relief like the story's.
+ */
+.e {
+  font:
+    italic 400 12px/1 var(--font-text),
+    serif;
+  color: var(--ink-muted);
+}
+
+/* Day: the light relief leaves muted ink at the AA floor (4.54:1 measured), so the notes take ink; italic keeps them a
+   step behind the names. */
+:global(:root[data-theme='day']) .lbl[data-role^='next-'] .e {
+  color: var(--ink);
+}
+
+.lbl[data-role='next-circuit-end'] .n,
+.lbl[data-role='next-road'] .n,
+.lbl[data-role='next-via'] .n {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--map-jeep);
+}
+
+.lbl[data-role='next-jeep-start'] .n,
+.lbl[data-role='next-trailhead'] .n {
+  font-weight: 600;
+}
+
+.lbl[data-role='next-goal'] .n {
+  font:
+    650 13.5px/1 var(--font-display),
+    sans-serif;
+  letter-spacing: 0.005em;
+}
+
+.lbl[data-role='next-summit'] {
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.lbl[data-role='next-summit'] .n {
+  font:
+    500 10.5px/1 var(--font-display),
+    sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.lbl[data-role='next-summit'] .a {
+  font-size: 10px;
+}
+
+/* Phones: the long #next labels break after the name (altitude and note on a second line), so they fit. */
+@media (max-width: 760px) {
+  .lbl[data-role='next-goal'],
+  .lbl[data-role='next-trailhead'],
+  .lbl[data-role='next-jeep-start'] {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    max-width: 13rem;
+  }
+
+  .lbl[data-role='next-goal'] .n,
+  .lbl[data-role='next-trailhead'] .n,
+  .lbl[data-role='next-jeep-start'] .n {
+    flex-basis: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lbl {
     transition: none;
@@ -708,6 +780,32 @@
 :global(html[data-motion='off']) .slot,
 :global(html[data-lite='1']) .slot {
   min-height: 0;
+}
+
+/*
+ * The #next transition slot (Meander's NextTransition; docs/redesign/next-trek/build/CONTRACT.md §1-§2). From
+ * S_END (the slot's top at the viewport bottom) to the rest line (#next's header at `--rest-line` %) is
+ * slot + (100 - rest line) vh of scroll, so 242 vh with the 22 % line and 272 vh with the 52 % line on phones keep
+ * the 320 vh of story 1:1. Staged layout only: not laid out under motion off, on lite devices, without
+ * JavaScript (the gate never wrote data-motion / data-lite), once the 3D could not run (the stage is static) or
+ * the #next data failed (html[data-next-static]): the same switch as #next's static layout (chapters/next/next.module.css).
+ */
+.nextSlot {
+  height: 242vh;
+}
+
+/* Phones and tablets (<= 1023 px, NEXT_MOBILE_MAX_WIDTH): the #next rest line is 52 %. */
+@media (max-width: 1023.98px) {
+  .nextSlot {
+    height: 272vh;
+  }
+}
+
+:global(html:not([data-motion='on'])) .nextSlot,
+:global(html:not([data-lite='0'])) .nextSlot,
+:global(html:has([data-story-stage][data-static])) .nextSlot,
+:global(html[data-next-static]) .nextSlot {
+  display: none;
 }
 
 /* The summit numeral: sticky while the head climbs and holds on the pass (28 vh; 50 svh on phones). */

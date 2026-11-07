@@ -85,6 +85,9 @@ uniform vec4 uRects[10];
 uniform float uRectN;
 uniform float uFeather;
 uniform float uRadius;
+uniform vec4 uLabelRects[8];
+uniform float uLabelN;
+uniform float uLabelFeather;
 float sdRoundRect(vec2 p, vec4 r, float rad) {
   vec2 h = max((r.zw - r.xy) * 0.5 - rad, vec2(0.0));
   vec2 q = abs(p - (r.xy + r.zw) * 0.5) - h;
@@ -95,6 +98,11 @@ float recedeMaskAt(vec2 px) {
   for (int i = 0; i < 10; i++) {
     if (float(i) >= uRectN) break;
     m = max(m, 1.0 - smoothstep(0.0, uFeather, sdRoundRect(px, uRects[i], uRadius)));
+  }
+  // Compact pools under map labels (the #next set; none in the story): the same recede, a short feather.
+  for (int i = 0; i < 8; i++) {
+    if (float(i) >= uLabelN) break;
+    m = max(m, 1.0 - smoothstep(0.0, uLabelFeather, sdRoundRect(px, uLabelRects[i], uLabelFeather * 0.3)));
   }
   return m * m * (3.0 - 2.0 * m);
 }
@@ -128,5 +136,19 @@ vec3 recede(vec3 c, vec3 paper, float m) {
   vec3 down = r * (Ln / L);
   vec3 up = mix(r, pl, clamp((Ld - L) / max(lumLin(pl) - L, 1e-5), 0.0, 1.0));
   return pow(mix(lin, mix(down, up, uRecedeDay), m), vec3(1.0 / 2.2));
+}
+`;
+
+/**
+ * The #next handoff (past S_END only: the story tile's cut program and the north tile's stand-in): behind the north
+ * tile's reveal front (`grow`: radius, soft band, centre; world units) the story tile's NORTH rim stops sinking (1 =
+ * no sink), so looking north its far edge fades out in colour (the sheet) over real relief instead of standing as a
+ * sunk cliff behind a coloured ridge (fix2 verify P1). `p` is the story tile's plane (world x, z), `hv` its half
+ * extents. The story's own program never has it.
+ */
+export const GLSL_NORTH_RIM_LIFT = /* glsl */ `
+float northRimLift(vec2 p, vec2 hv, vec4 grow) {
+  float north = smoothstep(0.0, 0.25, -p.y / hv.y);
+  return north * (1.0 - smoothstep(grow.x - grow.y, grow.x, distance(p, grow.zw)));
 }
 `;

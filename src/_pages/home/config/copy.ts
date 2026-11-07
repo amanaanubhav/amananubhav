@@ -256,15 +256,84 @@ export const LEDGER_GLYPH = {
 
 /* ------------------------------------------------------------------ #next */
 
-/** [S-EPILOGUE] and [S-REMOTE-SHORT]. The next trek is planned, so it is never dated before the trip (Q-48). */
+/**
+ * [S-EPILOGUE] and [S-REMOTE-SHORT], the next-trek redesign (docs/redesign/next-trek/NEXT-DESIGN.md §3.4). The next
+ * trek is planned, so it is never dated before the trip (Q-48). Route facts are the research's Route A (ROUTE-FACTS.md):
+ * a planned leg from Muktinath, where the walked circuit ends, past Marpha to Humkhola (dashed; the owner, 2026-11-07: "the
+ * route should resume from muktinath"), then the expected Herzog Trail (dotted). The page never names a mode
+ * of transport (Aman, 2026-11-07): the legs differ by line style only. Every route fact says "planned",
+ * "expected" or "commonly cited", and no source is listed on the page (the citations live in the docs and the data
+ * scripts).
+ */
 export const NEXT_COPY = {
-  headline: 'Next: Annapurna North Base Camp. Then, ideally, your team.',
+  kicker: 'Next trek · planned',
+  /** The approved headline, "Next: Annapurna North Base Camp. Then, ideally, your team.", set as two lines. */
+  headlineLines: ['Next: Annapurna North Base Camp.', 'Then, ideally, your team.'],
   /** The trek after the last one (Aman, 2026-11-06): planned, so no dates. */
   nextTrek: { name: 'Annapurna North Base Camp', region: 'Nepal' },
-  body: "Last seen on Darwa Top in Uttarkashi, in October. Next on the map: Annapurna North Base Camp in Nepal. After that, I'd like my next climb to be a remote role on a team that ships AI people actually use. If that sounds like your team, write to me.",
-  remote:
-    "I'm looking for a remote AI engineering role: give me a clear problem and a quiet room, and I'll give you focused, well-documented work.",
+  /** Caption C1, over the planned leg of the 3D transition (staged layout only). */
+  caption: {
+    head: 'Next, from Muktinath',
+    text: 'Down the Kali Gandaki past Jomsom and Marpha to Humkhola, where the trail starts. Planned.',
+  },
+  /** One paragraph: the remote role is asked for once (Q-C, the merge of the old `body` and `remote`). */
+  body: "Last seen on Darwa Top in Uttarkashi, in October. After Annapurna North, I'd like my next climb to be a remote AI engineering role: a clear problem, a quiet room, and a team that ships AI people actually use. If that sounds like your team, write to me.",
+  route: 'Muktinath to Humkhola, then up to the base camp',
+  routeNote: '(expected)',
   then: 'a remote AI engineering role',
+  /** The map key: solid = walked, dashes = the planned leg, dots = the expected trek (`jeep` / `foot` are ids only). */
+  key: {
+    label: 'Map key',
+    walked: 'walked',
+    jeep: 'Muktinath to Humkhola, planned',
+    foot: 'Humkhola to base camp, expected',
+    note: 'Expected route and altitudes as commonly cited; approximate line.',
+  },
+  /** The visually hidden route list (the canvas and the sheet are images). */
+  routeList: {
+    label: 'Expected route, planned',
+    stops: [
+      'Muktinath, start of the planned leg',
+      'Kagbeni',
+      'Jomsom',
+      'Marpha',
+      'Tatopani',
+      'Narchyang',
+      'Humkhola, where the trail starts',
+      'Sadhi Kharka',
+      'Bhusket Mela',
+      'Panchakunda Lake',
+      'Annapurna I Base Camp (North)',
+    ],
+  },
+  /** The static plan sheet (reduced motion, lite devices, no JavaScript, a failed 3D load). */
+  sheet: {
+    title: 'Plan sheet: the expected route to Annapurna North Base Camp',
+    desc: 'A relief map of the Kali Gandaki and the north side of Annapurna I. A dashed line marks the planned leg from Muktinath, where the walked circuit ends, past Kagbeni, Jomsom and Marpha down to Tatopani and up past Narchyang to Humkhola. A dotted line marks the expected route from Humkhola past Sadhi Kharka, Bhusket Mela and Panchakunda Lake to Annapurna I Base Camp (North). Lines are approximate.',
+    km: 'km',
+  },
+  /**
+   * Names and notes of the next route's places, by route-file place id: the one source for the static sheet and the
+   * 3D map's labels (NEXT_MARKS). Muktinath is where the walked circuit ends and the planned leg starts; the road towns
+   * carry names only.
+   */
+  places: {
+    muktinath: { name: 'Muktinath', note: 'end of the circuit' },
+    jharkot: { name: 'Jharkot' },
+    kagbeni: { name: 'Kagbeni' },
+    jomsom: { name: 'Jomsom' },
+    marpha: { name: 'Marpha' },
+    kalopani: { name: 'Kalopani' },
+    ghasa: { name: 'Ghasa' },
+    tatopani: { name: 'Tatopani' },
+    narchyang: { name: 'Narchyang' },
+    humkhola: { name: 'Humkhola', note: 'trail starts, expected' },
+    'sadhi-kharka': { name: 'Sadhi Kharka' },
+    'bhusket-mela': { name: 'Bhusket Mela' },
+    panchakunda: { name: 'Panchakunda Lake' },
+    anbc: { name: 'Annapurna I Base Camp (North)', note: 'expected' },
+    'annapurna-i': { name: 'Annapurna I' },
+  } as Readonly<Record<string, { readonly name: string; readonly note?: string }>>,
   terminal: 'Open the terminal',
   vault: 'Vault',
   email: 'Email me',

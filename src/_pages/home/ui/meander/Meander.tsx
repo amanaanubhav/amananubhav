@@ -8,6 +8,7 @@ import { PassEntry } from '../chapters/PassEntry';
 import type { StorySlot } from '../chapters/RouteEntry';
 import { WorkEntry } from '../chapters/WorkEntry';
 import { WriteEntry } from '../chapters/WriteEntry';
+import { NextTransition } from './NextTransition';
 import { STORY_TEXT_AT as AT } from '../scenes/story/timeline';
 import styles from '../story/story.module.css';
 import { StoryCaption } from '../story/StoryCaption';
@@ -46,8 +47,9 @@ const CAPTION_SLOTS = { day6: SLOTS.day6, day7: SLOTS.day7, days910: SLOTS.days9
  * (tabindex -1, set by the hero's "Read my story") so the next Tab starts in the route.
  *
  * The grid opts out of the rail reserve (`data-rail-overlay`): its right side is map space by design and no
- * story text reaches past content col 6. `data-story-end` (after entry 6) is where the dissolve ends: #next
- * starts on plain ground.
+ * story text reaches past content col 6. `data-story-end` (after entry 6) is the story's end (S_END); the
+ * #next transition follows it (NextTransition: the jeep leg and caption C1), and the map, which no longer
+ * dissolves, comes to rest under #next.
  */
 export function Meander() {
   return (
@@ -75,6 +77,7 @@ export function Meander() {
         className={`${styles.slot} col-[full-start/full-end] motion-stage`}
         style={{ '--slot-h': '0vh' } as CSSVars}
       />
+      <NextTransition />
     </section>
   );
 }

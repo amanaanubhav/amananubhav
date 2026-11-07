@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 
 import { signalBootReady } from '@/shared/lib/boot';
 import { setChromeDimmed } from '@/shared/lib/chrome';
-import { useMotionTier } from '@/shared/lib/motion-tier';
+import { holdPlaceAcrossStatic, useMotionTier } from '@/shared/lib/motion-tier';
 import { encodePrefetchList, prefetch, releaseStageHold } from '@/shared/lib/stage-prefetch';
 import { preloadStage, useStageScene } from '@/shared/ui/stage';
 
@@ -44,6 +44,15 @@ export function StoryStage({ poster }: StoryStageProps) {
   const tier = useMotionTier();
   const hydrated = useSyncExternalStore(noSubscribe, onClient, onServer);
   const [failed, setFailed] = useState(false);
+  // A failed 3D load turns the page static, which collapses the #next transition slot through CSS; the place is
+  // held across it once (the motion tier does the same for its own degrades).
+  const failedOnce = useRef(false);
+  const fail = useCallback(() => {
+    if (failedOnce.current) return;
+    failedOnce.current = true;
+    holdPlaceAcrossStatic();
+    setFailed(true);
+  }, []);
   const [shown, setShown] = useState(false);
   const [live, setLive] = useState(false);
   const [el, setEl] = useState<HTMLDivElement | null>(null);
@@ -76,7 +85,7 @@ export function StoryStage({ poster }: StoryStageProps) {
     void document.fonts.ready.then(() => {
       if (cancelled) return;
       preloadStage().catch(() => {
-        if (!cancelled) setFailed(true);
+        if (!cancelled) fail();
       });
       loadRelief().catch(() => {}); // a scene chunk error reaches the scene boundary (data-stage-failed)
       for (const [url, kind] of STORY_DATA_PREFETCH) prefetch(url, kind);
@@ -84,7 +93,7 @@ export function StoryStage({ poster }: StoryStageProps) {
     return () => {
       cancelled = true;
     };
-  }, [staged]);
+  }, [staged, fail]);
 
   // The scene marks the slot: `data-stage-live` on its first (ground-identical) frame, `data-stage-shown`
   // once the relief has risen far enough for the labels, `data-stage-failed` when it cannot draw. A failure
@@ -96,7 +105,7 @@ export function StoryStage({ poster }: StoryStageProps) {
       setLive(el.hasAttribute('data-stage-live'));
       setShown(el.hasAttribute('data-stage-shown'));
       const added = records.some((r) => r.attributeName === 'data-stage-failed' && r.oldValue === null);
-      if (added || el.hasAttribute('data-stage-failed')) setFailed(true);
+      if (added || el.hasAttribute('data-stage-failed')) fail();
     };
     const observer = new MutationObserver(read);
     observer.observe(el, {
@@ -106,7 +115,7 @@ export function StoryStage({ poster }: StoryStageProps) {
     });
     if (['data-stage-live', 'data-stage-shown', 'data-stage-failed'].some((a) => el.hasAttribute(a))) read([]);
     return () => observer.disconnect();
-  }, [el]);
+  }, [el, fail]);
 
   // The first-load curtain waits for the stage on '/' (preloader design §4.2): ready once the relief's first
   // frame is drawn (it rises when the curtain leaves), or once the stage is static or has failed. The same

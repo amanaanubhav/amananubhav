@@ -1,4 +1,5 @@
 import type { StoryMarkKind } from './marks';
+import type { NextMarkKind } from './next-timeline';
 
 /*
  * The contract between the relief scene and the home page (design §15.5). No three.js here.
@@ -22,7 +23,10 @@ export const STORY_DATA_PREFETCH: readonly (readonly [url: string, kind: 'json' 
 
 /** Param keys the scene reads every frame (all optional; defaults in brackets). */
 export const STORY_PARAM = {
-  /** s / S_END, 0..1 [0]. `setSceneProgress(id, p)` works too. */
+  /**
+   * s / S_END [0]: 0..1 is the story, above 1 (up to S_NEXT_REST / S_END) the #next transition and rest.
+   * `setSceneProgress(id, p)` works too.
+   */
   progress: 'progress',
   /**
    * Recede rectangles in CSS px, viewport coordinates, top-left origin: [left, top, right, bottom]
@@ -45,6 +49,17 @@ export const STORY_PARAM = {
   labels: 'labels',
   /** The ambient sway's clock origin (`performance.now()`) [window.__t0, else 0 = navigation start]. */
   t0: 't0',
+  /**
+   * Pools under the #next map labels: [left, top, right, bottom] per placed label in the stage's CSS px, up to 8,
+   * plus `labelN` [0]. Written by the label layer after it places them (the scene uses them on its next frame).
+   */
+  labelRects: 'labelRects',
+  labelN: 'labelN',
+  /**
+   * The plate's exit (#next, CSS px, <= 0) [0]: the stage is translated up by this much while #next's bottom
+   * passes the viewport bottom. The page writes every rect in the stage's own (translated) coordinates.
+   */
+  plateY: 'plateY',
 } as const;
 
 export interface StoryMarkState {
@@ -59,6 +74,29 @@ export interface StoryMarkState {
   visible: boolean;
   /** The stop the head is at ("here": signal colour + the readout's °C). */
   here: boolean;
+}
+
+/** A mark of the #next map (NEXT_MARKS order): screen position and label wish, as StoryMarkState. */
+export interface NextMarkState {
+  readonly id: string;
+  readonly kind: NextMarkKind;
+  x: number;
+  y: number;
+  /** > 0: wants a label now (higher first); <= 0: no label. */
+  pri: number;
+  visible: boolean;
+}
+
+/** The #next part of the frame (NEXT-DESIGN §3): null until the north data is in and compiled. */
+export interface NextFrame {
+  /** 0 at S_END -> 1 at the end of the handoff (the north tile has risen). */
+  handoff: number;
+  /** The camera is at rest (s >= S_NEXT_REST) and the ambient sway has stopped. */
+  rest: boolean;
+  /** The trek line's reveal, 0..1 (time-based, once). */
+  trek: number;
+  /** Every mark of NEXT_MARKS, in that order. */
+  marks: NextMarkState[];
 }
 
 /**
@@ -91,7 +129,7 @@ export interface StoryFrame {
   intro: boolean;
   overview: boolean;
   reduced: boolean;
-  /** 0..1 over the last 60 vh: labels fade at 0.5, the legend at 0.4, the stage hides at 1. */
+  /** 0..1 over the story's last 60 vh: its labels fade at 0.5, the legend at 0.4 (the map itself stays). */
   dissolve: number;
   /** The summit numeral (cited metres): 4,880 -> 5,416 with the head through the climb. */
   numeralM: number;
@@ -100,4 +138,6 @@ export interface StoryFrame {
   readout: StoryReadout | null;
   /** Every mark of STORY_MARKS, in that order. */
   marks: StoryMarkState[];
+  /** The #next transition and rest view, or null while its data is not ready (the overview holds). */
+  next: NextFrame | null;
 }

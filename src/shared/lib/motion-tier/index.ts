@@ -1,6 +1,7 @@
 export {
   degradeStage,
   getMotionTier,
+  holdPlaceAcrossStatic,
   useMotionAllowed,
   useMotionTier,
 } from './motion-tier';

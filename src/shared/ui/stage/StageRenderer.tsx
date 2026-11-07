@@ -20,7 +20,15 @@ import { degradeStage } from '@/shared/lib/motion-tier';
 import { StageSceneRoot, markStageFailed } from '@/shared/ui/stage-three';
 
 import { onIdle } from './idle';
-import { hasVisibleScene, runStageBeforeAdvance, useStageEntries, type StageSceneEntry } from './registry';
+import {
+  hasVisibleScene,
+  isStageFrameHeld,
+  releaseStageFrameHolds,
+  runStageBeforeAdvance,
+  setStageClearSkipped,
+  useStageEntries,
+  type StageSceneEntry,
+} from './registry';
 import { ThemeUniforms } from './ThemeUniforms';
 
 /*
@@ -84,6 +92,8 @@ function TickerDriver({ paused, onResume }: { paused: boolean; onResume: () => v
         gl.setScissorTest(false);
         gl.clear(true, true, false);
       }
+      // Not advancing: the canvas may be cleared or resized before the next drawn frame, so no hold survives.
+      if (!active) releaseStageFrameHolds();
       wasActive = active;
     };
     gsap.ticker.add(tick);
@@ -95,9 +105,15 @@ function TickerDriver({ paused, onResume }: { paused: boolean; onResume: () => v
   return null;
 }
 
-/** Clears the whole canvas at the start of every frame, before the slot renders (priority 1). */
+/**
+ * Clears the whole canvas at the start of every frame, before the slot renders (priority 1), unless every
+ * visible scene holds its last frame (registry frame hold: a still view keeps the canvas untouched).
+ */
 function FrameClear() {
   useFrame(({ gl }) => {
+    const held = isStageFrameHeld();
+    setStageClearSkipped(held);
+    if (held) return;
     gl.setScissorTest(false);
     gl.clear(true, true, false);
   }, 0.5);

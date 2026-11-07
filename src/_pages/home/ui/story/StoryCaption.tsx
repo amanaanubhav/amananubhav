@@ -16,7 +16,7 @@ export interface StoryCaptionProps {
  */
 export function StoryCaption({ head, text, at, slotVh }: StoryCaptionProps) {
   return (
-    <li className={styles.slot} style={{ '--slot-h': `${slotVh}vh` } as CSSVars}>
+    <li className={styles.slot} data-static-collapse="" style={{ '--slot-h': `${slotVh}vh` } as CSSVars}>
       <p data-story-at={at} data-recede="" className="text-body m-0 max-w-[34ch] py-8 font-body text-ink">
         <span className="mb-2 flex items-center gap-2 font-data text-caption font-semibold text-ink">
           <span aria-hidden="true" className={styles.tick} />

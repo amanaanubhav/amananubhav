@@ -2,68 +2,103 @@ import { Mail } from 'lucide-react';
 
 import { getExpedition } from '@/entities/expedition';
 import { PROFILE } from '@/entities/profile';
+import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { ChapterHeader } from '@/shared/ui/chapter-header';
 import { OverlapBand } from '@/shared/ui/charts';
-import { Log, Trail } from '@/shared/ui/journal';
+import { Trail } from '@/shared/ui/journal';
+import { VisuallyHidden } from '@/shared/ui/visually-hidden';
 
 import { NEXT_COPY } from '../../config/copy';
 import { NEXT_TRAIL } from '../../config/trail';
 import { OpenTerminalButton, SecureContactButton } from './HomeActions';
+import { NEXT_S } from './next/anchors';
+import { MapKey } from './next/MapKey';
+import styles from './next/next.module.css';
+import { NorthSheet } from './next/NorthSheet';
 
 /**
- * `#next`, the next base camp (§G.1, [S-EPILOGUE]): home's one full remote ask, on plain ground. It
- * carries no map: the story map has dissolved into the ground before it arrives (one map per page; the dissolve
- * ends as its top reaches the viewport bottom, Meander's END).
- * The headline names the next trek; the log keeps the last one, whose journal entry links in once it exists.
+ * `#next`, the next trek (docs/redesign/next-trek/NEXT-DESIGN.md §2-§4): home's one full remote ask.
  *
- * Spacing (SYS-4, M-05): the dissolve is the seam above it, so it opens with one block space; it is the last section
- * before the footer, so it has no bottom padding (the footer's seam is the only one).
+ * Staged (the 3D map): the story map no longer dissolves. The 320 vh transition (the jeep leg, caption C1) is the
+ * story's own slot before this section (Meander, the scene step); at the rest anchor the map holds a still view of the
+ * expected foot route and this copy floats over it, left of the subject (content cols 1-6), with no panels: the map
+ * recedes under each `data-recede` box. The header carries the rest anchor (`data-next-anchor="rest"`, next/anchors.ts).
  *
- * Ink: the log and the trail lift muted ink to ink, and both paragraphs are ink (running text never takes the muted
- * role).
+ * Static (reduced motion, lite devices, no JavaScript, tier 0 or a failed 3D load): the north
+ * plan sheet sits in flow beside the copy (cols 7-12; above the log on phones), and the Trail returns.
  *
- * Grid (≥ 1024 px; content col n is grid track n + 1): log cols 1-2, copy cols 3-8, then the actions and
- * the overlap band across cols 3-10, so the rail never covers the band's rows. The h2 keeps the default
- * width: thin air is for the route entries only (§B.4.4).
+ * Ink: everything over the map is ink (muted ink never sits on the relief). Actions: one row from 1024 px; on phones
+ * they keep the dock band and the chat bead clear, and the section ends clear of the bead.
  */
 export function NextSection() {
   const last = getExpedition('dodital');
   const next = NEXT_COPY.nextTrek;
+  const [headFirst, headSecond] = NEXT_COPY.headlineLines;
 
   return (
     <section
       id="next"
+      data-static-anchor=""
       aria-labelledby="next-title"
-      className="journal-grid relative z-[1] pb-0 pt-block"
+      className={cn('journal-grid relative z-[1] pb-0', styles.section, styles.end)}
     >
-      <div className="col-[content-start/content-end] lg:col-[4/span_6] lg:row-start-1">
-        <ChapterHeader as="h2" id="next-title">
-          {NEXT_COPY.headline}
+      <header
+        data-next-anchor="rest"
+        data-next-at={NEXT_S.rest}
+        data-recede=""
+        className={cn('col-[content-start/content-end] lg:col-[2/span_7] lg:row-start-2', styles.restHead)}
+      >
+        <p className="m-0 mb-3 font-data text-caption font-medium uppercase tracking-[0.08em] text-ink">
+          {NEXT_COPY.kicker}
+        </p>
+        <ChapterHeader as="h2" id="next-title" size="h3" reveal="none">
+          <span className={styles.headFirst}>{headFirst}</span>{' '}
+          <span className={styles.headSecond}>{headSecond}</span>
         </ChapterHeader>
+      </header>
+
+      {/* The static plan sheet: the still poster of the rest view (beside the copy from 1024 px, above the log below). */}
+      <figure
+        className={cn(
+          'col-[content-start/content-end] m-0 mt-8 lg:col-[8/span_5] lg:row-[3/span_3] lg:mt-8 lg:self-start',
+          styles.staticOnly,
+        )}
+      >
+        <NorthSheet className="w-full" />
+      </figure>
+
+      <div data-recede="" className="col-[content-start/content-end] mt-8 lg:col-[2/span_6] lg:row-start-3">
+        <dl aria-label="Field log: next" className={cn('text-caption font-body', styles.log)}>
+          <dt>last</dt>
+          <dd>{last.when ? `${last.name}, ${last.when}` : last.name}</dd>
+          <dt>next</dt>
+          <dd>{`${next.name}, ${next.region}`}</dd>
+          <dt>status</dt>
+          <dd>planned</dd>
+          <dt>route</dt>
+          <dd>
+            {NEXT_COPY.route} <i>{NEXT_COPY.routeNote}</i>
+          </dd>
+          <dt>then</dt>
+          <dd>{NEXT_COPY.then}</dd>
+        </dl>
+        <Trail items={NEXT_TRAIL} label="Trail: next" summitTone="bronze" className={cn('mt-6', styles.staticOnly)} />
+        {/* From 1024 px the key sits under the log; below it, after the body (the rest frame keeps it off the dock). */}
+        <MapKey className="mt-6 hidden lg:block" />
       </div>
 
-      <div className="col-[content-start/content-end] mt-4 lg:col-[2/span_2] lg:row-[1/span_2] lg:mt-0 lg:self-start lg:pt-2 [&_.text-ink-muted]:text-ink">
-        <Log
-          label="Field log: next"
-          items={[
-            { key: 'last', value: last.when ? `${last.name}, ${last.when}` : last.name, mono: false },
-            { key: 'next', value: `${next.name}, ${next.region}`, mono: false },
-            { key: 'status', value: 'planned', mono: false },
-            { key: 'then', value: NEXT_COPY.then, mono: false },
-          ]}
-        />
-        <Trail items={NEXT_TRAIL} label="Trail: next" summitTone="bronze" className="mt-6" />
-      </div>
-
-      <div className="col-[content-start/content-end] mt-6 lg:col-[4/span_6] lg:row-start-2 lg:mt-8">
+      <div data-recede="" className="col-[content-start/content-end] mt-6 lg:col-[2/span_6] lg:row-start-4 lg:mt-8">
         <p className="text-body m-0 max-w-[60ch] text-ink [text-wrap:pretty]">{NEXT_COPY.body}</p>
-        <p className="text-body m-0 mt-4 max-w-[60ch] text-ink [text-wrap:pretty]">{NEXT_COPY.remote}</p>
+        <MapKey className="mt-6 lg:hidden" />
       </div>
 
-      {/* One row (§G.1): under the copy, cols 3-10, so the three actions never wrap from 1024 px. */}
-      <div className="col-[content-start/content-end] mt-8 lg:col-[4/span_8] lg:row-start-3 lg:mt-10">
-        <div className="flex flex-wrap items-center gap-3 xl:flex-nowrap">
+      {/* One row from 1024 px (§3.4 item 6); on phones the row wraps and clears the dock and the chat bead. */}
+      <div
+        data-recede=""
+        className={cn('col-[content-start/content-end] mt-8 lg:col-[2/span_6] lg:row-start-5 lg:mt-10', styles.actions)}
+      >
+        <div className="flex flex-wrap items-center gap-3">
           <OpenTerminalButton label={NEXT_COPY.terminal} />
           <SecureContactButton label={NEXT_COPY.vault} />
           <Button variant="secondary" icon={Mail} href={`mailto:${PROFILE.links.email}`}>
@@ -71,15 +106,23 @@ export function NextSection() {
           </Button>
         </div>
         {last.status === 'done' && last.storyId ? (
-          <Button variant="text" href={`/stories#${last.id}`} className="mt-6">
+          <Button variant="text" href={`/stories#${last.id}`} className="mt-4 min-h-11">
             {NEXT_COPY.storyLink}
           </Button>
         ) : null}
       </div>
 
-      <div className="col-[content-start/content-end] mt-16 lg:col-[4/span_8] lg:row-start-4 lg:mt-20">
+      <div data-recede="" className="col-[content-start/content-end] mt-16 lg:col-[2/span_8] lg:row-start-6 lg:mt-20">
         <OverlapBand workWindowIST={PROFILE.availability?.workWindowIST} caption={NEXT_COPY.overlapCaption} />
       </div>
+
+      <VisuallyHidden as="div">
+        <ol aria-label={NEXT_COPY.routeList.label}>
+          {NEXT_COPY.routeList.stops.map((stop) => (
+            <li key={stop}>{stop}</li>
+          ))}
+        </ol>
+      </VisuallyHidden>
     </section>
   );
 }

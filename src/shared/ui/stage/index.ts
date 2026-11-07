@@ -6,8 +6,10 @@
 export {
   emitSceneFrame,
   hasVisibleScene,
+  isSceneFrameHeld,
   lastSceneFrame,
   onStageBeforeAdvance,
+  setSceneFrameHeld,
   setSceneParam,
   setSceneProgress,
   stageBufferParams,

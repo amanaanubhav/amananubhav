@@ -26,8 +26,32 @@ export { loadHeightfield, createTerrainFrame } from './heightfield';
 export type { HeightfieldMeta, LoadHeightfieldOptions, LoadedHeightfield, TerrainFrame } from './heightfield';
 export { applyStoryTheme, createStoryUniforms, setRecedeTheme, storyIndexAlpha } from './story-uniforms';
 export type { StoryUniforms } from './story-uniforms';
-export { createStoryMarkers, createStoryRibbon, createStoryTerrain, setTerrainFocus } from './story-layers';
+export {
+  createStoryMarkers,
+  createStoryRibbon,
+  createStoryTerrain,
+  createStoryTerrainCut,
+  setTerrainFocus,
+} from './story-layers';
 export type { RibbonStrip, StoryMarkerKind, StoryMarkers, StoryTerrainOptions } from './story-layers';
+export {
+  addSkirt,
+  createNextLine,
+  createNextLineUniforms,
+  createNextMarkers,
+  createNorthGrowUniform,
+  createNorthTerrain,
+  focusAt,
+} from './next-layers';
+export type {
+  NextLine,
+  NextLineStrip,
+  NextLineUniforms,
+  NextMarkerKind,
+  NextMarkers,
+  NorthGrowUniform,
+  NorthTerrainOptions,
+} from './next-layers';
 
 /** Per-frame drivers of scenes run before primitives (0.8) and the slot render (1). */
 export const SCENE_DRIVER_PRIORITY = 0.6;

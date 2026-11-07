@@ -112,6 +112,55 @@ export function runStageBeforeAdvance(): void {
 }
 
 /* ------------------------------------------------------------------------------------------------
+ * Frame hold. A scene whose last drawn frame is still exact (a still view: nothing it draws has changed)
+ * skips its draw and asks the renderer not to clear the canvas either, so the last frame stays on screen
+ * and the GPU idles. The renderer clears only when every visible scene holds; it drops all holds when it
+ * stops advancing (the canvas is cleared then, so the next frame must draw).
+ * ---------------------------------------------------------------------------------------------- */
+
+const heldScenes = new Set<SceneId>();
+/** Whether this frame's clear was actually skipped (written by the renderer's frame clear, every frame). */
+let clearSkipped = false;
+
+/** A scene's wish for the NEXT frame: true = keep the canvas as it is (no clear), false = clear as usual. */
+export function setSceneFrameHeld(id: SceneId, held: boolean): void {
+  if (held) heldScenes.add(id);
+  else heldScenes.delete(id);
+}
+
+/**
+ * True when this scene asked for the hold AND the renderer actually skipped this frame's clear, so the canvas still
+ * shows the scene's last draw and the scene may skip its own. A scene that holds while another visible scene does
+ * not gets false here (the canvas was cleared), and draws.
+ */
+export function isSceneFrameHeld(id: SceneId): boolean {
+  return clearSkipped && heldScenes.has(id);
+}
+
+/** The renderer's frame clear reports whether it skipped the clear this frame (see `isSceneFrameHeld`). */
+export function setStageClearSkipped(skipped: boolean): void {
+  clearSkipped = skipped;
+}
+
+/** The renderer's check before its frame clear: every visible scene holds (and at least one does). */
+export function isStageFrameHeld(): boolean {
+  if (heldScenes.size === 0) return false;
+  let any = false;
+  for (const e of entries) {
+    if (!e.visible) continue;
+    if (!heldScenes.has(e.id)) return false;
+    any = true;
+  }
+  return any;
+}
+
+/** Drops every hold (the renderer stopped advancing or cleared the canvas). */
+export function releaseStageFrameHolds(): void {
+  heldScenes.clear();
+  clearSkipped = false;
+}
+
+/* ------------------------------------------------------------------------------------------------
  * Scene -> page frames. A scene emits one frame object per rendered frame (the same object, mutated
  * in place); DOM overlays (labels, readouts) subscribe and write transforms in the same tick.
  * ---------------------------------------------------------------------------------------------- */

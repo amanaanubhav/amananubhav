@@ -11,10 +11,13 @@ export interface HomeWaypoint {
   readonly altitudeM?: number;
   readonly approx?: boolean;
   readonly planned?: boolean;
+  /** The rail's italic note after the altitude ("expected"); said after it too. */
+  readonly note?: string;
+  /** The place in full for screen readers, when `name` is shortened to fit the rail. */
+  readonly spokenPlace?: string;
 }
 
 const ANNAPURNA = getExpedition('annapurna');
-const DODITAL = getExpedition('dodital');
 
 /** Only the site's or commonly cited altitudes are printed, never a DEM sample (R26). */
 const PRINTABLE = new Set<string>(['commonly-cited', 'bio', 'gpx']);
@@ -27,7 +30,21 @@ function waypoint(exp: Expedition, name: string, planned = false): HomeWaypoint 
 }
 
 /**
- * The camp each home section stands at, Besisahar to Darwa Top: where the walk is on the story map when
+ * #next stands at the next trek's goal (docs/redesign/next-trek/NEXT-DESIGN.md §3.4): Annapurna I Base Camp (North),
+ * ~4,190 m as commonly cited (ROUTE-FACTS.md, Route A; the same figure as the map's `NEXT_MARKS` goal), approximate.
+ * The rail reads "~4,190 m expected" over "Annapurna North BC" under its "Next base camp" label (the full name is cut
+ * by the rail's one-line place at 1440) and says "Annapurna North Base Camp, about 4,190 metres, expected".
+ */
+const NEXT_BASE_CAMP: HomeWaypoint = {
+  name: 'Annapurna North BC',
+  spokenPlace: 'Annapurna North Base Camp',
+  altitudeM: 4190,
+  approx: true,
+  note: 'expected',
+};
+
+/**
+ * The camp each home section stands at, Besisahar to Muktinath, then the next base camp: where the walk is on the story map when
  * the entry is centred (design §4: entry 1 on Day 2 to Syange, entry 2 on Day 3 to Timang, entry 3 on
  * Day 4 to Dhikur Pokhari).
  */
@@ -39,7 +56,7 @@ export const HOME_WAYPOINTS: Readonly<Record<HomeSectionId, HomeWaypoint>> = {
   pass: waypoint(ANNAPURNA, 'Thorong La'),
   ask: waypoint(ANNAPURNA, 'Muktinath'),
   write: waypoint(ANNAPURNA, 'Muktinath'),
-  next: waypoint(DODITAL, 'Darwa Top', DODITAL.status !== 'done'),
+  next: NEXT_BASE_CAMP,
 };
 
 function item(id: HomeSectionId, label: string): SectionNavItem {
@@ -51,6 +68,8 @@ function item(id: HomeSectionId, label: string): SectionNavItem {
     altitudeM: wp.altitudeM,
     approx: wp.approx,
     kind: wp.planned ? 'planned' : 'waypoint',
+    note: wp.note,
+    spokenPlace: wp.spokenPlace,
   };
 }
 

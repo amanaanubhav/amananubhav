@@ -1,6 +1,6 @@
 import { Color, Vector2, Vector3, Vector4 } from 'three';
 
-import { hexToRgb01 } from '@/shared/config';
+import { hexToRgb01, STORY_LAPSE } from '@/shared/config';
 import { STORY_HYPSO_STOPS_M, STORY_PALETTE, STORY_TEMP_STOPS_C, type StoryThemeColors } from '@/shared/ui/stage';
 
 import { stageUniforms } from './stage-uniforms';
@@ -82,7 +82,7 @@ export function createStoryUniforms() {
     /** 1 = elevation fill, 0 = temperature fill (the legend toggle, damped). */
     uFillMix: { value: 1 },
     /** Temperature model: (reference altitude m, reference °C, °C per km). */
-    uLapse: { value: new Vector3(760, 22, -6.5) },
+    uLapse: { value: new Vector3(STORY_LAPSE.baseM, STORY_LAPSE.baseC, STORY_LAPSE.perKm) },
     uMinor: { value: NIGHT.src.minor },
     /** Minor contours fade out beyond dist 16. */
     uMinorK: { value: 1 },
@@ -117,6 +117,12 @@ export function createStoryUniforms() {
     uFadeFar: { value: 60 },
     /** 1 -> 0: the map dissolves into the ground in place (the ending). */
     uFade: { value: 1 },
+    /**
+     * The #next handoff: the north tile's box in story world units [x0, z0, x1, z1], and how much of it the
+     * north tile owns (0 = none, the story exactly; 1 = all). See TERRAIN_FS.
+     */
+    uCutBox: { value: new Vector4(0, 0, 0, 0) },
+    uCutMix: { value: 0 },
     /** Route reveal: main length drawn, and each side trip's (Blue, Green, Ice, Tilicho). */
     uDrawMain: { value: 0 },
     uDrawTrip: { value: new Vector4() },
@@ -127,6 +133,10 @@ export function createStoryUniforms() {
     uPulse: { value: 1 },
     uRects: { value: Array.from({ length: 10 }, () => new Vector4()) },
     uRectN: { value: 0 },
+    /** Compact pools under the #next map labels (device px, bottom-left), their count and feather. */
+    uLabelRects: { value: Array.from({ length: 8 }, () => new Vector4()) },
+    uLabelN: { value: 0 },
+    uLabelFeather: { value: 18 },
     uFeather: { value: 112 },
     uRadius: { value: 26 },
     uLumCap: { value: 0.04 },

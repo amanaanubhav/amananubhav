@@ -18,4 +18,14 @@ export type { StoryActDef } from './timeline';
 export { STORY_FREEZE_M, STORY_MARKS, STORY_OVERVIEW_PRIORITY, STORY_TEMPERATURE, modelledTempC } from './marks';
 export type { StoryMarkDef, StoryMarkKind } from './marks';
 export { STORY_PARAM, STORY_SCENE_ID } from './frame';
-export type { StoryFrame, StoryMarkState, StoryReadout } from './frame';
+export type { NextFrame, NextMarkState, StoryFrame, StoryMarkState, StoryReadout } from './frame';
+export {
+  NEXT_DATA_PREFETCH,
+  NEXT_MARKS,
+  NEXT_MOBILE_MAX_WIDTH,
+  NEXT_PREFETCH_FROM,
+  NEXT_REST_TOP,
+  NEXT_TEXT_AT,
+  S_NEXT_REST,
+} from './next-timeline';
+export type { NextMarkDef, NextMarkKind } from './next-timeline';

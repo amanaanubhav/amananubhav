@@ -4,9 +4,12 @@ import { useEffect } from 'react';
 
 import { setChromeDimmed } from '@/shared/lib/chrome';
 import { gsap } from '@/shared/lib/gsap';
+import { getLenis } from '@/shared/lib/smooth-scroll';
+import { prefetch } from '@/shared/lib/stage-prefetch';
 import { onStageBeforeAdvance, setSceneParam, setSceneProgress } from '@/shared/ui/stage';
 
 import { STORY_PARAM, STORY_SCENE_ID } from '../ui/scenes/story/frame';
+import { NEXT_DATA_PREFETCH, NEXT_PREFETCH_FROM, S_NEXT_REST } from '../ui/scenes/story/next-timeline';
 import { S_END } from '../ui/scenes/story/timeline';
 import {
   buildScrollMap,
@@ -14,6 +17,7 @@ import {
   phaseAt,
   publishPhase,
   resetPhase,
+  scrollAtRest,
   storyAtScroll,
   type ScrollMap,
 } from './story-scroll';
@@ -28,6 +32,11 @@ import {
  *    (viewport, top-left origin, the scene's default `rectUnits`), plus `rectN`;
  *  - the label obstacles (the same boxes in CSS px), read by StoryLabels in the same tick.
  *
+ *  - #next (docs/redesign/next-trek/build/CONTRACT.md): the north data is prefetched at idle once the story
+ *    reaches the numeral (or the page opens on #next), and the plate's exit: once #next's bottom passes the
+ *    viewport bottom the fixed stage is translated up by the overshoot (composite only) and, half a viewport
+ *    past fully off screen, marked gone. Every box above is then given in the stage's own (translated) coordinates.
+ *
  * Layout reads happen only when the layout changes (resize, fonts, content size); per tick the text boxes
  * are shifted by scrollY and only the few fixed chrome elements are measured.
  */
@@ -41,6 +50,8 @@ const TEXT_PAD = 14;
 const CHROME_PAD = 6;
 const MAX_RECTS = 10;
 const TAU = 0.32;
+/** The plate is marked gone once #next's bottom is this many viewports above the viewport bottom (1 = just off). */
+const GONE_PAST = 1.5;
 
 interface CachedBox {
   x0: number;
@@ -84,6 +95,14 @@ export function useStoryDriver(enabled: boolean): void {
     let last = performance.now();
     let lastFrame = -1;
     const rects = new Float32Array(MAX_RECTS * 4);
+    // Looked up again on every layout change: a tier change remounts the stage.
+    let stage = document.querySelector<HTMLElement>('[data-story-stage]');
+    let nextBottom = Infinity; // #next's bottom edge, document px
+    let plate = 0;
+    let prefetched = false;
+    // At the rest view: the scroll position past the rest line (px), -1 elsewhere; and the last tick's scrollY.
+    let restOff = -1;
+    let lastSy = -1;
 
     const measure = () => {
       dirty = false;
@@ -97,6 +116,14 @@ export function useStoryDriver(enabled: boolean): void {
         boxes.push({ x0: b.left, y0: b.top + sy, x1: b.right, y1: b.bottom + sy, live: sticky });
       });
       chrome = chromeElements();
+      const found = document.querySelector<HTMLElement>('[data-story-stage]');
+      if (found !== stage) {
+        if (stage) stage.style.transform = '';
+        stage = found;
+        plate = -1; // re-apply the plate transform on the new node
+      }
+      const next = document.getElementById('next');
+      nextBottom = next ? next.getBoundingClientRect().bottom + sy : Infinity;
     };
     const markDirty = () => {
       dirty = true;
@@ -112,20 +139,67 @@ export function useStoryDriver(enabled: boolean): void {
       const frame = gsap.ticker.frame;
       if (frame === lastFrame) return;
       lastFrame = frame;
+      const relaid = dirty;
       if (dirty) measure();
       const now = performance.now();
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const sy = window.scrollY;
+      let sy = window.scrollY;
+      // A layout change at the rest view that moved the anchors under an unchanged scroll position (a resize after the
+      // browser clamped the scroll to a shorter page) would drop the visitor back into the transition: keep them at
+      // the rest view instead (fix2 verify P2). A scroll of their own (scrollY moved) is never undone.
+      const restY = scrollAtRest(map);
+      if (relaid && restOff >= 0 && sy === lastSy && Number.isFinite(restY) && storyAtScroll(map, sy) < S_NEXT_REST - 0.5) {
+        const target = Math.max(0, Math.min(restY + restOff, document.documentElement.scrollHeight - h));
+        const lenis = getLenis();
+        if (lenis) {
+          // Lenis re-measures the page on a debounce: its limit may still be the shorter page's, which would clamp.
+          lenis.resize();
+          lenis.scrollTo(target, { immediate: true, force: true });
+        }
+        else window.scrollTo(0, target);
+        sy = window.scrollY;
+      }
+      const moved = sy !== lastSy;
+      lastSy = sy;
       const sRaw = storyAtScroll(map, sy);
+      // Set and cleared only by the visitor's own scroll: kept through a layout change, while the scroll stands still
+      // and through a move that ends at the page end (the browser's clamp when the page got shorter, which can leave
+      // the scroll short of the rest line until the next resize).
+      if (!relaid && (restOff < 0 || moved)) {
+        const atRest = sRaw >= S_NEXT_REST - 0.5 && Number.isFinite(restY);
+        if (atRest && restOff < 0) restOff = Math.max(0, sy - restY);
+        else if (moved && sy < document.documentElement.scrollHeight - h - 1) restOff = atRest ? Math.max(0, sy - restY) : -1;
+      }
       damped = damped < 0 ? sRaw : damped + (sRaw - damped) * (1 - Math.exp(-dt / TAU));
       if (Math.abs(sRaw - damped) < 0.01) damped = sRaw;
 
       setSceneProgress(SCENE_ID, sRaw / S_END);
-      publishPhase(phaseAt(damped));
+
+      // The plate's exit: #next's bottom above the viewport bottom moves the stage up by as much.
+      const over = Math.max(0, h - (nextBottom - sy));
+      const nextPlate = Math.min(over, h + 1);
+      if (stage && nextPlate !== plate) {
+        stage.style.transform = nextPlate > 0 ? `translate3d(0, ${(-nextPlate).toFixed(1)}px, 0)` : '';
+      }
+      plate = nextPlate;
+      setSceneParam(SCENE_ID, STORY_PARAM.plateY, -plate);
+      // Gone (hidden, so the renderer idles) only half a viewport past fully off screen: on the way back the stage
+      // is shown again while still above the viewport, so the renderer wakes and draws before any of it scrolls in.
+      publishPhase(phaseAt(damped, over >= h * GONE_PAST));
       emitStoryTick(damped);
+
+      // The #next data, at idle, once the story nears its end or the page opens on #next.
+      if (!prefetched && (damped >= NEXT_PREFETCH_FROM || window.location.hash === '#next')) {
+        prefetched = true;
+        const run = () => {
+          for (const [url, kind] of NEXT_DATA_PREFETCH) prefetch(url, kind, 'low');
+        };
+        if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 1500 });
+        else setTimeout(run, 200);
+      }
 
       // Text boxes on screen (CSS px), then the chrome.
       const text: number[][] = [];
@@ -138,6 +212,9 @@ export function useStoryDriver(enabled: boolean): void {
           y1 = r.bottom;
         }
         if (y1 < -40 || y0 > h + 40) continue;
+        // In the stage's coordinates (it is translated up by `plate` while it leaves with #next).
+        y0 += plate;
+        y1 += plate;
         text.push([b.x0 - TEXT_PAD, y0 - TEXT_PAD, Math.min(w, b.x1 + TEXT_PAD), y1 + TEXT_PAD]);
       }
       const chromeBoxes: number[][] = [];
@@ -145,7 +222,12 @@ export function useStoryDriver(enabled: boolean): void {
         const r = el.getBoundingClientRect();
         if (r.width === 0 || r.height === 0 || r.bottom < 0 || r.top > h) continue;
         if (getComputedStyle(el).opacity === '0') continue;
-        chromeBoxes.push([r.left - CHROME_PAD, r.top - CHROME_PAD, r.right + CHROME_PAD, r.bottom + CHROME_PAD]);
+        chromeBoxes.push([
+          r.left - CHROME_PAD,
+          r.top + plate - CHROME_PAD,
+          r.right + CHROME_PAD,
+          r.bottom + plate + CHROME_PAD,
+        ]);
       }
       storyObstacles.text = text;
       storyObstacles.chrome = chromeBoxes;
@@ -174,6 +256,8 @@ export function useStoryDriver(enabled: boolean): void {
       window.removeEventListener('resize', markDirty);
       storyObstacles.text = [];
       storyObstacles.chrome = [];
+      if (stage) stage.style.transform = '';
+      setSceneParam(SCENE_ID, STORY_PARAM.plateY, 0);
       setSceneParam(SCENE_ID, STORY_PARAM.rectN, 0);
       resetPhase();
       setChromeDimmed(false);

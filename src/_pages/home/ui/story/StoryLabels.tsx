@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-import { useSceneFrame } from '@/shared/ui/stage';
+import { setSceneParam, useSceneFrame } from '@/shared/ui/stage';
 
 import { storyObstacles } from '../../lib/story-driver';
 import {
@@ -13,8 +13,9 @@ import {
   type Box,
   type PlaceInput,
 } from '../../lib/story-labels';
-import { STORY_SCENE_ID, type StoryFrame } from '../scenes/story/frame';
+import { STORY_PARAM, STORY_SCENE_ID, type StoryFrame } from '../scenes/story/frame';
 import { STORY_MARKS } from '../scenes/story/marks';
+import { NEXT_MARKS, type NextMarkDef } from '../scenes/story/next-timeline';
 import { STORY_MOBILE_MAX_WIDTH } from '../scenes/story/timeline';
 import styles from './story.module.css';
 
@@ -25,6 +26,17 @@ const HEAD_INDEX = STORY_MARKS.findIndex((m) => m.kind === 'head');
 const LABELLED = STORY_MARKS.map((mark, index) => ({ mark, index })).filter(
   ({ mark }) => mark.name !== '' && mark.kind !== 'head',
 );
+
+/** The #next map's labels (NEXT_MARKS order) take their own index range in the same layer. */
+const NEXT_BASE = 1000;
+/** Pools under the #next labels (design §3.4: legibility without halos), padded like a tight text box. */
+const POOL_PAD = 6;
+const POOL_MAX = 8;
+const pools = new Float32Array(POOL_MAX * 4);
+const NUMBER = new Intl.NumberFormat('en');
+/** "~4,190 m" for a commonly cited, approximate figure; "8,091 m" for a surveyed height (`approx: false`). */
+const nextAltitude = (mark: NextMarkDef) =>
+  mark.altM ? `${mark.approx === false ? '' : '~'}${NUMBER.format(mark.altM)} m` : '';
 
 interface Size {
   w: number;
@@ -97,6 +109,15 @@ export function StoryLabels({ hidden }: { hidden: boolean }) {
     setText(headTemp.current, frame.readout && hereIndex < 0 ? temp : '', HEAD_INDEX);
 
     const candidates: PlaceInput[] = [];
+    // #next (past the story): its own set, with "planned" / "expected" notes.
+    if (frame.next && frame.live) {
+      frame.next.marks.forEach((m, i) => {
+        const index = NEXT_BASE + i;
+        const size = sizes.current.get(index);
+        if (!m.visible || m.pri <= 0 || !size) return;
+        candidates.push({ index, role: m.kind === 'summit' ? 'peak' : 'stay', priority: m.pri, x: m.x, y: m.y, ...size });
+      });
+    }
     if (frame.dissolve < 0.5 && frame.live) {
       for (const { index } of LABELLED) {
         const m = frame.marks[index];
@@ -120,6 +141,18 @@ export function StoryLabels({ hidden }: { hidden: boolean }) {
 
     const cap = vw <= STORY_MOBILE_MAX_WIDTH ? CAP.mobile : CAP.desktop;
     const placed = placeLabels(candidates, obstacles, vw, vh, cap);
+    // The #next labels' boxes become compact recede pools (the story's labels keep none, as before).
+    let poolN = 0;
+    pools.fill(0);
+    for (const p of placed) {
+      if (p.index < NEXT_BASE || poolN >= POOL_MAX) continue;
+      const size = sizes.current.get(p.index);
+      if (!size) continue;
+      pools.set([p.x - POOL_PAD, p.y - POOL_PAD, p.x + size.w + POOL_PAD, p.y + size.h + POOL_PAD], poolN * 4);
+      poolN += 1;
+    }
+    setSceneParam(STORY_SCENE_ID, STORY_PARAM.labelRects, pools);
+    setSceneParam(STORY_SCENE_ID, STORY_PARAM.labelN, poolN);
     const on = new Set<number>();
     for (const p of placed) {
       const el = els.current.get(p.index);
@@ -158,6 +191,25 @@ export function StoryLabels({ hidden }: { hidden: boolean }) {
                 {mark.sub ? <span className={styles.a}>{mark.sub}</span> : null}
                 {mark.approxPlace ? <span className={styles.q}>approx.</span> : null}
                 <span data-temp="" className={styles.t} />
+              </>
+            )}
+          </div>
+        );
+      })}
+      {NEXT_MARKS.map((mark, i) => {
+        const alt = nextAltitude(mark);
+        return (
+          <div key={`next-${mark.id}`} data-index={NEXT_BASE + i} className={styles.lbl} data-role={`next-${mark.kind}`}>
+            {mark.kind === 'summit' ? (
+              <>
+                {alt ? <span className={styles.a}>{alt}</span> : null}
+                <span className={styles.n}>{mark.name}</span>
+              </>
+            ) : (
+              <>
+                <span className={styles.n}>{mark.name}</span>
+                {alt ? <span className={styles.a}>{alt}</span> : null}
+                {mark.note ? <span className={styles.e}>{mark.note}</span> : null}
               </>
             )}
           </div>

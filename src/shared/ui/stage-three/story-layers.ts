@@ -9,9 +9,10 @@ import {
   Mesh,
   PlaneGeometry,
   ShaderMaterial,
+  type Vector4,
 } from 'three';
 
-import { GLSL_DITHER, GLSL_RECEDE, GLSL_RECEDE_MASK } from './glsl';
+import { GLSL_DITHER, GLSL_NORTH_RIM_LIFT, GLSL_RECEDE, GLSL_RECEDE_MASK } from './glsl';
 import type { StoryUniforms } from './story-uniforms';
 
 /*
@@ -41,6 +42,10 @@ uniform float uRangeM;
 uniform float uEx;
 uniform float uDpr;
 uniform vec2 uHalf;
+#ifdef STORY_CUT
+uniform vec4 uGrow;
+${GLSL_NORTH_RIM_LIFT}
+#endif
 ${GLSL_RECEDE_MASK}
 attribute float aHeightM;
 attribute float aFocus;
@@ -59,6 +64,9 @@ void main() {
   q *= q;
   float r = pow(q.x + q.y, 0.125);
   float sink = 1.0 - smoothstep(0.8, 1.0, r);
+#ifdef STORY_CUT
+  sink = mix(sink, 1.0, northRimLift(position.xz, uHalf, uGrow));
+#endif
   float sheet = (1.0 - smoothstep(0.7, 0.99, r)) * aFocus;
   vSheet = sheet * sheet * (3.0 - 2.0 * sheet);
   vec3 p = vec3(position.x, position.y * uEx * sink, position.z);
@@ -79,7 +87,14 @@ void main() {
 }
 `;
 
-const TERRAIN_FS = /* glsl */ `
+/*
+ * The terrain fragment shader, shared with the #next north tile (next-layers.ts, define NORTH_TILE). The cut
+ * hands the north tile's box (`uCutBox`, world units) over to that tile while `uCutMix` > 0: a plain world-space
+ * box, no dither (the north tile is an exact stand-in for this one inside it, then morphs to its own look). The
+ * story tile's cut is a separate program (define STORY_CUT, `createStoryTerrainCut`) used only past S_END, so the
+ * story's own program has no `discard` (early depth tests stay on for tile-based GPUs).
+ */
+export const TERRAIN_FS = /* glsl */ `
 uniform vec3 uPaper;
 uniform vec3 uInk;
 uniform vec3 uFog;
@@ -109,6 +124,8 @@ uniform float uFadeNear;
 uniform float uFadeFar;
 uniform float uFade;
 uniform float uDpr;
+uniform vec4 uCutBox;
+uniform float uCutMix;
 varying float vH;
 varying float vMpp;
 varying float vDepth;
@@ -138,6 +155,13 @@ float isoLine(float t, float lvl, float wpx) {
   return 1.0 - smoothstep(wpx * 0.5 - 0.5, wpx * 0.5 + 0.5, d);
 }
 void main() {
+#ifdef NORTH_TILE
+  // The north tile draws only while it owns its box (the scene's one warm-up draw before S_END lands nothing).
+  if (uCutMix <= 0.0) discard;
+#elif defined(STORY_CUT)
+  if (uCutMix > 0.0 && vPlane.x > uCutBox.x && vPlane.x < uCutBox.z && vPlane.y > uCutBox.y && vPlane.y < uCutBox.w)
+    discard;
+#endif
   float sheet = vSheet;
   float f = vH / 500.0;
   float w = max(fwidth(f), 1e-4);
@@ -240,6 +264,22 @@ export function createStoryTerrain(geometry: BufferGeometry, uniforms: StoryUnif
   mesh.frustumCulled = false;
   mesh.renderOrder = 0;
   return mesh;
+}
+
+/**
+ * The story terrain's cut variant for the #next handoff (define STORY_CUT): the same shaders, defines and uniform
+ * objects as `terrain`'s material, plus the cut and the north tile's reveal front (`grow`, by reference: behind it the
+ * story tile's north rim stops sinking, GLSL_NORTH_RIM_LIFT). The caller swaps it in while `uCutMix` > 0 and disposes
+ * it; the terrain's own material is left untouched.
+ */
+export function createStoryTerrainCut(terrain: Mesh, grow: { readonly value: Vector4 }): ShaderMaterial {
+  const base = terrain.material as ShaderMaterial;
+  return new ShaderMaterial({
+    uniforms: { ...base.uniforms, uGrow: grow },
+    vertexShader: TERRAIN_VS,
+    fragmentShader: TERRAIN_FS,
+    defines: { ...base.defines, STORY_CUT: '' },
+  });
 }
 
 /* ------------------------------------------------------------------------------------------------
