@@ -2,7 +2,8 @@
 //
 // Writes public/data/terrain/<id>.bin (257 x 257 little-endian Uint16 metres, row-major north to south,
 // west to east) and <id>.json for `annapurna` (relief scene, plan sheet), `garhwal` (home #next sheet)
-// `himalaya` (the /stories atlas) and `annapurna-story` (the home story map, a wider Annapurna box).
+// `himalaya` (the /stories atlas), `annapurna-story` (the home story map, a wider Annapurna box) and
+// `annapurna-north` (the home #next map of the expected Annapurna North Base Camp route, zoom 12).
 //
 // Source: public Terrain Tiles (Terrarium PNG over HTTPS, decoded with sharp:
 // h = R * 256 + G + B / 256 - 32768), area-averaged onto the grid. When a region's tiles cannot all be
@@ -16,6 +17,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import sharp from 'sharp';
 
+import { ANNAPURNA_I, CORRIDOR_STOPS, JEEP_STOPS, TREK_STOPS } from './north-places.mjs';
 import { HIMALAYA_CREST, crestField, valleyField } from './procedural.mjs';
 import {
   GRID,
@@ -59,6 +61,16 @@ function regionRoutes(id, { hints = false } = {}) {
         : { ...wp, altitudeM: PROCEDURAL_ALTITUDE_HINTS[wp.name] },
     );
   if (id === 'annapurna' || id === 'annapurna-story') return [ANNAPURNA_ROUTE, ...ANNAPURNA_SIDE_TRIPS];
+  if (id === 'annapurna-north') {
+    // The walked circuit's end (the handoff), the road corridor to Marpha and the expected route's cited places
+    // (north-places.mjs). Corridor places without a cited altitude are skipped by the check.
+    const muktinath = ANNAPURNA_ROUTE.filter((wp) => wp.name === 'Muktinath');
+    const corridor = CORRIDOR_STOPS.slice(1, -1);
+    // The summit is checked but never made a procedural valley floor.
+    return hints
+      ? [muktinath, corridor, JEEP_STOPS, TREK_STOPS]
+      : [muktinath, corridor, JEEP_STOPS, TREK_STOPS, [ANNAPURNA_I]];
+  }
   if (id === 'garhwal') return [getExpedition('chandrashila').waypoints, withHints(getExpedition('dodital').waypoints)];
   return [];
 }
@@ -122,16 +134,17 @@ async function mapLimit(items, limit, fn) {
   return results;
 }
 
-/** Area-averaged 257 x 257 grid from Terrarium tiles at the region's zoom. */
+/** Area-averaged 257 x 257 grid (257 x `region.rows`) from Terrarium tiles at the region's zoom. */
 async function tileField(region) {
   const z = region.zoom;
+  const rows = region.rows ?? GRID;
   const [west, south, east, north] = region.bbox;
   const x0 = lonToPx(west, z);
   const x1 = lonToPx(east, z);
   const y0 = latToPx(north, z);
   const y1 = latToPx(south, z);
   const cellX = (x1 - x0) / (GRID - 1);
-  const cellY = (y1 - y0) / (GRID - 1);
+  const cellY = (y1 - y0) / (rows - 1);
   const ss = Math.max(1, Math.min(6, Math.round(Math.max(cellX, cellY))));
   const margin = Math.max(cellX, cellY) + 2;
   const tx0 = Math.floor((x0 - margin) / TILE_SIZE);
@@ -166,9 +179,9 @@ async function tileField(region) {
     return top * (1 - ay) + bottom * ay;
   };
 
-  const heights = new Float64Array(GRID * GRID);
-  for (let j = 0; j < GRID; j += 1) {
-    const lat = north - ((north - south) * j) / (GRID - 1);
+  const heights = new Float64Array(GRID * rows);
+  for (let j = 0; j < rows; j += 1) {
+    const lat = north - ((north - south) * j) / (rows - 1);
     const cy = latToPx(lat, z);
     for (let i = 0; i < GRID; i += 1) {
       const lon = west + ((east - west) * i) / (GRID - 1);
@@ -200,11 +213,11 @@ async function tileField(region) {
 const PIT_DROP_M = 250;
 const PIT_MAX_RING = 8;
 
-function repairPits(heights) {
-  const n = GRID;
+function repairPits(heights, rows = GRID) {
+  const n = GRID; // columns
   const h = Float64Array.from(heights);
-  const pit = new Uint8Array(n * n);
-  for (let j = 0; j < n; j += 1) {
+  const pit = new Uint8Array(n * rows);
+  for (let j = 0; j < rows; j += 1) {
     for (let i = 0; i < n; i += 1) {
       const v = h[j * n + i];
       for (let r = 1; r <= PIT_MAX_RING; r += 1) {
@@ -212,7 +225,7 @@ function repairPits(heights) {
         let count = 0;
         for (let d = -r; d <= r; d += 1) {
           for (const [ii, jj] of [[i + d, j - r], [i + d, j + r], [i - r, j + d], [i + r, j + d]]) {
-            if (ii < 0 || jj < 0 || ii >= n || jj >= n) continue;
+            if (ii < 0 || jj < 0 || ii >= n || jj >= rows) continue;
             const w = h[jj * n + ii];
             if (w < ringMin) ringMin = w;
             count += 1;
@@ -228,20 +241,20 @@ function repairPits(heights) {
   }
   // Grow by one sample: the rim of a void is partly averaged into it.
   const mask = Uint8Array.from(pit);
-  for (let j = 0; j < n; j += 1) {
+  for (let j = 0; j < rows; j += 1) {
     for (let i = 0; i < n; i += 1) {
       if (!pit[j * n + i]) continue;
       for (let dj = -1; dj <= 1; dj += 1) {
         for (let di = -1; di <= 1; di += 1) {
           const ii = i + di;
           const jj = j + dj;
-          if (ii >= 0 && jj >= 0 && ii < n && jj < n) mask[jj * n + ii] = 1;
+          if (ii >= 0 && jj >= 0 && ii < n && jj < rows) mask[jj * n + ii] = 1;
         }
       }
     }
   }
   const cells = [];
-  for (let k = 0; k < n * n; k += 1) if (mask[k]) cells.push(k);
+  for (let k = 0; k < n * rows; k += 1) if (mask[k]) cells.push(k);
   // Gauss-Seidel relaxation of the masked samples toward the mean of their 4 neighbours.
   for (let iter = 0; iter < 400; iter += 1) {
     let delta = 0;
@@ -253,7 +266,7 @@ function repairPits(heights) {
       if (i > 0) { sum += h[k - 1]; m += 1; }
       if (i < n - 1) { sum += h[k + 1]; m += 1; }
       if (j > 0) { sum += h[k - n]; m += 1; }
-      if (j < n - 1) { sum += h[k + n]; m += 1; }
+      if (j < rows - 1) { sum += h[k + n]; m += 1; }
       const v = sum / m;
       delta = Math.max(delta, Math.abs(v - h[k]));
       h[k] = v;
@@ -290,9 +303,9 @@ for (const id of only) {
   if (!forceProcedural) {
     try {
       const raw = await tileField(region);
-      const { heights, repaired, pits } = region.repairPits ? repairPits(raw) : { heights: raw, repaired: 0, pits: 0 };
+      const { heights, repaired, pits } = region.repairPits ? repairPits(raw, region.rows) : { heights: raw, repaired: 0, pits: 0 };
       if (repaired) console.log(`  ${id}: inpainted ${repaired} samples around ${pits} void-pit samples`);
-      field = { heights, source: 'terrain-tiles', attribution: TERRAIN_ATTRIBUTION };
+      field = { heights, rows: region.rows, source: 'terrain-tiles', attribution: TERRAIN_ATTRIBUTION };
     } catch (error) {
       console.warn(`  ${id}: Terrain Tiles unavailable (${error.message}); writing the procedural fallback.`);
     }

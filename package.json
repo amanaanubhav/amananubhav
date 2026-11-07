@@ -13,13 +13,15 @@
     "check:palette": "node scripts/palette/check.mjs",
     "check:colors": "node scripts/palette/check-literals.mjs",
     "gen:terrain": "node scripts/terrain/build-heightfield.mjs",
+    "gen:north-route": "node scripts/terrain/build-north-route.mjs",
     "gen:posters": "node scripts/posters/build-posters.mjs",
+    "gen:north-sheet": "node scripts/posters/build-north-sheet.mjs",
     "sky:data": "node scripts/posters/sky-data.mjs",
     "gen:brand": "node scripts/brand/build-brand.mjs",
     "gen:photos": "node scripts/photos/build-duotones.mjs",
     "gen:preloader": "node scripts/preloader/build-climb.mjs",
     "gen:footer": "node scripts/hero-footer/build-contour-sheet.mjs",
-    "gen:all": "npm run gen:terrain && npm run gen:posters && npm run gen:brand && npm run gen:photos && npm run gen:preloader && npm run gen:footer"
+    "gen:all": "npm run gen:terrain && npm run gen:north-route && npm run gen:north-sheet && npm run gen:posters && npm run gen:brand && npm run gen:photos && npm run gen:preloader && npm run gen:footer"
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.75",

@@ -92,24 +92,47 @@ export const REGIONS = {
   // The home story map (design §15.2): wider east and south than the plan sheet, so the relief runs past
   // the trek on every side and the scene's rim fade never lands on the route (R29).
   'annapurna-story': { id: 'annapurna-story', bbox: [83.75, 28.08, 84.57, 28.92], zoom: 11, repairPits: true },
+  // The home #next map (next-trek NEXT-DESIGN §5.1, ROUTE-FACTS §7.3): Muktinath (the handoff) down the whole
+  // road corridor to Marpha (Jharkot, Kagbeni, Jomsom), the Kali Gandaki to Tatopani, up to Humkhola and on to
+  // the base camp. West to 83.45 so the Dhaulagiri side closes the valley instead of a tile edge, north to 28.95
+  // so Kagbeni and the river above it sit well inside, east to 84.00 so it overlaps the story tile around
+  // Muktinath, where the scene hands over. Same source, zoom and processing as `annapurna-story` (Terrain Tiles
+  // zoom 11, area-averaged, pits repaired), so where the two overlap they average the same data; the scene
+  // starts the overlap on the story tile's own drawn surface and morphs to this one. A separate, lazily loaded
+  // tile (about 210 m per sample, finer than the story's 330 m); the story tile is left as it is.
+  //
+  // North to ~29.15 N (fix2 verify, 2026-11-07): looking north over the corridor the camera sees ~40 km past the
+  // target, so with the edge at 28.95 the tile's own rim stood in the frame as a hard horizon. The extra 94 rows keep
+  // the same row spacing (0.55° / 256), so rows 94-350 are the old 28.95-28.40 lattice (the route builder crops to
+  // it, ROUTE_BBOX in build-north-route.mjs) and the island fades into the ground well before this edge.
+  'annapurna-north': {
+    id: 'annapurna-north',
+    bbox: [83.45, 28.4, 84.0, 28.95 + (94 * 0.55) / 256],
+    rows: 257 + 94,
+    zoom: 11,
+    repairPits: true,
+  },
   garhwal: { id: 'garhwal', bbox: coverBbox(SHEETS.garhwal), zoom: 10, repairPits: true },
   // At ~6 km per sample the atlas's hollows are real basins and gorges (voids average out): left as is.
   himalaya: { id: 'himalaya', bbox: coverBbox(SHEETS.himalaya), zoom: 7, repairPits: false },
 };
 
 /* ------------------------------------------------------------------------------------------------
- * Heightfield IO (§C.5): <id>.bin = little-endian Uint16 metres, 257 x 257, row-major north to south,
+ * Heightfield IO (§C.5): <id>.bin = little-endian Uint16 metres, 257 x 257 (257 x `rows` where a region sets
+ * `rows`), row-major north to south,
  * west to east; <id>.json = { cols, rows, bbox, minM, maxM, source, seed?, attribution? }.
  * --------------------------------------------------------------------------------------------- */
 
 /**
  * @param {string} dir
  * @param {string} id
- * @param {{ heights: Float64Array | number[]; bbox: number[]; source: 'terrain-tiles' | 'procedural'; seed?: number; attribution?: string }} field
+ * @param {{ heights: Float64Array | number[]; bbox: number[]; rows?: number; source: 'terrain-tiles' | 'procedural'; seed?: number; attribution?: string }} field
  */
 export function writeHeightfield(dir, id, field) {
   mkdirSync(dir, { recursive: true });
-  const n = GRID * GRID;
+  const cols = GRID;
+  const rows = field.rows ?? GRID;
+  const n = cols * rows;
   if (field.heights.length !== n) throw new Error(`${id}: expected ${n} heights, got ${field.heights.length}`);
   const buf = Buffer.alloc(n * 2);
   let minM = Infinity;
@@ -121,8 +144,8 @@ export function writeHeightfield(dir, id, field) {
     if (m > maxM) maxM = m;
   }
   const meta = {
-    cols: GRID,
-    rows: GRID,
+    cols,
+    rows,
     bbox: field.bbox.map((v) => Math.round(v * 10000) / 10000),
     minM,
     maxM,
