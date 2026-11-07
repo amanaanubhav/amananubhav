@@ -31,7 +31,7 @@ export interface ElevationProfileProps {
   className?: string;
 }
 
-const EVEN_NOTE = 'Waypoints evenly spaced until the GPS track arrives.';
+const EVEN_NOTE = 'Waypoints evenly spaced, not by distance.';
 const nf = new Intl.NumberFormat('en');
 const r1 = (v: number) => Math.round(v * 10) / 10;
 

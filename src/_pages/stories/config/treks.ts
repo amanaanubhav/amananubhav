@@ -38,7 +38,10 @@ export interface TrekCopy {
   readonly noteComing?: string;
 }
 
-/** The four full trek spreads, in page order (Himachal has its own three-card spread). */
+/**
+ * Annapurna's spread, then the three single-trek pages of the field notebook (NOTEBOOK-DESIGN §3.3: same headlines,
+ * leads, slots and `noteComing`). Himachal's page is `HIMACHAL_COPY`.
+ */
 export const TREKS: readonly TrekCopy[] = [
   {
     id: 'annapurna',
@@ -83,18 +86,62 @@ export const TREKS: readonly TrekCopy[] = [
   },
 ];
 
-/** `#himachal`: three short entries ([S-EXP-HIMACHAL]); the deck's lines are [TBD Q-55], so they stay hidden. */
-export const HIMACHAL_COPY = {
+/** A single trek's copy by expedition id (the notebook pages look theirs up). */
+export function trekCopy(expeditionId: ExpeditionId): TrekCopy | undefined {
+  return TREKS.find((trek) => trek.expeditionId === expeditionId);
+}
+
+/** One Himachal entry. `note` is the deck's one-liner, [TBD Q-55]: left undefined, it renders nothing. */
+export interface HimachalEntry {
+  readonly expeditionId: ExpeditionId;
+  readonly slot: MediaSlotId;
+  readonly note?: string;
+}
+
+/** The notebook's Himachal page: three short entries ([S-EXP-HIMACHAL]); the deck's lines are [TBD Q-55], so they stay hidden. */
+export const HIMACHAL_COPY: {
+  readonly id: 'himachal';
+  readonly copyId: string;
+  readonly headline: string;
+  readonly highPointExpedition: ExpeditionId;
+  readonly treks: readonly HimachalEntry[];
+} = {
   id: 'himachal',
   copyId: 'S-EXP-HIMACHAL',
   headline: 'Himachal trails.',
-  /** The rail and the thin-air width read the highest of the three. */
-  highPointExpedition: 'yulla-kanda' as ExpeditionId,
+  /** The thin-air width reads the highest of the three. */
+  highPointExpedition: 'yulla-kanda',
   treks: [
     { expeditionId: 'triund', slot: 'M-EXP-HIM-01' },
     { expeditionId: 'kheerganga', slot: 'M-EXP-HIM-02' },
     { expeditionId: 'yulla-kanda', slot: 'M-EXP-HIM-03' },
-  ] as const satisfies readonly { expeditionId: ExpeditionId; slot: MediaSlotId }[],
+  ],
+};
+
+/**
+ * `#notebook` (NOTEBOOK-DESIGN §2): UI copy, not facts. The h2, its line and the rail label wait on the owner's
+ * wording (NB-8); the sketch captions say how sure each drawing is (§2.4). Nothing promises a GPS track: which treks
+ * have one is the owner's answer (NB-4), so the lines stay neutral until then. `none` is empty: no line is drawn.
+ */
+export const NOTEBOOK_COPY = {
+  headline: 'The field notebook.',
+  line: 'The other treks, one page each: the route, the stops and the log.',
+  railLabel: 'Field notebook',
+  tablistLabel: 'Treks in the notebook',
+  previous: 'Previous',
+  next: 'Next',
+  caption: {
+    track: 'Drawn from my GPS track.',
+    plan: "Sketch from the stops' estimated positions, not a recorded track.",
+    locator: 'Trailheads, placed approximately.',
+    none: '',
+  },
+  stopsLabel: 'Stops in walking order',
+  himachalStopsLabel: 'The three treks',
+  notPlaced: 'not placed',
+  heightsNote: 'Heights are approximate.',
+  locatorTitle: 'Trailheads of the Himachal treks',
+  north: 'N',
 } as const;
 
 /** `#pack`: [S-EXP-GEAR] (the gear list with weights is [TBD Q-56] and stays hidden). */

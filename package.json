@@ -21,7 +21,9 @@
     "gen:photos": "node scripts/photos/build-duotones.mjs",
     "gen:preloader": "node scripts/preloader/build-climb.mjs",
     "gen:footer": "node scripts/hero-footer/build-contour-sheet.mjs",
-    "gen:all": "npm run gen:terrain && npm run gen:north-route && npm run gen:north-sheet && npm run gen:posters && npm run gen:brand && npm run gen:photos && npm run gen:preloader && npm run gen:footer"
+    "gen:routes": "node scripts/routes/build-trek-routes.mjs",
+    "test:routes": "node scripts/routes/selftest.mjs",
+    "gen:all": "npm run gen:terrain && npm run gen:north-route && npm run gen:north-sheet && npm run gen:posters && npm run gen:brand && npm run gen:photos && npm run gen:preloader && npm run gen:footer && npm run gen:routes"
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.75",

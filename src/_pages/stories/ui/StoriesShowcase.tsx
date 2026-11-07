@@ -4,13 +4,13 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { STORIES, getFeaturedStories } from '@/entities/story';
-import { useScrollToTopOnMount } from '@/shared/lib/dom';
 import { ScrollTrigger } from '@/shared/lib/gsap';
 import { scrollToTarget } from '@/shared/lib/smooth-scroll';
 import { Button } from '@/shared/ui/button';
 import { ChapterHeader } from '@/shared/ui/chapter-header';
 import { FIELD_NOTES_COPY } from '../config/treks';
 import { useStackedCardsTimeline } from '../lib/use-stacked-cards-timeline';
+import { useTopUnlessDeepLink } from '../lib/use-top-unless-deep-link';
 import { useStoryFilters } from '../model/use-story-filters';
 import { ArchiveDrawer } from './ArchiveDrawer';
 import { MechanicalCard } from './MechanicalCard';
@@ -65,7 +65,7 @@ ${STAGED} .fn-sub{display:none}
  * arrive as server-rendered nodes keyed by story id.
  */
 export function StoriesShowcase({ covers }: { covers: Readonly<Record<string, ReactNode>> }) {
-  useScrollToTopOnMount();
+  useTopUnlessDeepLink();
 
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);

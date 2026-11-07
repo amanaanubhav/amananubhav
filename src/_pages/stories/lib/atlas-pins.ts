@@ -4,7 +4,7 @@ import { atlasPoint } from '../config/atlas.generated';
 /** Serializable pin data handed to the client pin layer. */
 export interface AtlasPinData {
   readonly expeditionId: ExpeditionId;
-  /** The section the caption card's "Go to journal entry" scrolls to. */
+  /** The hash target of the caption card's "Go to journal entry": a section, a notebook page or a page's entry. */
   readonly sectionId: string;
   readonly label: string;
   readonly highPointName: string;
@@ -20,14 +20,17 @@ export interface AtlasPinData {
 /** Past this share of the sheet width a pin's label (to its right by default) would run off the plate. */
 const LABEL_FLIP_X_PCT = 82;
 
-/** Which rail section each expedition's caption card points to. */
-const SECTION_OF: Readonly<Record<ExpeditionId, string>> = {
+/**
+ * The hash each expedition's caption card jumps to (NOTEBOOK-DESIGN §1.4): Annapurna's own section, a field notebook
+ * page, or a Himachal trek's own id (an alias that opens the Himachal page at that entry).
+ */
+const PAGE_OF: Readonly<Record<ExpeditionId, string>> = {
   annapurna: 'annapurna',
   'kun-tso': 'kun-tso',
   chandrashila: 'chandrashila',
-  triund: 'himachal',
-  kheerganga: 'himachal',
-  'yulla-kanda': 'himachal',
+  triund: 'triund',
+  kheerganga: 'kheerganga',
+  'yulla-kanda': 'yulla-kanda',
   dodital: 'dodital',
 };
 
@@ -41,7 +44,7 @@ export function buildAtlasPins(list: readonly Expedition[]): AtlasPinData[] {
       const { xPct, yPct } = atlasPoint(exp.trailhead.lon, exp.trailhead.lat);
       return {
         expeditionId: exp.id,
-        sectionId: SECTION_OF[exp.id],
+        sectionId: PAGE_OF[exp.id],
         label: exp.shortName,
         highPointName: exp.highPoint.name,
         altitudeM: exp.highPoint.altitudeM,

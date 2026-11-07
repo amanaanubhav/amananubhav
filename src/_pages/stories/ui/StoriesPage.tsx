@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { STORIES, getFeaturedStories } from '@/entities/story';
 import { SectionDotNav } from '@/shared/ui/section-dot-nav';
 import { STORIES_SECTIONS, STORIES_TRACK_CAPTION } from '../config/sections';
-import { TREKS } from '../config/treks';
+import { trekCopy } from '../config/treks';
 import { AtlasSection } from './AtlasSection';
-import { HimachalSpread } from './HimachalSpread';
+import { TrekNotebook } from './notebook/TrekNotebook';
 import { PackSection } from './PackSection';
 import { StoriesShowcase } from './StoriesShowcase';
 import { StoryCover } from './StoryCover';
@@ -15,12 +15,12 @@ const COVERS: Readonly<Record<string, ReactNode>> = Object.fromEntries(
   getFeaturedStories(STORIES, 3).map((story) => [story.id, <StoryCover key={story.id} story={story} />]),
 );
 
-const [ANNAPURNA, KUN_TSO, CHANDRASHILA, DODITAL] = TREKS;
+const ANNAPURNA = trekCopy('annapurna');
 
 /**
- * Journal, `/stories` (§G.4): the atlas, every trek with its profile, the pack, then the long reads.
- * No WebGL in phase 1. Server component; client islands are the rail, the atlas pins, the reader
- * buttons and the stacked cards with their index.
+ * Journal, `/stories` (§G.4): the atlas, the Annapurna spread, the field notebook (every other trek, one page each;
+ * NOTEBOOK-DESIGN), the pack, then the long reads. No WebGL in phase 1. Server component; client islands are the rail,
+ * the atlas pins, the notebook controller, the reader buttons and the stacked cards with their index.
  */
 export function StoriesPage() {
   return (
@@ -28,11 +28,8 @@ export function StoriesPage() {
       <SectionDotNav sections={STORIES_SECTIONS} track={{ caption: STORIES_TRACK_CAPTION }} />
       <div className="flex flex-col gap-section">
         <AtlasSection />
-        <TrekSpread trek={ANNAPURNA} />
-        <TrekSpread trek={KUN_TSO} />
-        <TrekSpread trek={CHANDRASHILA} />
-        <HimachalSpread />
-        <TrekSpread trek={DODITAL} />
+        {ANNAPURNA ? <TrekSpread trek={ANNAPURNA} /> : null}
+        <TrekNotebook />
         <PackSection />
         <StoriesShowcase covers={COVERS} />
       </div>

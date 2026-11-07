@@ -1,0 +1,373 @@
+/*
+ * The field notebook (NOTEBOOK-DESIGN §2). Three states:
+ *  - stacked: no JS (html has no data-nb-page). Every page in flow, one under the other, in one book.
+ *  - selecting: JS ran (the pre-paint script set html[data-nb-page]) but the controller is not live yet. The page that
+ *    attribute names is shown by the pre-live rules TrekNotebook emits (the ids live in lib/notebook-pages.ts).
+ *  - live: the root carries data-nb-live; React owns data-current, data-leaving and inert, and pages turn.
+ * From 1024 px the pages share one grid cell, so the book is as tall as its tallest page and never jumps on a turn.
+ * Only transform, opacity and the route mask's stroke-dashoffset animate; the whole turn ends by 500 ms.
+ */
+
+/* ── The bar: tabs, then (from 1024 px) the counter and Previous / Next ─────────────────────────── */
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px 24px;
+  margin-top: var(--space-item);
+  margin-bottom: 16px;
+}
+
+.tabs {
+  display: flex;
+  min-width: 0;
+  gap: 4px;
+  /* overflow-x: auto clips to the padding box in both directions, so the padding has to hold the whole focus ring
+     (outline 2px at offset 3px = 5px outside the tab). The negative margins keep the bar's height and the tabs' line
+     where they were with 3px. */
+  margin: -3px -6px;
+  padding: 6px;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabs > li { display: flex; flex: none; }
+
+.tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--steel-rim);
+  border-radius: 2px;
+  background-color: transparent;
+  color: var(--ink);
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: var(--step--1);
+  font-weight: 600;
+  line-height: 1.2;
+  font-variation-settings: 'wdth' 92;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  scroll-snap-align: start;
+  -webkit-user-select: none;
+  user-select: none;
+  transition:
+    background-color var(--dur-hover) var(--ease-settle),
+    transform var(--dur-micro) var(--ease-settle);
+}
+@media (min-width: 1024px) {
+  .tab { padding: 0 16px; font-variation-settings: 'wdth' 100; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .tab:hover { background-color: var(--action-wash); }
+}
+.tab:active { transform: scale(0.97); }
+.tab[aria-selected='true'] {
+  background-color: var(--action-soft);
+  box-shadow: inset 0 -2px 0 var(--action-line);
+}
+
+/* Counter and Previous / Next: from 1024 px, and only with JS (they do nothing without it). */
+.turns {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+@media (min-width: 1024px) {
+  :global(html[data-nb-page]) .turns { display: flex; }
+}
+/* The counter and the buttons come from the server render (page 1); on a deep link they would read wrong until
+   hydration. Their slots keep the bar's layout, so showing them at go-live moves nothing. */
+.root:not(.live) .turns { visibility: hidden; }
+.counter {
+  min-width: 4.5em;
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* A missing Previous or Next keeps its place, so the other button never moves under the pointer. */
+.slot { visibility: hidden; }
+
+/* ── The book ───────────────────────────────────────────────────────────────────────────────────── */
+
+.book {
+  --nb-dir: 1;
+  --nb-ground: var(--surface);
+  position: relative;
+  border: 1px solid var(--steel-rim);
+  border-radius: 6px;
+  background-color: var(--surface);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+@media (min-width: 1024px) {
+  /* Two equal pages; the fold is the step in tone (left surface-2, right surface), not a line. */
+  .book { background-image: linear-gradient(90deg, var(--surface-2) 50%, var(--surface) 50%); }
+  :global(html[data-nb-page]) .book { display: grid; }
+  :global(html[data-nb-page]) .page { grid-area: 1 / 1; }
+}
+@media (max-width: 1023.98px) {
+  /* Swipe to turn: vertical scroll and pinch zoom stay native. */
+  .live .book { touch-action: pan-y pinch-zoom; }
+}
+
+/* Stacked (no JS): a hairline between pages. */
+:global(html:not([data-nb-page])) .page + .page { border-top: 1px solid var(--line); }
+
+.page {
+  min-width: 0;
+  padding: 16px;
+  /* A native anchor lands where the controller's own jump puts the book: the bar (50 px) and its 16 px gap in view
+     under the navbar band (html's scroll-padding-top adds --nav-clear). */
+  scroll-margin-top: 66px;
+}
+/* Stacked (no JS) there is no bar above the other pages. */
+:global(html:not([data-nb-page])) .page { scroll-margin-top: 16px; }
+.page:focus-visible { outline-offset: -4px; }
+.page > * + * { margin-top: 24px; }
+.page > .foot { margin-top: 32px; }
+
+@media (min-width: 1024px) {
+  .page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: repeat(6, auto) 1fr;
+    align-content: start;
+    column-gap: 64px;
+    padding: 32px;
+  }
+  /* DOM order is the reading order (h3 and log, figure, stops, lead, media, action); the grid moves the route to the
+     left page and everything else to the right. */
+  .page > * { grid-column: 2; }
+  .page > * + * { margin-top: 0; }
+  .page > .route {
+    --nb-ground: var(--surface-2);
+    grid-column: 1;
+    grid-row: 1 / -1;
+  }
+  .page > .lead, .page > .media, .page > .action, .page > .entries { margin-top: 24px; }
+}
+@media (min-width: 1280px) {
+  .page { column-gap: 80px; padding: 40px; }
+}
+
+/* ── Right page parts ───────────────────────────────────────────────────────────────────────────── */
+
+.head > * + * { margin-top: 12px; }
+
+.media {
+  display: grid;
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .media[data-count='2'] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+}
+
+.entries {
+  display: grid;
+  gap: 20px;
+  padding: 0;
+  list-style: none;
+}
+.entry { display: flex; align-items: flex-start; gap: 16px; scroll-margin-top: 16px; }
+.entry > :first-child:empty { display: none; }
+.entryHeading:focus { outline: none; }
+
+/* ── Phones: the foot ───────────────────────────────────────────────────────────────────────────── */
+
+.foot { display: none; }
+@media (max-width: 1023.98px) {
+  :global(html[data-nb-page]) .foot { display: block; }
+}
+.footRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+.footNext { grid-column: 2; }
+.footPage {
+  margin: 12px 0 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── The route figure ───────────────────────────────────────────────────────────────────────────── */
+
+.figure {
+  margin: 0;
+  container-type: inline-size;
+}
+.sketch {
+  --nb-ms: 0.9;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+/* Marks, numbers and the north arrow keep about their px size at every width (the drawing itself scales with its
+   300-unit box; --nb-ms is about 300 / the container width). route-sketch.ts places numbers for the largest value. */
+@container (min-width: 360px) { .sketch { --nb-ms: 0.78; } }
+@container (min-width: 440px) { .sketch { --nb-ms: 0.64; } }
+@container (min-width: 560px) { .sketch { --nb-ms: 0.5; } }
+@container (min-width: 700px) { .sketch { --nb-ms: 0.42; } }
+
+.routeLine {
+  fill: none;
+  stroke: var(--oxblood);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+/* Dashed for an estimate, solid for a recording: the line itself says how sure it is. */
+.routeLine[data-kind='plan'] { stroke-dasharray: 6 4; }
+
+.drawMask { mask-type: alpha; }
+.drawPath {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 8;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.tri { stroke-width: 1.5; stroke-linejoin: round; }
+.tri[data-tone='peak'] { fill: var(--oxblood); stroke: var(--oxblood); }
+.tri[data-tone='lake'] { fill: var(--map-lake); stroke: var(--map-lake-edge); }
+.tri[data-tone='plain'] { fill: var(--nb-ground); stroke: var(--ink); }
+
+.num {
+  fill: var(--ink);
+  font-family: var(--font-data), ui-monospace, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: var(--nb-ground);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* The arrow is steel (a graphic, >= 3:1); the letter is text, so it takes ink-muted (>= 4.5:1 in both themes). */
+.north text {
+  fill: var(--ink-muted);
+  font-family: var(--font-data), ui-monospace, monospace;
+  font-size: 10px;
+}
+.northArrow { fill: none; stroke: var(--steel); stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+
+.scaleBar { fill: none; stroke: var(--ink-muted); stroke-width: 1.25; vector-effect: non-scaling-stroke; }
+.scaleLabel { fill: var(--ink-muted); font-family: var(--font-data), ui-monospace, monospace; font-size: 10px; }
+
+/* ── Stop list ──────────────────────────────────────────────────────────────────────────────────── */
+
+.stops {
+  display: grid;
+  column-gap: 24px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 1280px) {
+  .stops[data-cols='2'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: repeat(var(--nb-rows), auto);
+    grid-auto-flow: column;
+  }
+}
+/* A future trek with more than ten stops scrolls inside the page, so the book keeps its height budget. */
+.stops[data-scroll] { max-height: 22rem; overflow-y: auto; }
+.stop {
+  display: grid;
+  grid-template-columns: 1.75em minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+
+/* ── The turn (live only) ───────────────────────────────────────────────────────────────────────── */
+
+.live .page[data-current] { z-index: 1; }
+.live .page:not([data-current]) { visibility: hidden; transition: visibility 0s linear var(--dur-hover); }
+@media (max-width: 1023.98px) {
+  /* One sheet: an inactive page takes no room, so a short page stays short. */
+  .live .page:not([data-current]) { display: none; }
+}
+
+/* Enter: from the side the turn comes from, 280 ms after a 40 ms beat; the right page settles 40 ms after the route. */
+.live .page > * {
+  transition:
+    opacity var(--dur-ui) var(--ease-settle) 40ms,
+    transform var(--dur-ui) var(--ease-settle) 40ms;
+}
+@media (min-width: 1024px) {
+  .live .page[data-current] > :not(.route) { transition-delay: 80ms; }
+}
+/* Waiting pages sit on the entry side (no transform transition: they snap there when the direction changes). */
+.live .page:not([data-current]) > * {
+  opacity: 0;
+  transform: translateX(calc(16px * var(--nb-dir)));
+  transition: opacity var(--dur-hover) var(--ease-settle);
+}
+/* Exit: 180 ms, a short step back the other way. */
+.live .page[data-leaving] > * {
+  transform: translateX(calc(-8px * var(--nb-dir)));
+  transition:
+    opacity var(--dur-hover) var(--ease-settle),
+    transform var(--dur-hover) var(--ease-settle);
+}
+
+/* The route draws from the trailhead to the top (420 ms on the pen curve after 80 ms); each mark appears as the line
+   reaches it (its delay is the pen-curve time of its place on the line, --nb-td). The leaving page keeps its line. */
+.live .page:not([data-current]):not([data-leaving]) .drawPath { stroke-dashoffset: 1; transition: none; }
+.live .page[data-current] .drawPath { transition: stroke-dashoffset 400ms var(--ease-pen) 80ms; }
+.live .page:not([data-current]):not([data-leaving]) .mark { opacity: 0; transition: none; }
+.live .page[data-current] .mark { transition: opacity 60ms linear calc(80ms + var(--nb-td, 0) * 360ms); }
+
+/* Phones: the outgoing page is gone at once; the incoming one still enters from its side. */
+@media (max-width: 1023.98px) {
+  @starting-style {
+    .live .page[data-current] > * { opacity: 0; transform: translateX(calc(16px * var(--nb-dir))); }
+    .live .page[data-current] .drawPath { stroke-dashoffset: 1; }
+    .live .page[data-current] .mark { opacity: 0; }
+  }
+}
+
+/* Reduced motion (the OS setting only): no slide, no draw, no stagger; a 120 ms crossfade stays. These outrank the
+   global reduced-motion rule (html[data-motion='off'] *), which would otherwise cut the fade to nothing. */
+:global(html[data-motion='off']) .live .page > * {
+  transform: none !important;
+  transition-property: opacity !important;
+  transition-duration: var(--dur-micro) !important;
+  transition-delay: 0s !important;
+}
+:global(html[data-motion='off']) .live .page .drawPath {
+  stroke-dashoffset: 0 !important;
+  transition: none !important;
+}
+:global(html[data-motion='off']) .live .page .mark {
+  opacity: 1 !important;
+  transition: none !important;
+}
+:global(html[data-motion='off']) .live .page:not([data-current]) { transition-delay: var(--dur-micro); }
+
+/* Keyboard turns are instant (arrow keys, Enter / Space on Previous / Next): repeated turns never lag. */
+.root .book[data-instant] .page,
+.root .book[data-instant] .page * {
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+
+@media (forced-colors: active) {
+  .tab[aria-selected='true'] { outline: 2px solid CanvasText; outline-offset: -2px; }
+  .routeLine, .tri { forced-color-adjust: auto; }
+}
